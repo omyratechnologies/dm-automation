@@ -1,13 +1,14 @@
 "use client";
 import { usePaths } from "@/hooks/user-nav";
-import Logo from "@/svgs/logo";
+import GemaiLogo from "@/components/global/gemai-logo";
 import React from "react";
 import Items from "./items";
 import { Separator } from "@/components/ui/separator";
-import ClerkAuthState from "../clerk-auth-state";
 import { HelpDuoToneWhite } from "@/icons";
 import { SubscriptionPlan } from "../subscription-plan";
 import UpgradeCard from "./upgrade";
+import Link from "next/link";
+import { User } from "lucide-react";
 
 type Props = {
   slug: string;
@@ -41,13 +42,8 @@ const Sidebar = ({ slug }: Props) => {
        p-4"
       >
         {/* Logo Section with Enhanced Styling */}
-        <div className="flex gap-x-3 items-center p-4 mb-2">
-          <div className="h-10 w-10 rounded-xl bg-gradient-brand flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-primary/30">
-            S
-          </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-primary via-slate-secondary to-slate-primary bg-clip-text text-transparent">
-            Slate AI
-          </span>
+        <div className="flex gap-x-3 items-center p-4 mb-2 justify-center">
+          <GemaiLogo size="lg" className="h-8" />
         </div>
 
         {/* Navigation Items */}
@@ -60,15 +56,28 @@ const Sidebar = ({ slug }: Props) => {
         </div>
 
         {/* Profile & Help Section */}
-        <div className="px-3 flex flex-col gap-y-4">
-          <div className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
-            <ClerkAuthState />
-            <p className="text-muted-foreground text-sm font-medium">Profile</p>
-          </div>
-          <div className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
+        <div className="px-3 flex flex-col gap-y-2">
+          {/* Profile Link */}
+          <Link 
+            href={`/dashboard/${slug}/settings`}
+            className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer group"
+          >
+            <User className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            <p className="text-muted-foreground text-sm font-medium group-hover:text-foreground transition-colors">
+              Profile
+            </p>
+          </Link>
+
+          {/* Help Link */}
+          <Link 
+            href={`/dashboard/${slug}/help`}
+            className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer group"
+          >
             <HelpDuoToneWhite />
-            <p className="text-muted-foreground text-sm font-medium">Help</p>
-          </div>
+            <p className="text-muted-foreground text-sm font-medium group-hover:text-foreground transition-colors">
+              Help
+            </p>
+          </Link>
         </div>
 
         {/* Upgrade Card */}

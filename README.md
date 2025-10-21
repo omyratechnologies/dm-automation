@@ -1,6 +1,8 @@
-# DM Automations (dm.ai)
+# Gemai - AI-Powered Instagram Automation Platform
 
-A sophisticated Instagram automation platform that helps businesses and creators automate their Instagram DM responses and comment interactions using AI.
+**Website:** [gemai.in](https://gemai.in) | [gemai.omyratech.com](https://gemai.omyratech.com)
+
+Gemai is a sophisticated Instagram automation platform that helps businesses and creators transform Instagram DMs and comments into revenue using intelligent AI automation. Scale your Instagram presence, engage customers instantly, and drive sales 24/7—no manual work required.
 
 ## Tech Stack
 
@@ -15,29 +17,48 @@ A sophisticated Instagram automation platform that helps businesses and creators
 
 ## Key Features
 
-- **Instagram DM Automation**
+- **🤖 Instagram DM Automation**
 
-  - Automated responses to direct messages
-  - Keyword-based triggers
-  - Smart AI-powered responses
-  - Custom message templates
+  - Lightning-fast automated responses to direct messages
+  - AI-powered keyword and intent-based triggers
+  - Context-aware intelligent responses
+  - Custom message templates with personalization
+  - 24/7 availability—never miss a potential customer
 
-- **Comment Automation**
+- **💬 Comment Automation**
 
   - Automated responses to post comments
   - Post-specific automation rules
-  - Engagement tracking
+  - Smart engagement tracking
+  - Bulk comment management
 
-- **Smart AI Integration**
+- **🧠 Advanced AI Integration**
 
-  - AI-powered response generation
-  - Context-aware messaging
-  - Natural language processing
+  - GPT-powered response generation
+  - Context-aware conversational AI
+  - Natural language understanding
+  - Brand voice customization
+  - Lead qualification automation
 
-- **Analytics Dashboard**
-  - Engagement metrics
-  - Automation performance tracking
-  - Response statistics
+- **📊 Real-Time Analytics Dashboard**
+  - Comprehensive engagement metrics
+  - Conversion tracking and ROI measurement
+  - Automation performance insights
+  - Response rate statistics
+  - Customer interaction history
+
+- **🔧 No-Code Automation Builder**
+
+  - Visual workflow editor
+  - Drag-and-drop automation creation
+  - Conditional logic and branching
+  - Multi-step automation sequences
+
+- **🔒 Enterprise-Grade Security**
+  - Bank-level encryption
+  - GDPR compliance
+  - Official Meta/Instagram API integration
+  - Secure data handling
 
 ## Project Structure
 
@@ -122,26 +143,53 @@ A sophisticated Instagram automation platform that helps businesses and creators
 ## Development Setup
 
 1. Clone the repository
+
+```bash
+git clone https://github.com/omyratechnologies/gemai.git
+cd gemai
+```
+
 2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
+3. Set up environment variables (create `.env.local`):
 
 ```env
+# Database
 DATABASE_URL=
+
+# Instagram/Meta API
 INSTAGRAM_APP_ID=
 INSTAGRAM_APP_SECRET=
+META_WEBHOOK_VERIFY_TOKEN=
+
+# OpenAI
 OPENAI_API_KEY=
+
+# Authentication (Clerk)
 CLERK_SECRET_KEY=
 CLERK_PUBLISHABLE_KEY=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# Payment (Stripe)
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# App URLs
+NEXT_PUBLIC_APP_URL=https://gemai.in
 ```
 
 4. Run database migrations:
 
 ```bash
+npx prisma generate
 npx prisma migrate dev
 ```
 
@@ -151,13 +199,19 @@ npx prisma migrate dev
 npm run dev
 ```
 
+Access the app at `http://localhost:3000`
+
 ## Production Deployment
 
-The application is optimized for production deployment on Vercel:
+Gemai is optimized for production deployment on Vercel:
 
 1. Connect your repository to Vercel
-2. Configure environment variables
+2. Configure all environment variables
 3. Deploy!
+
+**Production URLs:**
+- Primary: [https://gemai.in](https://gemai.in)
+- Secondary: [https://gemai.omyratech.com](https://gemai.omyratech.com)
 
 ## Design System
 
@@ -168,9 +222,25 @@ The project uses a consistent design system built on:
 - Custom theme configuration
 - Responsive design principles
 
+## About Gemai
+
+Gemai is developed and maintained by **Omyra Technologies**, a leading software development company specializing in AI-powered business automation solutions.
+
+**Contact Us:**
+- Website: [gemai.in](https://gemai.in)
+- Email: support@gemai.in
+- Company: [Omyra Technologies](https://omyratech.com)
+
+## License
+
+© 2025 Omyra Technologies. All rights reserved.
+
 ## Contributing
 
+We welcome contributions! Please follow these steps:
+
 1. Fork the repository
-2. Create a new branch
-3. Make your changes
-4. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request

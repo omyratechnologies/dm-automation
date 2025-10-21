@@ -7,10 +7,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import LegalPageHeader from "@/components/global/legal-page-header";
 
 export default function PrivacyPolicy() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-3xl">
+      <LegalPageHeader />
+
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Privacy Policy</CardTitle>
@@ -92,11 +95,14 @@ export default function PrivacyPolicy() {
             </p>
             <p className="mt-2">
               <Link
-                href="mailto:privacy@dm.ai"
+                href="mailto:support@gemai.in"
                 className="text-primary hover:underline"
               >
-                privacy@dm.ai
+                support@gemai.in
               </Link>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Gemai by Omyra Technologies
             </p>
           </section>
         </CardContent>

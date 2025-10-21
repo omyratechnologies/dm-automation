@@ -11,7 +11,7 @@ import ClerkAuthState from "../clerk-auth-state";
 import { HelpDuoToneWhite } from "@/icons";
 import { SubscriptionPlan } from "../subscription-plan";
 import UpgradeCard from "../sidebar/upgrade";
-import Logo from "@/svgs/logo";
+import GemaiLogo from "@/components/global/gemai-logo";
 import CreateAutomation from "../create-automation";
 import Search from "./search";
 import { Notifications } from "./notifications";
@@ -39,13 +39,8 @@ const InfoBar = ({ slug }: Props) => {
               </div>
             } className="lg:hidden" side="left">
               <div className="flex flex-col gap-y-5 w-full h-full p-4 bg-background/95 backdrop-blur-2xl">
-                <div className="flex gap-x-3 items-center p-4">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-brand flex items-center justify-center font-bold text-white text-lg shadow-lg">
-                    S
-                  </div>
-                  <span className="text-2xl font-bold bg-gradient-to-r from-primary via-slate-secondary to-slate-primary bg-clip-text text-transparent">
-                    Slate AI
-                  </span>
+                <div className="flex gap-x-3 items-center justify-center p-4">
+                  <GemaiLogo size="lg" className="h-8" />
                 </div>
                 <div className="flex flex-col py-3">
                   <Items page={page} slug={slug} />

@@ -11,30 +11,57 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Slate AI - Your AI-Powered Instagram Sales Assistant",
-    template: "%s | Slate AI"
+    default: "Gemai - AI-Powered Instagram DM Automation & Sales Assistant",
+    template: "%s | Gemai"
   },
-  description: "Automate Instagram DMs and comments with intelligent, personalized messages that convert followers into customers—24/7. Start your free trial today.",
-  keywords: ["Instagram automation", "AI chatbot", "DM automation", "Instagram marketing", "social media automation", "customer engagement", "Instagram sales"],
-  authors: [{ name: "Slate AI Team" }],
-  creator: "Slate AI",
+  description: "Transform Instagram DMs into revenue with Gemai's intelligent AI automation. Automate customer conversations, qualify leads, and boost sales 24/7. Free plan available—start today!",
+  keywords: [
+    "Instagram automation",
+    "AI chatbot",
+    "DM automation",
+    "Instagram marketing",
+    "social media automation",
+    "customer engagement",
+    "Instagram sales",
+    "lead generation",
+    "Instagram business tools",
+    "automated responses",
+    "Instagram AI assistant",
+    "Gemai",
+    "Instagram DM bot",
+    "comment automation",
+    "Instagram growth"
+  ],
+  authors: [{ name: "Gemai Team" }],
+  creator: "Gemai by Omyra Technologies",
+  publisher: "Omyra Technologies",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://slate-ai.com",
-    title: "Slate AI - Your AI-Powered Instagram Sales Assistant",
-    description: "Turn Instagram conversations into customers instantly with AI-powered automation.",
-    siteName: "Slate AI",
+    url: "https://gemai.in",
+    title: "Gemai - AI-Powered Instagram DM Automation & Sales Assistant",
+    description: "Transform Instagram conversations into customers instantly with Gemai's intelligent AI automation. Engage, qualify, and convert—24/7.",
+    siteName: "Gemai",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Slate AI - Your AI-Powered Instagram Sales Assistant",
-    description: "Automate Instagram DMs and comments with intelligent AI responses.",
-    creator: "@slateai",
+    title: "Gemai - AI-Powered Instagram DM Automation",
+    description: "Automate Instagram DMs and comments with intelligent AI. Turn followers into customers 24/7.",
+    creator: "@gemaiapp",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: "https://gemai.in",
   },
 };
 

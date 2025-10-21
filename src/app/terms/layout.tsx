@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Gemai",
+  title: "Terms of Service | Gemai",
   description:
-    "Privacy policy for Gemai - AI-Powered Instagram DM Automation Platform",
+    "Terms of Service for Gemai - AI-Powered Instagram DM Automation Platform",
 };
 
-export default function PrivacyPolicyLayout({
+export default function TermsLayout({
   children,
 }: {
   children: React.ReactNode;
