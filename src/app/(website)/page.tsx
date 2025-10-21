@@ -170,7 +170,7 @@ export default function Home() {
                       AI-Powered Smart Replies
                     </h3>
                     <p className="text-lg text-slate-text-secondary mb-6">
-                      Our advanced AI doesn't just respond—it understands context, learns your brand voice, and delivers personalized conversations that feel genuinely human. Watch your engagement soar while you sleep.
+                      Our advanced AI doesn&apos;t just respond—it understands context, learns your brand voice, and delivers personalized conversations that feel genuinely human. Watch your engagement soar while you sleep.
                     </p>
                     <ul className="space-y-3">
                       <li className="flex items-start gap-3">
@@ -332,7 +332,7 @@ export default function Home() {
                   Enterprise Security
                 </h3>
                 <p className="text-slate-text-secondary leading-relaxed">
-                  Bank-level encryption, GDPR compliance, and full adherence to Instagram's official Meta API standards for complete peace of mind.
+                  Bank-level encryption, GDPR compliance, and full adherence to Instagram&apos;s official Meta API standards for complete peace of mind.
                 </p>
                 <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
                   <div className="flex items-center gap-2 text-sm text-slate-primary">

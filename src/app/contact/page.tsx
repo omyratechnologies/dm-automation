@@ -106,7 +106,7 @@ export default function ContactPage() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-primary/20 to-purple-500/20 border border-slate-primary/30 rounded-full mb-6">
               <MessageCircle className="h-4 w-4 text-slate-primary" />
-              <span className="text-sm font-medium text-slate-text-primary">We're Here to Help</span>
+              <span className="text-sm font-medium text-slate-text-primary">We&apos;re Here to Help</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-text-primary mb-6">
@@ -118,7 +118,7 @@ export default function ContactPage() {
             
             <p className="text-xl text-slate-text-secondary max-w-2xl mx-auto">
               Have questions about Gemai? Want to learn how we can help automate your Instagram? 
-              We'd love to hear from you.
+              We&apos;d love to hear from you.
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function ContactPage() {
                         Message Sent Successfully!
                       </h3>
                       <p className="text-slate-text-secondary">
-                        Thank you for contacting us. We'll get back to you within 24 hours.
+                        Thank you for contacting us. We&apos;ll get back to you within 24 hours.
                       </p>
                     </div>
                   ) : (

@@ -143,7 +143,7 @@ export default function HelpPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Send us an email and we'll respond within 24 hours
+                Send us an email and we&apos;ll respond within 24 hours
               </p>
               <a href="mailto:support@gemai.in">
                 <Button className="w-full bg-gradient-brand text-white">
