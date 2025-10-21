@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -23,35 +22,13 @@ const isProtectedRoute = createRouteMatcher([
   "/payment(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  try {
-    // Allow public routes without authentication
-    if (isPublicRoute(req)) {
-      return NextResponse.next();
-    }
-
-    // Protect authenticated routes
-    if (isProtectedRoute(req)) {
-      await auth.protect();
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    console.error("Middleware error:", error);
-    
-    // For API routes, return JSON error
-    if (req.nextUrl.pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-    
-    // For page routes, redirect to sign-in
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
+export default clerkMiddleware((auth, req) => {
+  // Protect all protected routes
+  if (isProtectedRoute(req)) {
+    auth.protect();
   }
+  
+  // Public routes automatically pass through without auth check
 });
 
 export const config = {

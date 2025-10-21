@@ -70,12 +70,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Provide a fallback key for build time (will be overridden in production)
+  const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder';
+  
   return (
     <ClerkProvider
       appearance={{
         baseTheme: undefined,
       }}
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={clerkPublishableKey}
     >
       <html lang="en" suppressHydrationWarning>
         <body suppressHydrationWarning className={jakarta.className}>
