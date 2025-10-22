@@ -126,3 +126,12 @@ enum LISTENERS {
   SMARTAI
   MESSAGE
 }
+
+model DataDeletionRequest {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  confirmationCode String   @unique
+  userId           String?  // Instagram/Facebook User ID
+  requestedAt      DateTime @default(now())
+  completedAt      DateTime?
+  status           String   @default("pending") // pending, completed, failed
+}
