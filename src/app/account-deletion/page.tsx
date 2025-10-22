@@ -68,7 +68,7 @@ export default function AccountDeletionPage() {
             </ol>
             <p className="mt-4 text-sm">
               When you remove the app from Facebook/Instagram, Meta will automatically notify us to
-              delete your data. This process is handled securely through Meta's data deletion
+              delete your data. This process is handled securely through Meta&apos;s data deletion
               callback system.
             </p>
           </section>
