@@ -132,32 +132,62 @@ export const sendPrivateMessage = async (
 
 //exchange a short-lived access token for a long-lived one during the authentication process
 export const generateTokens = async (code: string) => {
-  const insta_form = new FormData();
-  insta_form.append("client_id", process.env.INSTAGRAM_CLIENT_ID as string);
-
-  insta_form.append(
-    "client_secret",
-    process.env.INSTAGRAM_CLIENT_SECRET as string
-  );
-  insta_form.append("grant_type", "authorization_code");
-  insta_form.append(
-    "redirect_uri",
-    `${process.env.NEXT_PUBLIC_HOST_URL}/callback/instagram`
-  );
-  insta_form.append("code", code);
+  // Step 1: Exchange authorization code for short-lived access token
+  // Reference: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login#step-2--exchange-the-code-for-a-token
+  
+  const tokenForm = new FormData();
+  tokenForm.append("client_id", process.env.INSTAGRAM_CLIENT_ID as string);
+  tokenForm.append("client_secret", process.env.INSTAGRAM_CLIENT_SECRET as string);
+  tokenForm.append("grant_type", "authorization_code");
+  tokenForm.append("redirect_uri", `${process.env.NEXT_PUBLIC_HOST_URL}/callback/instagram`);
+  tokenForm.append("code", code);
 
   const shortTokenRes = await fetch(process.env.INSTAGRAM_TOKEN_URL as string, {
     method: "POST",
-    body: insta_form,
+    body: tokenForm,
   });
 
-  const token = await shortTokenRes.json();
-  if (token.permissions.length > 0) {
-    console.log(token, "got permissions");
-    const long_token = await axios.get(
-      `${process.env.INSTAGRAM_BASE_URL}/access_token?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_CLIENT_SECRET}&access_token=${token.access_token}`
-    );
-
-    return long_token.data;
+  const tokenData = await shortTokenRes.json();
+  
+  console.log("📥 Token exchange response:", tokenData);
+  
+  // Check for errors
+  if (tokenData.error_type || tokenData.error) {
+    console.error("❌ Token exchange failed:", tokenData);
+    throw new Error(tokenData.error_message || tokenData.error?.message || "Failed to exchange token");
+  }
+  
+  // Instagram Business Login returns data in different format
+  const shortToken = tokenData.data ? tokenData.data[0] : tokenData;
+  
+  if (!shortToken.access_token) {
+    console.error("❌ No access token in response:", tokenData);
+    throw new Error("No access token received");
+  }
+  
+  console.log("✅ Got short-lived token, user_id:", shortToken.user_id);
+  console.log("✅ Permissions granted:", shortToken.permissions);
+  
+  // Step 2: Exchange short-lived token for long-lived token (60 days)
+  // Reference: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login#step-3--get-a-long-lived-access-token
+  
+  try {
+    const longTokenUrl = `${process.env.INSTAGRAM_BASE_URL}/access_token?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_CLIENT_SECRET}&access_token=${shortToken.access_token}`;
+    
+    const longTokenRes = await axios.get(longTokenUrl);
+    
+    console.log("✅ Long-lived token acquired, expires in:", longTokenRes.data.expires_in, "seconds");
+    
+    return {
+      access_token: longTokenRes.data.access_token,
+      token_type: longTokenRes.data.token_type,
+      expires_in: longTokenRes.data.expires_in,
+      user_id: shortToken.user_id,
+      permissions: shortToken.permissions
+    };
+  } catch (error) {
+    console.error("❌ Failed to get long-lived token:", error);
+    // Return short-lived token as fallback
+    return shortToken;
   }
 };

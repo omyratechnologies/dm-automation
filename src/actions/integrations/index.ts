@@ -22,12 +22,23 @@ export const onIntegrate = async (code: string) => {
 
     if (integration && integration.integrations.length === 0) {
       const token = await generateTokens(code);
-      console.log(token);
+      console.log("✅ Token generated:", { 
+        user_id: token.user_id, 
+        has_token: !!token.access_token 
+      });
 
-      if (token) {
-        const insta_id = await axios.get(
-          `${process.env.INSTAGRAM_BASE_URL}/me?fields=user_id&access_token=${token.access_token}`
-        );
+      if (token && token.access_token) {
+        // Get Instagram user ID (if not already in token response)
+        let instagramUserId = token.user_id;
+        
+        if (!instagramUserId) {
+          const insta_id = await axios.get(
+            `${process.env.INSTAGRAM_BASE_URL}/me?fields=user_id&access_token=${token.access_token}`
+          );
+          instagramUserId = insta_id.data.user_id;
+        }
+
+        console.log("✅ Instagram User ID:", instagramUserId);
 
         const today = new Date();
         const expire_date = today.setDate(today.getDate() + 60);
@@ -35,17 +46,17 @@ export const onIntegrate = async (code: string) => {
           user.id,
           token.access_token,
           new Date(expire_date),
-          insta_id.data.user_id
+          instagramUserId
         );
         return { status: 200, data: create };
       }
-      console.log("🔴 401");
+      console.log("🔴 401 - No access token");
       return { status: 401 };
     }
-    console.log("🔴 404");
+    console.log("🔴 404 - User not found or already has integration");
     return { status: 404 };
   } catch (error) {
     console.log("🔴 500", error);
-    return { status: 500 };
+    return { status: 500, error };
   }
 };
