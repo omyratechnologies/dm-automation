@@ -26,6 +26,14 @@ export const getIntegration = async (clerkId: string) => {
         where: {
           name: "INSTAGRAM",
         },
+        select: {
+          id: true,
+          name: true,
+          token: true,
+          expiresAt: true,
+          instagramId: true,
+          createdAt: true,
+        },
       },
     },
   });
@@ -53,6 +61,14 @@ export const createIntegration = async (
     select: {
       firstname: true,
       lastname: true,
+    },
+  });
+};
+
+export const deleteIntegration = async (integrationId: string) => {
+  return await client.integrations.delete({
+    where: {
+      id: integrationId,
     },
   });
 };

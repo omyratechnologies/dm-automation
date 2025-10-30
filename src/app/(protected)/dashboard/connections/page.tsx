@@ -23,6 +23,13 @@ function ConnectionsContent() {
       });
       // Clear message after 5 seconds
       setTimeout(() => setMessage(null), 5000);
+    } else if (success === "disconnected") {
+      setMessage({
+        type: "success",
+        text: "Instagram account disconnected successfully.",
+      });
+      // Clear message after 5 seconds
+      setTimeout(() => setMessage(null), 5000);
     } else if (error) {
       let errorText = "Failed to connect Instagram account. Please try again.";
       

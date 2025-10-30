@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { onCurrentUser } from "../user";
-import { createIntegration, getIntegration } from "./queries";
+import { createIntegration, getIntegration, deleteIntegration } from "./queries";
 import { generateTokens } from "@/lib/fetch";
 import axios from "axios";
 
@@ -97,6 +97,63 @@ export const onIntegrate = async (code: string) => {
     return { 
       status: 500, 
       error: error.message || "Unknown error occurred" 
+    };
+  }
+};
+
+export const onDisconnect = async (integrationId: string) => {
+  console.log("🔵 onDisconnect called for integration:", integrationId);
+  
+  try {
+    const user = await onCurrentUser();
+    console.log("✅ Current user retrieved:", user.id);
+
+    // Delete the integration
+    await deleteIntegration(integrationId);
+    console.log("✅ Integration disconnected successfully");
+    
+    return { status: 200, message: "Integration disconnected successfully" };
+    
+  } catch (error: any) {
+    console.error("🔴 500 - Error disconnecting integration:", {
+      message: error.message,
+      stack: error.stack,
+    });
+    return { 
+      status: 500, 
+      error: error.message || "Failed to disconnect integration" 
+    };
+  }
+};
+
+export const getInstagramAccountInfo = async (instagramId: string, accessToken: string) => {
+  console.log("🔵 Fetching Instagram account info for:", instagramId);
+  
+  try {
+    // Fetch user profile information from Instagram API
+    const response = await axios.get(
+      `${process.env.INSTAGRAM_BASE_URL}/${instagramId}?fields=username,account_type,media_count&access_token=${accessToken}`
+    );
+    
+    console.log("✅ Instagram account info retrieved:", response.data);
+    
+    return {
+      status: 200,
+      data: {
+        username: response.data.username,
+        accountType: response.data.account_type,
+        mediaCount: response.data.media_count,
+        instagramId: instagramId,
+      }
+    };
+  } catch (error: any) {
+    console.error("🔴 Error fetching Instagram account info:", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    return {
+      status: 500,
+      error: error.message || "Failed to fetch Instagram account info"
     };
   }
 };
