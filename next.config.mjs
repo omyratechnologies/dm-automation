@@ -44,6 +44,11 @@ const nextConfig = {
   
   // Code splitting optimization
   webpack: (config, { isServer }) => {
+    // Suppress webpack cache warnings about large strings
+    config.infrastructureLogging = {
+      level: "error",
+    };
+    
     // Optimize chunk splitting
     if (!isServer) {
       config.optimization = {
