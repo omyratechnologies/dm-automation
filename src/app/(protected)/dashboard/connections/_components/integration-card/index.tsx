@@ -27,11 +27,12 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
   const integrated: { 
     name: string; 
     id: string; 
-    instagramId?: string;
-    token?: string;
+    instagramId?: string | null;
+    token?: string | null;
+    expiresAt?: Date | null;
+    createdAt?: Date;
   } | undefined = data?.data?.integrations.find(
-    (integration: { name: string; id: string; instagramId?: string; token?: string }) => 
-      integration.name === strategy
+    (integration: any) => integration.name === strategy
   );
 
   // Fetch Instagram username when integration exists
