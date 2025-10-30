@@ -24,8 +24,16 @@ jobs:
           script: |
             echo "🚀 Starting deployment..."
             
+            # Load NVM and set up environment
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
             # Navigate to project directory
             cd dm-automation || exit 1
+            
+            # Remove conflicting files before pull
+            echo "🧹 Cleaning up conflicting files..."
+            rm -f ecosystem.config.js
             
             # Pull latest changes
             echo "📥 Pulling latest code from GitHub..."
@@ -41,12 +49,8 @@ jobs:
             
             # Restart PM2 processes
             echo "🔄 Restarting PM2..."
-            pm2 kill
-            pm2 start ecosystem.config.js
+            pm2 restart gemai || pm2 start npm --name "gemai" -- start
             pm2 save
-            
-            # Ensure PM2 starts on system reboot
-            pm2 startup systemd -u ubuntu --hp /home/ubuntu
             
             echo "✅ Deployment completed successfully!"
             
@@ -61,6 +65,11 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "🔍 Checking deployment status..."
+            
+            # Load NVM and set up environment
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
             pm2 status
             
             # Check if application is running

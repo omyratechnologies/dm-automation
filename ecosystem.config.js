@@ -1,10 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: 'gemai-production',
+      name: 'gemai',
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
-      cwd: '/home/ubuntu/dm-automations',
+      cwd: '/home/ubuntu/dm-automation',
       instances: 1,
       autorestart: true,
       watch: false,
