@@ -48,12 +48,19 @@ const Page = async ({ searchParams }: Props) => {
         return redirect("/dashboard/connections?error=already_connected");
       }
       
-      console.error("❌ Integration failed with status:", result.status);
-      return redirect("/dashboard/connections?error=integration_failed");
+      if (result.status === 401) {
+        console.error("❌ No access token received");
+        return redirect("/dashboard/connections?error=no_token");
+      }
       
-    } catch (error) {
+      console.error("❌ Integration failed with status:", result.status, "Error:", result.error);
+      const errorMsg = encodeURIComponent(result.error || "integration_failed");
+      return redirect(`/dashboard/connections?error=integration_failed&details=${errorMsg}`);
+      
+    } catch (error: any) {
       console.error("❌ Exception during integration:", error);
-      return redirect("/dashboard/connections?error=exception");
+      const errorMsg = encodeURIComponent(error.message || "Unknown error");
+      return redirect(`/dashboard/connections?error=exception&details=${errorMsg}`);
     }
   }
   

@@ -1,0 +1,85 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 65.0.94.178
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "🚀 Starting deployment..."
+            
+            # Navigate to project directory
+            cd dm-automations || exit 1
+            
+            # Pull latest changes
+            echo "📥 Pulling latest code from GitHub..."
+            git pull origin main
+            
+            # Install dependencies
+            echo "📦 Installing dependencies..."
+            npm install
+            
+            # Build the application
+            echo "🔨 Building application..."
+            npm run build
+            
+            # Restart PM2 processes
+            echo "🔄 Restarting PM2..."
+            pm2 kill
+            pm2 start ecosystem.config.js
+            pm2 save
+            
+            # Ensure PM2 starts on system reboot
+            pm2 startup systemd -u ubuntu --hp /home/ubuntu
+            
+            echo "✅ Deployment completed successfully!"
+            
+            # Display running processes
+            pm2 list
+
+      - name: Check Deployment Status
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 65.0.94.178
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "🔍 Checking deployment status..."
+            pm2 status
+            
+            # Check if application is running
+            if pm2 list | grep -q "online"; then
+              echo "✅ Application is running"
+            else
+              echo "❌ Application is not running"
+              exit 1
+            fi
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "### Deployment Summary 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed to:** 65.0.94.178" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit Message:** ${{ github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY

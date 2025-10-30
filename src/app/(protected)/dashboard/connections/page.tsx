@@ -14,6 +14,7 @@ function ConnectionsContent() {
   useEffect(() => {
     const success = searchParams.get("success");
     const error = searchParams.get("error");
+    const details = searchParams.get("details");
 
     if (success === "true") {
       setMessage({
@@ -32,20 +33,27 @@ function ConnectionsContent() {
         case "no_code":
           errorText = "No authorization code received from Instagram.";
           break;
+        case "no_token":
+          errorText = "Failed to exchange authorization code for access token.";
+          break;
         case "integration_failed":
-          errorText = "Failed to save Instagram connection. Please try again.";
+          errorText = details 
+            ? `Integration failed: ${decodeURIComponent(details)}` 
+            : "Failed to save Instagram connection. Please try again.";
           break;
         case "access_denied":
           errorText = "You denied access to your Instagram account.";
           break;
         case "exception":
-          errorText = "An unexpected error occurred. Please try again.";
+          errorText = details
+            ? `Error: ${decodeURIComponent(details)}`
+            : "An unexpected error occurred. Please try again.";
           break;
       }
       
       setMessage({ type: "error", text: errorText });
-      // Clear message after 8 seconds
-      setTimeout(() => setMessage(null), 8000);
+      // Clear message after 10 seconds for error messages
+      setTimeout(() => setMessage(null), 10000);
     }
   }, [searchParams]);
 
