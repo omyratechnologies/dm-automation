@@ -1,13 +1,13 @@
 "use client";
 
 import { INTEGRATION_CARDS } from "@/constants/integrations";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import IntegrationCard from "./_components/integration-card";
 import { useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from "lucide-react";
 
-function Page() {
+function ConnectionsContent() {
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -50,6 +50,29 @@ function Page() {
   }, [searchParams]);
 
   return (
+    <>
+      {/* Success/Error Messages */}
+      {message && (
+        <Alert variant={message.type === "success" ? "default" : "destructive"} className="mb-4">
+          {message.type === "success" ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <XCircle className="h-4 w-4" />
+          )}
+          <AlertTitle>{message.type === "success" ? "Success" : "Error"}</AlertTitle>
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      )}
+
+      {INTEGRATION_CARDS.map((card, key) => (
+        <IntegrationCard key={key} {...card} />
+      ))}
+    </>
+  );
+}
+
+function Page() {
+  return (
     <div className="flex justify-center pb-10">
       <div className="flex flex-col w-full lg:w-10/12 xl:w-8/12 gap-y-6">
         <div className="mb-4">
@@ -57,22 +80,11 @@ function Page() {
           <p className="text-muted-foreground">Connect your social media accounts to start automating</p>
         </div>
 
-        {/* Success/Error Messages */}
-        {message && (
-          <Alert variant={message.type === "success" ? "default" : "destructive"} className="mb-4">
-            {message.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <XCircle className="h-4 w-4" />
-            )}
-            <AlertTitle>{message.type === "success" ? "Success" : "Error"}</AlertTitle>
-            <AlertDescription>{message.text}</AlertDescription>
-          </Alert>
-        )}
-
-        {INTEGRATION_CARDS.map((card, key) => (
-          <IntegrationCard key={key} {...card} />
-        ))}
+        <Suspense fallback={
+          <div className="text-muted-foreground">Loading...</div>
+        }>
+          <ConnectionsContent />
+        </Suspense>
       </div>
     </div>
   );
