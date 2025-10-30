@@ -172,10 +172,21 @@ export async function withCache<T>(
 export async function invalidateUserCache(userId: string): Promise<void> {
   if (!redis) return;
 
-  const patterns = [
-    cacheKey(CACHE_KEYS.USER, userId, "*"),
+  const keys = [
+    cacheKey(CACHE_KEYS.USER, userId),
     cacheKey(CACHE_KEYS.AUTOMATION_LIST, userId),
     cacheKey(CACHE_KEYS.SUBSCRIPTION, userId),
+  ];
+
+  // Delete exact keys
+  for (const key of keys) {
+    await deleteCache(key);
+  }
+
+  // Also delete any wildcard patterns
+  const patterns = [
+    `${CACHE_KEYS.USER}:${userId}:*`,
+    `${CACHE_KEYS.AUTOMATION}:${userId}:*`,
   ];
 
   for (const pattern of patterns) {

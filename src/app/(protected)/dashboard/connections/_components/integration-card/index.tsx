@@ -35,6 +35,17 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
     (integration: any) => integration.name === strategy
   );
 
+  // Debug logging
+  useEffect(() => {
+    console.log("🔍 Integration Card Debug:", {
+      strategy,
+      hasData: !!data,
+      dataStatus: data?.status,
+      integrations: data?.data?.integrations,
+      integrated: integrated,
+    });
+  }, [data, integrated, strategy]);
+
   // Fetch Instagram username when integration exists
   useEffect(() => {
     const fetchUsername = async () => {
