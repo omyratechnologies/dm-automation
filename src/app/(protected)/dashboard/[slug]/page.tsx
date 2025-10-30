@@ -2,29 +2,22 @@ import DoubleGradientCard from "@/components/global/double-gradient-card";
 import { DASHBOARD_CARDS } from "@/constants/dashboard";
 import { BarDuoToneBlue, RocketDuoToneBlue, AutomationDuoToneBlue } from "@/icons";
 import React from "react";
-import Chart from "./_components/metrics";
-import MetricsCard from "./_components/metrics/metrics-card";
-import QuickActionCard from "./_components/quick-action-card";
+import Chart from "../_components/metrics";
+import MetricsCard from "../_components/metrics/metrics-card";
+import QuickActionCard from "../_components/quick-action-card";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-type Props = {
-  params: {
-    slug: string;
-  };
-};
-
-const Page = async ({ params }: Props) => {
+const Page = async () => {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
 
-  const { slug } = params;
   const firstName = user.firstName || "there";
 
   // Quick Actions Configuration
   const quickActions = [
     {
-      href: `/dashboard/${slug}/automations`,
+      href: `/dashboard/automations`,
       title: "Create Automation",
       subtitle: "Set up new flows",
       icon: (
@@ -38,7 +31,7 @@ const Page = async ({ params }: Props) => {
       hoverShadow: "rgba(99, 102, 241, 0.1)",
     },
     {
-      href: `/dashboard/${slug}/connections`,
+      href: `/dashboard/connections`,
       title: "Connect Account",
       subtitle: "Link social media",
       icon: (
@@ -52,7 +45,7 @@ const Page = async ({ params }: Props) => {
       hoverShadow: "rgba(139, 92, 246, 0.1)",
     },
     {
-      href: `/dashboard/${slug}/analytics`,
+      href: `/dashboard/analytics`,
       title: "View Analytics",
       subtitle: "Track metrics",
       icon: (
@@ -66,7 +59,7 @@ const Page = async ({ params }: Props) => {
       hoverShadow: "rgba(236, 72, 153, 0.1)",
     },
     {
-      href: `/dashboard/${slug}/settings`,
+      href: `/dashboard/settings`,
       title: "Account Settings",
       subtitle: "Manage profile",
       icon: (

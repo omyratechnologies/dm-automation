@@ -19,13 +19,9 @@ import MainBreadCrumb from "../bread-crumbs/main-bread-crumb";
 import GoToAutomationsButton from "../go-to-automations-button";
 import { ThemeToggle } from "../theme-toggle";
 
-type Props = {
-  slug: string;
-};
-
-const InfoBar = ({ slug }: Props) => {
+const InfoBar = () => {
   const { page } = usePaths();
-  const currentPage = PAGE_BREAD_CRUMBS.includes(page) || page == slug;
+  const currentPage = PAGE_BREAD_CRUMBS.includes(page) || page == "dashboard";
 
   return (
     currentPage && (
@@ -43,7 +39,7 @@ const InfoBar = ({ slug }: Props) => {
                   <GemaiLogo size="lg" className="h-8" />
                 </div>
                 <div className="flex flex-col py-3">
-                  <Items page={page} slug={slug} />
+                  <Items page={page} />
                 </div>
                 <div className="px-4">
                   <Separator orientation="horizontal" className="bg-border" />
@@ -77,7 +73,7 @@ const InfoBar = ({ slug }: Props) => {
         </div>
         
         {/* Breadcrumb */}
-        <MainBreadCrumb page={page === slug ? "Home" : page} slug={slug} />
+        <MainBreadCrumb page={page === "dashboard" ? "Home" : page} />
       </div>
     )
   );

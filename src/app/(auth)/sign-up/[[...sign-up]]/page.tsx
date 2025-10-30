@@ -2,7 +2,7 @@ import { SignUp } from "@clerk/nextjs";
 type Props = {};
 
 function page({}: Props) {
-  return <SignUp afterSignUpUrl="/dashboard" afterSignInUrl="/dashboard" />;
+  return <SignUp fallbackRedirectUrl="/dashboard" />;
 }
 
 export default page;

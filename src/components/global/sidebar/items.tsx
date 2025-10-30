@@ -5,27 +5,26 @@ import React from "react";
 
 type Props = {
   page: string;
-  slug: string;
 };
 
-const Items = ({ page, slug }: Props) => {
+const Items = ({ page }: Props) => {
   return SIDEBAR_MENU.map((item) => (
     <Link
       key={item.id}
-      href={`/dashboard/${slug}/${item.label === "overview" ? "/" : item.label}`}
+      href={`/dashboard/${item.label === "overview" ? "" : item.label}`}
       className={cn(
         "capitalize flex gap-x-3 rounded-xl p-3 mb-1 transition-all duration-200 items-center group",
         page === item.label 
           ? "bg-primary/10 dark:bg-gradient-to-r dark:from-slate-primary/20 dark:to-primary/10 border border-primary/30 text-foreground shadow-lg shadow-primary/10" 
           : "text-muted-foreground hover:bg-accent hover:text-foreground",
-        page === slug && item.label === "overview"
+        page === "dashboard" && item.label === "overview"
           ? "bg-primary/10 dark:bg-gradient-to-r dark:from-slate-primary/20 dark:to-primary/10 border border-primary/30 text-foreground shadow-lg shadow-primary/10"
           : ""
       )}
     >
       <span className={cn(
         "transition-transform duration-200",
-        page === item.label || (page === slug && item.label === "overview") 
+        page === item.label || (page === "dashboard" && item.label === "overview") 
           ? "scale-110" 
           : "group-hover:scale-105"
       )}>

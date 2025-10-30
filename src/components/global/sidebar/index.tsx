@@ -10,11 +10,7 @@ import UpgradeCard from "./upgrade";
 import Link from "next/link";
 import { User } from "lucide-react";
 
-type Props = {
-  slug: string;
-};
-
-const Sidebar = ({ slug }: Props) => {
+const Sidebar = () => {
   const { page } = usePaths();
 
   return (
@@ -48,7 +44,7 @@ const Sidebar = ({ slug }: Props) => {
 
         {/* Navigation Items */}
         <div className="flex flex-col py-4">
-          <Items page={page} slug={slug} />
+          <Items page={page} />
         </div>
 
         <div className="px-4 my-4">
@@ -59,7 +55,7 @@ const Sidebar = ({ slug }: Props) => {
         <div className="px-3 flex flex-col gap-y-2">
           {/* Profile Link */}
           <Link 
-            href={`/dashboard/${slug}/settings`}
+            href="/dashboard/settings"
             className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer group"
           >
             <User className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -70,7 +66,7 @@ const Sidebar = ({ slug }: Props) => {
 
           {/* Help Link */}
           <Link 
-            href={`/dashboard/${slug}/help`}
+            href="/dashboard/help"
             className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer group"
           >
             <HelpDuoToneWhite />
