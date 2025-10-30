@@ -25,7 +25,7 @@ jobs:
             echo "🚀 Starting deployment..."
             
             # Navigate to project directory
-            cd dm-automations || exit 1
+            cd dm-automation || exit 1
             
             # Pull latest changes
             echo "📥 Pulling latest code from GitHub..."
