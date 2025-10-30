@@ -5,6 +5,7 @@ import { onCurrentUser } from "../user";
 import { createIntegration, getIntegration, deleteIntegration } from "./queries";
 import { generateTokens } from "@/lib/fetch";
 import axios from "axios";
+import { invalidateUserCache } from "@/lib/cache";
 
 export const onOAuthInstagram = (strategy: "INSTAGRAM" | "CRM") => {
   if (strategy === "INSTAGRAM") {
@@ -61,6 +62,10 @@ export const onIntegrate = async (code: string) => {
           );
           
           console.log("✅ Integration created successfully:", create);
+          
+          // Invalidate user cache to refresh integration data
+          await invalidateUserCache(user.id);
+          
           return { status: 200, data: create };
         }
         
@@ -111,6 +116,9 @@ export const onDisconnect = async (integrationId: string) => {
     // Delete the integration
     await deleteIntegration(integrationId);
     console.log("✅ Integration disconnected successfully");
+    
+    // Invalidate user cache to refresh integration data
+    await invalidateUserCache(user.id);
     
     return { status: 200, message: "Integration disconnected successfully" };
     
