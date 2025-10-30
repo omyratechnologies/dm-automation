@@ -3,22 +3,62 @@ import { redirect } from "next/navigation";
 
 type Props = {
   searchParams: {
-    code: string;
+    code?: string;
+    error?: string;
+    error_reason?: string;
+    error_description?: string;
   };
 };
 
-const Page = async ({ searchParams: { code } }: Props) => {
-  if (code) {
-    console.log("📥 Instagram OAuth callback received code:", code);
-    const user = await onIntegrate(code.split("#_")[0]);
-    if (user.status === 200) {
-      console.log("✅ Integration successful, redirecting to connections page");
-      return redirect("/dashboard/connections");
-    }
-    console.error("❌ Integration failed with status:", user.status);
+const Page = async ({ searchParams }: Props) => {
+  console.log("🔵 Instagram callback page loaded");
+  console.log("📋 Search params:", searchParams);
+  
+  // Check for OAuth errors
+  if (searchParams.error) {
+    console.error("❌ OAuth Error:", {
+      error: searchParams.error,
+      reason: searchParams.error_reason,
+      description: searchParams.error_description,
+    });
+    return redirect(`/dashboard/connections?error=${searchParams.error}`);
   }
-  console.error("❌ No code received, redirecting to sign-up");
-  return redirect("/sign-up");
+  
+  // Check for authorization code
+  const code = searchParams.code;
+  
+  if (code) {
+    console.log("📥 Instagram OAuth callback received code:", code.substring(0, 20) + "...");
+    
+    try {
+      const cleanCode = code.split("#_")[0];
+      console.log("🔄 Calling onIntegrate with cleaned code");
+      
+      const result = await onIntegrate(cleanCode);
+      
+      console.log("📤 Integration result:", result);
+      
+      if (result.status === 200) {
+        console.log("✅ Integration successful! Redirecting to connections page");
+        return redirect("/dashboard/connections?success=true");
+      }
+      
+      if (result.status === 404) {
+        console.error("❌ User already has integration or not found");
+        return redirect("/dashboard/connections?error=already_connected");
+      }
+      
+      console.error("❌ Integration failed with status:", result.status);
+      return redirect("/dashboard/connections?error=integration_failed");
+      
+    } catch (error) {
+      console.error("❌ Exception during integration:", error);
+      return redirect("/dashboard/connections?error=exception");
+    }
+  }
+  
+  console.error("❌ No code received in callback");
+  return redirect("/dashboard/connections?error=no_code");
 };
 
 export default Page;
