@@ -129,6 +129,14 @@ export const onUserInfo = async () => {
       CACHE_TTL.USER_DATA
     );
     
+    // Debug logging for integrations
+    console.log("🔍 onUserInfo Debug:", {
+      userId: userId,
+      hasProfile: !!profile,
+      integrationsCount: profile?.integrations?.length || 0,
+      integrations: profile?.integrations,
+    });
+    
     if (profile) return { status: 200, data: profile };
 
     return { status: 404 };
