@@ -1,8 +1,8 @@
 "use client";
-import { onUserInfo } from "@/actions/user";
 import { onDisconnect, getInstagramAccountInfo } from "@/actions/integrations";
 import { Button } from "@/components/ui/button";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useQueryUser } from "@/hooks/user-queries";
 import React, { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -19,10 +19,7 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
   const [isLoadingUsername, setIsLoadingUsername] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: onUserInfo,
-  });
+  const { data } = useQueryUser();
 
   const integrated: { 
     name: string; 
