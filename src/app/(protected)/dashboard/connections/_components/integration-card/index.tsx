@@ -19,7 +19,15 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
   const [isLoadingUsername, setIsLoadingUsername] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data } = useQueryUser();
+  const { data, isLoading, error } = useQueryUser();
+
+  console.log("🔍 Integration Card Mounted:", { 
+    strategy, 
+    title,
+    isLoading,
+    hasData: !!data,
+    error: error?.message,
+  });
 
   const integrated: { 
     name: string; 
