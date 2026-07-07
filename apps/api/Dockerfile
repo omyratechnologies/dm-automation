@@ -15,7 +15,11 @@ COPY packages/db/package.json packages/db/
 COPY packages/shared/package.json packages/shared/
 # --ignore-scripts: root postinstall runs prisma generate, which needs the
 # schema; we generate explicitly in the build stage instead.
-RUN npm ci --ignore-scripts
+# The nest.js CLI check fails the build immediately (with a clear message) if
+# devDependencies didn't actually get installed, instead of surfacing as a
+# confusing "nest: not found" three layers later in the build stage.
+RUN npm ci --ignore-scripts \
+  && test -x node_modules/.bin/nest || (echo "npm ci did not install @nestjs/cli — devDependencies missing" && exit 1)
 
 # ---------------------------------------------------------------------------
 # build — prisma generate, build @repo/shared then @repo/api
@@ -29,7 +33,7 @@ COPY apps/api ./apps/api
 COPY apps/web/package.json apps/web/package.json
 RUN npx prisma generate --schema packages/db/prisma/schema.prisma \
   && npm run build --workspace @repo/shared \
-  && PATH=/app/node_modules/.bin:$PATH npm run build --workspace @repo/api
+  && npm run build --workspace @repo/api
 
 # ---------------------------------------------------------------------------
 # runtime — production dependencies only, non-root
