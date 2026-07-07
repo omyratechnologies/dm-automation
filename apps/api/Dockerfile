@@ -29,7 +29,7 @@ COPY apps/api ./apps/api
 COPY apps/web/package.json apps/web/package.json
 RUN npx prisma generate --schema packages/db/prisma/schema.prisma \
   && npm run build --workspace @repo/shared \
-  && npm run build --workspace @repo/api
+  && PATH=/app/node_modules/.bin:$PATH npm run build --workspace @repo/api
 
 # ---------------------------------------------------------------------------
 # runtime — production dependencies only, non-root
