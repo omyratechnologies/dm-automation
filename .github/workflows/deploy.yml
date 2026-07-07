@@ -1,9 +1,6 @@
-name: Deploy to Production
+name: Deploy to Production (EC2 — manual only; Render deploys from GitHub automatically)
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
