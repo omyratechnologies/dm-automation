@@ -1,0 +1,495 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clerkId      String         @unique
+  email        String         @unique
+  firstname    String?
+  lastname     String?
+  createdAt    DateTime       @default(now())
+  subscription Subscription?
+  integrations Integrations[]
+  automations  Automation[]
+  memberships  Membership[]
+  ownedOrgs    Organization[] @relation("OrgOwner")
+}
+
+model Subscription {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  User       User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String?           @unique @db.Uuid
+  createdAt  DateTime          @default(now())
+  plan       SUBSCRIPTION_PLAN @default(FREE)
+  updatedAt  DateTime          @default(now())
+  customerId String?           @unique
+}
+
+model Integrations {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        INTEGRATIONS @default(INSTAGRAM)
+  createdAt   DateTime     @default(now())
+  User        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?      @db.Uuid
+  token       String       @unique
+  expiresAt   DateTime?
+  instagramId String?      @unique
+}
+
+model Automation {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String    @default("Untitled")
+  createdAt DateTime  @default(now())
+  active    Boolean   @default(false)
+  trigger   Trigger[]
+  listener  Listener?
+  posts     Post[]
+  dms       Dms[]
+  User      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?   @db.Uuid
+  keywords  Keyword[]
+}
+
+model Dms {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  Automation   Automation? @relation(fields: [automationId], references: [id])
+  automationId String?     @db.Uuid
+  createdAt    DateTime    @default(now())
+  senderId     String?
+  reciever     String?
+  message      String?
+}
+
+model Post {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postid        String
+  caption       String?
+  media         String
+  mediaType     MEDIATYPE   @default(IMAGE)
+  requireFollow Boolean     @default(false)
+  Automation    Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId  String?     @db.Uuid
+}
+
+model Listener {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  Automation   Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId String     @unique @db.Uuid
+  listener     LISTENERS  @default(MESSAGE)
+  prompt       String
+  commentReply String?
+  dmCount      Int        @default(0)
+  commentCount Int        @default(0)
+}
+
+model Trigger {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type         String
+  Automation   Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId String?     @db.Uuid
+}
+
+model Keyword {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  word         String
+  Automation   Automation? @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  automationId String?     @db.Uuid
+
+  @@unique([automationId, word]) //this constraints ensure user cant use the same keyword on multiple automations
+}
+
+enum SUBSCRIPTION_PLAN {
+  PRO
+  FREE
+}
+
+enum INTEGRATIONS {
+  INSTAGRAM
+}
+
+enum MEDIATYPE {
+  IMAGE
+  VIDEO
+  CAROSEL_ALBUM
+}
+
+enum LISTENERS {
+  SMARTAI
+  MESSAGE
+}
+
+model DataDeletionRequest {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  confirmationCode String   @unique
+  userId           String?  // Instagram/Facebook User ID
+  requestedAt      DateTime @default(now())
+  completedAt      DateTime?
+  status           String   @default("pending") // pending, completed, failed
+}
+// ============================================================
+// Enterprise multi-tenant models (org → workspace → IG account)
+// Legacy models above are retained; new features use these.
+// ============================================================
+
+enum ORG_PLAN {
+  FREE
+  PRO
+}
+
+enum ROLE {
+  OWNER
+  ADMIN
+  AGENT
+}
+
+enum IG_ACCOUNT_STATUS {
+  ACTIVE
+  TOKEN_EXPIRED
+  DISCONNECTED
+}
+
+enum CONVERSATION_STATUS {
+  OPEN
+  CLOSED
+}
+
+enum CONVERSATION_MODE {
+  BOT
+  HUMAN
+}
+
+enum MSG_DIRECTION {
+  IN
+  OUT
+}
+
+enum MSG_STATUS {
+  QUEUED
+  SENT
+  FAILED
+  REJECTED
+}
+
+enum MSG_SOURCE {
+  CONTACT
+  FLOW
+  BROADCAST
+  AGENT
+  AI
+}
+
+enum FLOW_STATUS {
+  DRAFT
+  ACTIVE
+  PAUSED
+}
+
+enum RUN_STATUS {
+  RUNNING
+  WAITING
+  COMPLETED
+  FAILED
+}
+
+enum BROADCAST_STATUS {
+  DRAFT
+  QUEUED
+  SENDING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+enum WEBHOOK_PROVIDER {
+  INSTAGRAM
+  STRIPE
+}
+
+enum WEBHOOK_EVENT_STATUS {
+  RECEIVED
+  PROCESSED
+  FAILED
+  DUPLICATE
+}
+
+model Organization {
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String
+  ownerId              String        @db.Uuid
+  owner                User          @relation("OrgOwner", fields: [ownerId], references: [id])
+  plan                 ORG_PLAN      @default(FREE)
+  stripeCustomerId     String?       @unique
+  stripeSubscriptionId String?       @unique
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @default(now()) @updatedAt
+  workspaces           Workspace[]
+  usageCounters        UsageCounter[]
+  auditLogs            AuditLog[]
+}
+
+model Workspace {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String        @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
+  memberships    Membership[]
+  igAccounts     IgAccount[]
+  contacts       Contact[]
+  conversations  Conversation[]
+  messages       Message[]
+  flows          Flow[]
+  flowRuns       FlowRun[]
+  segments       Segment[]
+  broadcasts     Broadcast[]
+  auditLogs      AuditLog[]
+
+  @@index([organizationId])
+}
+
+model Membership {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String    @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  role        ROLE      @default(AGENT)
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+}
+
+model IgAccount {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String            @db.Uuid
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  igUserId       String            @unique
+  username       String?
+  // Envelope-encrypted long-lived access token: "v1.<dekCt>.<iv>.<tag>.<ct>" (base64url parts)
+  tokenEncrypted String
+  tokenExpiresAt DateTime?
+  status         IG_ACCOUNT_STATUS @default(ACTIVE)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @default(now()) @updatedAt
+  contacts       Contact[]
+  conversations  Conversation[]
+  broadcasts     Broadcast[]
+
+  @@index([workspaceId])
+}
+
+model Contact {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId   String         @db.Uuid
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  igAccountId   String         @db.Uuid
+  igAccount     IgAccount      @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  igUserId      String
+  username      String?
+  name          String?
+  profilePicUrl String?
+  tags          String[]       @default([])
+  isFollow      Boolean        @default(false)
+  lastInboundAt  DateTime?
+  lastOutboundAt DateTime?
+  optedOutAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+  conversation  Conversation?
+  flowRuns      FlowRun[]
+
+  @@unique([igAccountId, igUserId])
+  @@index([workspaceId])
+  @@index([workspaceId, lastInboundAt])
+}
+
+model Conversation {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId   String              @db.Uuid
+  workspace     Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  igAccountId   String              @db.Uuid
+  igAccount     IgAccount           @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  contactId     String              @unique @db.Uuid
+  contact       Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status        CONVERSATION_STATUS @default(OPEN)
+  mode          CONVERSATION_MODE   @default(BOT)
+  assignedToId  String?             @db.Uuid
+  lastMessageAt DateTime            @default(now())
+  unreadCount   Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @default(now()) @updatedAt
+  messages      Message[]
+
+  @@index([workspaceId, lastMessageAt(sort: Desc)])
+  @@index([workspaceId, status])
+}
+
+model Message {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String        @db.Uuid
+  workspace      Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversationId String        @db.Uuid
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      MSG_DIRECTION
+  source         MSG_SOURCE
+  text           String?
+  attachments    Json?
+  igMessageId    String?       @unique
+  status         MSG_STATUS    @default(QUEUED)
+  errorCode      String?
+  humanAgentTag  Boolean       @default(false)
+  sentById       String?       @db.Uuid
+  sentAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([workspaceId, createdAt])
+}
+
+model Flow {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String        @db.Uuid
+  workspace       Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name            String        @default("Untitled flow")
+  status          FLOW_STATUS   @default(DRAFT)
+  activeVersionId String?       @unique @db.Uuid
+  activeVersion   FlowVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+  versions        FlowVersion[]
+  runs            FlowRun[]
+
+  @@index([workspaceId, status])
+}
+
+model FlowVersion {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  flowId      String    @db.Uuid
+  flow        Flow      @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  version     Int
+  definition  Json
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  activeFor   Flow?     @relation("ActiveVersion")
+  runs        FlowRun[]
+
+  @@unique([flowId, version])
+}
+
+model FlowRun {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId   String      @db.Uuid
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  flowId        String      @db.Uuid
+  flow          Flow        @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  flowVersionId String      @db.Uuid
+  flowVersion   FlowVersion @relation(fields: [flowVersionId], references: [id], onDelete: Cascade)
+  contactId     String      @db.Uuid
+  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status        RUN_STATUS  @default(RUNNING)
+  currentNodeId String?
+  context       Json        @default("{}")
+  error         String?
+  startedAt     DateTime    @default(now())
+  finishedAt    DateTime?
+
+  @@index([workspaceId, startedAt(sort: Desc)])
+  @@index([flowId])
+}
+
+model Segment {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String      @db.Uuid
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  filter      Json        @default("{\"conditions\":[]}")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now()) @updatedAt
+  broadcasts  Broadcast[]
+
+  @@index([workspaceId])
+}
+
+model Broadcast {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId  String           @db.Uuid
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  igAccountId  String           @db.Uuid
+  igAccount    IgAccount        @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  segmentId    String?          @db.Uuid
+  segment      Segment?         @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+  name         String
+  messageText  String
+  status       BROADCAST_STATUS @default(DRAFT)
+  scheduledAt  DateTime?
+  totalTargets Int              @default(0)
+  sentCount    Int              @default(0)
+  failedCount  Int              @default(0)
+  skippedCount Int              @default(0)
+  createdById  String?          @db.Uuid
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @default(now()) @updatedAt
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model WebhookEvent {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider    WEBHOOK_PROVIDER
+  // Dedupe/replay key: provider-scoped unique id (e.g. IG mid or sha256 of entry, Stripe event id)
+  eventKey    String
+  igAccountId String?              @db.Uuid
+  payload     Json?
+  status      WEBHOOK_EVENT_STATUS @default(RECEIVED)
+  error       String?
+  receivedAt  DateTime             @default(now())
+  processedAt DateTime?
+
+  @@unique([provider, eventKey])
+  @@index([receivedAt])
+}
+
+model UsageCounter {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String       @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Billing period key, e.g. "2026-07"
+  period         String
+  sends          Int          @default(0)
+  contacts       Int          @default(0)
+
+  @@unique([organizationId, period])
+}
+
+model AuditLog {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String        @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaceId    String?       @db.Uuid
+  workspace      Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  actorUserId    String?       @db.Uuid
+  actorType      String        @default("USER")
+  action         String
+  targetType     String?
+  targetId       String?
+  meta           Json?
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([workspaceId, createdAt(sort: Desc)])
+}

@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Dummy values — CI never talks to real services.
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_test
+  REDIS_URL: redis://localhost:6379
+  CLERK_SECRET_KEY: sk_test_ci_dummy
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
+  TOKEN_MASTER_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  OPENROUTER_API_KEY: sk-ci-dummy
+  AI_MODEL: gpt-4o-mini
+  OPENAI_API_KEY: sk-ci-dummy
+  NEXT_PUBLIC_API_URL: http://localhost:4000
+  NEXT_PUBLIC_HOST_URL: http://localhost:3000
+
+jobs:
+  build-and-test:
+    name: Build, typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Build @repo/shared
+        run: npm run build --workspace @repo/shared
+
+      - name: Typecheck all workspaces
+        run: npm run typecheck
+
+      - name: API unit tests (jest)
+        working-directory: apps/api
+        run: npx jest --ci
+
+      - name: Web typecheck (tsc --noEmit)
+        working-directory: apps/web
+        run: npx tsc --noEmit
+
+      - name: Lint web (non-blocking)
+        continue-on-error: true
+        run: npm run lint --workspace @repo/web
+
+      - name: Lint api
+        run: npm run lint --workspace @repo/api --if-present

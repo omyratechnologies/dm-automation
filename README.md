@@ -6,14 +6,12 @@ Gemai is a sophisticated Instagram automation platform that helps businesses and
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router), TypeScript, TailwindCSS, shadcn/ui
-- **Backend**: Next.js API Routes (App Router), Prisma ORM
-- **State Management**: Redux Toolkit, React Query (TanStack Query)
-- **Authentication**: Clerk
-- **Database**: Postgres (via Prisma)
-- **APIs**: Instagram Graph API, OpenAI API
-- **Styling**: TailwindCSS, CSS Modules
-- **UI Components**: RadixUI, shadcn/ui
+- **Frontend** (`apps/web`): Next.js 14 (App Router), TypeScript, TailwindCSS, shadcn/ui, TanStack Query, socket.io-client, @xyflow/react (flow builder)
+- **Backend** (`apps/api`): NestJS 10, PostgreSQL (Prisma), Redis + BullMQ queues, socket.io gateway, pino structured logging, OpenAPI at `/docs`
+- **Authentication**: Clerk (web session + API JWT verification)
+- **Multi-tenancy**: Organization → Workspace → connected Instagram account, role-based membership (OWNER / ADMIN / AGENT)
+- **APIs**: Instagram Messaging API via Meta Graph API (official only), OpenAI API, Stripe Billing
+- **Security**: envelope-encrypted IG tokens (KMS-style, pluggable), `X-Hub-Signature-256` webhook verification, webhook replay protection, audit log
 
 ## Key Features
 
@@ -60,35 +58,60 @@ Gemai is a sophisticated Instagram automation platform that helps businesses and
   - Official Meta/Instagram API integration
   - Secure data handling
 
-## Project Structure
+## Monorepo Structure
 
 ```
-├── src/
-│   ├── actions/                 # Server actions for data mutations
-│   │   ├── automations/        # Automation-related actions
-│   │   ├── integrations/       # Third-party integration actions
-│   │   ├── user/              # User-related actions
-│   │   └── webhook/           # Webhook handlers for Instagram
-│   │
-│   ├── app/                    # Next.js 13 app directory
-│   │   ├── (auth)/            # Authentication routes
-│   │   ├── (protected)/       # Protected dashboard routes
-│   │   ├── (website)/         # Public website routes
-│   │   └── api/               # API routes
-│   │
-│   ├── components/             # React components
-│   │   ├── global/            # Shared components
-│   │   └── ui/                # UI components (shadcn/ui)
-│   │
-│   ├── hooks/                  # Custom React hooks
-│   ├── lib/                    # Utility functions and configs
-│   ├── providers/             # React context providers
-│   └── types/                 # TypeScript type definitions
-│
-├── prisma/                     # Prisma schema and migrations
-├── redux/                      # Redux store and slices
-└── public/                    # Static assets
+├── apps/
+│   ├── web/                    # Next.js 14 dashboard (Clerk auth, inbox, flow builder,
+│   │                           #   contacts/segments, broadcasts, team, analytics)
+│   └── api/                    # NestJS backend (webhooks, queues, flow engine, sends,
+│                               #   billing, GDPR, websocket inbox gateway)
+├── packages/
+│   ├── db/                     # Prisma schema, migrations, backfill scripts
+│   └── shared/                 # Shared contracts: flow/segment zod schemas, queue
+│                               #   job payloads, constants (built to dist)
+├── docker-compose.yml          # postgres + redis + api + web
+└── .github/workflows/ci.yml    # lint, typecheck, tests
 ```
+
+### Architecture
+
+```
+                    ┌─────────────┐   Clerk JWT + x-workspace-id   ┌──────────────┐
+  Meta webhooks ───▶│  apps/api    │◀───────────────────────────────│  apps/web    │
+  (sig verified,    │  NestJS :4000│──── socket.io /inbox ─────────▶│  Next.js:3000│
+   replay-proof)    └──────┬──────┘                                 └──────────────┘
+                           │
+        ┌──────────┬───────┴────────┬─────────────┐
+        ▼          ▼                ▼             ▼
+   PostgreSQL    Redis         BullMQ queues   Stripe/OpenAI
+   (Prisma)    (BullMQ)   webhook-events → flow-runs → send-messages → broadcasts
+                          (24h-window + plan-limit enforcement in send layer)
+
+  Tenancy: Organization → Workspace (members: OWNER/ADMIN/AGENT) → IgAccount → Contacts/Conversations
+```
+
+## Quickstart (local dev)
+
+```bash
+npm install                          # installs all workspaces + generates Prisma client
+cp .env.example .env                 # fill in Clerk, Meta, Stripe keys; TOKEN_MASTER_KEY: openssl rand -base64 32
+docker compose up -d postgres redis  # infra only
+npm run db:migrate                   # apply Prisma migrations
+npm run dev:api                      # NestJS on :4000 (Swagger at /docs)
+npm run dev:web                      # Next.js on :3000
+```
+
+Full stack via Docker: `docker compose up --build`. Tests: `cd apps/api && npx jest`. Typecheck everything: `npm run typecheck`.
+
+Existing single-app databases: baseline with `npx prisma migrate resolve --applied 0001_init --schema packages/db/prisma/schema.prisma`, then run `npx tsx packages/db/scripts/backfill-tenancy.ts` to give legacy users an organization/workspace and encrypt their IG tokens.
+
+### Meta compliance
+
+- Only the official Instagram Messaging API (Meta Graph API) is used — no scraping or unofficial clients.
+- The 24-hour standard messaging window is enforced in the send queue; outside it, only human-agent replies are sent, tagged `HUMAN_AGENT` (7-day limit). Broadcasts skip out-of-window contacts.
+- Webhooks are verified with `X-Hub-Signature-256` (constant-time compare) and deduplicated per event for replay protection.
+- GDPR/Meta data deletion: `POST /v1/webhooks/meta/data-deletion` (signed_request verified) plus deauthorize callback; IG access tokens are stored envelope-encrypted.
 
 ## Core Workflows
 
@@ -338,8 +361,11 @@ NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL=https://www.facebook.com/v21.0/dialog/o
 # Server-side OAuth URL
 INSTAGRAM_EMBEDDED_OAUTH_URL=https://www.facebook.com/v21.0/dialog/oauth?client_id=YOUR_APP_ID&redirect_uri=YOUR_DOMAIN/callback/instagram&scope=instagram_basic,instagram_manage_comments,instagram_manage_messages,pages_show_list,pages_read_engagement,business_management&response_type=code&auth_type=rerequest
 
-# ==================== OPENAI ====================
-OPENAI_API_KEY=sk-proj-YOUR_OPENAI_API_KEY
+# ==================== AI (OpenRouter / OpenAI) ====================
+# OpenRouter is preferred. OpenAI is used as fallback if OpenRouter not set.
+OPENROUTER_API_KEY=sk-or-your-openrouter-key
+# OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# OPENAI_API_KEY=sk-proj-YOUR_OPENAI_API_KEY
 
 # ==================== UPSTASH REDIS ====================
 # For rate limiting and caching

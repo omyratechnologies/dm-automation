@@ -31,25 +31,30 @@ jobs:
             # Navigate to project directory
             cd dm-automation || exit 1
             
-            # Remove conflicting files before pull
-            echo "🧹 Cleaning up conflicting files..."
-            rm -f ecosystem.config.js
+            # Stash any local changes (e.g. ecosystem.config.js modifications)
+            echo "🧹 Stashing local changes..."
+            git stash || true
             
             # Pull latest changes
             echo "📥 Pulling latest code from GitHub..."
             git pull origin main
             
-            # Install dependencies
+            # Install dependencies (deterministic)
             echo "📦 Installing dependencies..."
-            npm install
+            npm ci --ignore-scripts
+            npm run db:generate
             
             # Build the application
             echo "🔨 Building application..."
             npm run build
             
-            # Restart PM2 processes
+            # Apply database migrations
+            echo "🗄️ Running database migrations..."
+            npm run db:deploy
+            
+            # Restart PM2 processes from ecosystem file
             echo "🔄 Restarting PM2..."
-            pm2 restart gemai || pm2 start npm --name "gemai" -- start
+            pm2 startOrReload ecosystem.config.js --update-env
             pm2 save
             
             echo "✅ Deployment completed successfully!"
@@ -72,11 +77,12 @@ jobs:
             
             pm2 status
             
-            # Check if application is running
-            if pm2 list | grep -q "online"; then
-              echo "✅ Application is running"
+            # Check if both processes are online
+            if pm2 list | grep -q "gemai-web.*online" && pm2 list | grep -q "gemai-api.*online"; then
+              echo "✅ Both services are running"
             else
-              echo "❌ Application is not running"
+              echo "❌ One or more services are not running"
+              pm2 list
               exit 1
             fi
 
