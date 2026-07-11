@@ -10,9 +10,11 @@ import {
   Tag,
   Timer,
   UserRound,
+  UserCheck,
   Zap,
 } from "lucide-react";
 import React, { createContext, useContext, useState } from "react";
+import FlowPostSelector from "./post-selector";
 
 /* ------------------------------------------------------------------ */
 /* Context so node components can mutate their own data                */
@@ -142,6 +144,7 @@ const KIND_META: Record<
     icon: <MessageSquare className="h-3.5 w-3.5" />,
   },
   ai_reply: { label: "AI reply", icon: <Sparkles className="h-3.5 w-3.5" /> },
+  lead_qualify: { label: "Lead Qualifier", icon: <UserCheck className="h-3.5 w-3.5" /> },
   add_tag: { label: "Add tag", icon: <Tag className="h-3.5 w-3.5" /> },
   remove_tag: { label: "Remove tag", icon: <Tag className="h-3.5 w-3.5" /> },
   handoff_human: {
@@ -218,11 +221,10 @@ export const TriggerNode = ({ id, data, selected }: NodeProps) => {
       )}
       {d.kind === "comment" && (
         <>
-          <FieldLabel>Post IDs (empty = any post)</FieldLabel>
-          <ChipInput
-            values={(d.postIds as string[]) ?? []}
+          <FieldLabel>Target Posts</FieldLabel>
+          <FlowPostSelector
+            selectedPostIds={(d.postIds as string[]) ?? []}
             onChange={(postIds) => update({ postIds })}
-            placeholder="Add a post ID"
           />
         </>
       )}
@@ -353,14 +355,14 @@ export const ActionNode = ({ id, data, selected }: NodeProps) => {
             />
           </>
         )}
-        {d.kind === "ai_reply" && (
+        {(d.kind === "ai_reply" || d.kind === "lead_qualify") && (
           <>
-            <FieldLabel>AI prompt</FieldLabel>
+            <FieldLabel>{d.kind === "lead_qualify" ? "Qualification Prompt" : "AI prompt"}</FieldLabel>
             <textarea
               className={cn(inputCls, "min-h-[64px] resize-none")}
               value={(d.prompt as string) ?? ""}
               maxLength={4000}
-              placeholder="Instructions for the AI…"
+              placeholder={d.kind === "lead_qualify" ? "Define lead target rules & tone guidelines…" : "Instructions for the AI…"}
               onChange={(e) => update({ prompt: e.target.value })}
             />
           </>

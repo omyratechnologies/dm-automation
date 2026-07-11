@@ -64,6 +64,10 @@ export const actionNodeSchema = z.object({
       kind: z.literal("ai_reply"),
       prompt: z.string().min(1).max(4000),
     }),
+    z.object({
+      kind: z.literal("lead_qualify"),
+      prompt: z.string().max(4000).optional(),
+    }),
     z.object({ kind: z.literal("add_tag"), tag: z.string().min(1) }),
     z.object({ kind: z.literal("remove_tag"), tag: z.string().min(1) }),
     z.object({ kind: z.literal("handoff_human") }),

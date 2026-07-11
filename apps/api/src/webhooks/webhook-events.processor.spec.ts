@@ -14,6 +14,7 @@ function makeFixture() {
   const graph = { getUserProfile: jest.fn().mockResolvedValue({ isUserFollowBusiness: true }) };
   const tokenCrypto = { decrypt: jest.fn().mockReturnValue("mock-token") };
   const flowQueue = { add: jest.fn() };
+  const automationsExecutor = { trigger: jest.fn().mockResolvedValue(undefined) };
 
   const processor = new WebhookEventsProcessor(
     prisma as never,
@@ -21,9 +22,10 @@ function makeFixture() {
     graph as never,
     tokenCrypto as never,
     flowQueue as never,
+    automationsExecutor as never,
   );
 
-  return { processor, prisma, inbox, graph, tokenCrypto, flowQueue };
+  return { processor, prisma, inbox, graph, tokenCrypto, flowQueue, automationsExecutor };
 }
 
 describe("WebhookEventsProcessor", () => {

@@ -49,6 +49,7 @@ export class TenancyService {
                   select: {
                     id: true,
                     igUserId: true,
+                    username: true,
                     tokenExpiresAt: true,
                     createdAt: true,
                   },
@@ -77,6 +78,7 @@ export class TenancyService {
       expiresAt: acc.tokenExpiresAt,
       instagramId: acc.igUserId,
       createdAt: acc.createdAt,
+      username: acc.username,
     }));
 
     return {

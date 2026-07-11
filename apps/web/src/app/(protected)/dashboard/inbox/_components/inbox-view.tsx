@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-query";
 import { MessageCircle } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import ContactPanel from "./contact-panel";
 import ConversationList from "./conversation-list";
 import MessageThread from "./message-thread";
@@ -89,7 +90,7 @@ const InboxView = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-[calc(100vh-190px)] min-h-[560px]">
-      <div className="lg:col-span-3 h-full min-h-0">
+      <div className={cn("lg:col-span-3 h-full min-h-0", selected && "hidden lg:block")}>
         <ConversationList
           conversations={conversations}
           isLoading={conversationsQuery.isLoading}
@@ -105,12 +106,13 @@ const InboxView = () => {
           fetchNextPage={() => conversationsQuery.fetchNextPage()}
         />
       </div>
-      <div className="lg:col-span-6 h-full min-h-0">
+      <div className={cn("lg:col-span-6 h-full min-h-0", !selected && "hidden lg:block")}>
         {selected ? (
           <MessageThread
             key={selected.id}
             conversation={selected}
             members={membersQuery.data ?? []}
+            onBack={() => setSelectedId(null)}
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center rounded-2xl bg-card border border-border text-center p-8">
@@ -126,7 +128,7 @@ const InboxView = () => {
           </div>
         )}
       </div>
-      <div className="lg:col-span-3 h-full min-h-0">
+      <div className="hidden lg:block lg:col-span-3 h-full min-h-0">
         {selected ? (
           <ContactPanel conversation={selected} />
         ) : (

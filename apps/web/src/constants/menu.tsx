@@ -11,6 +11,7 @@ import {
   Users,
   UsersRound,
   Workflow,
+  UserCheck,
 } from "lucide-react";
 import { v4 as uuid } from "uuid";
 
@@ -48,6 +49,11 @@ export const SIDEBAR_MENU: SideBarProps[] = [
     id: uuid(),
     label: "contacts",
     icon: <Users className="h-5 w-5" />,
+  },
+  {
+    id: uuid(),
+    label: "leads",
+    icon: <UserCheck className="h-5 w-5" />,
   },
   {
     id: uuid(),

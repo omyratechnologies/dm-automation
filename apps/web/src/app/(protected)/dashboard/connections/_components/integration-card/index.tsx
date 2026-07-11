@@ -90,17 +90,26 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
   };
 
   return (
-    <div className="relative overflow-hidden border border-border rounded-2xl gap-x-6 p-6 flex items-center justify-between bg-card backdrop-blur-sm hover:border-primary/50 transition-all duration-300 group hover:shadow-xl hover:shadow-primary/10">
+    <div className="relative overflow-hidden border border-border rounded-2xl gap-y-4 md:gap-y-0 gap-x-6 p-6 flex flex-col md:flex-row md:items-center justify-between bg-card backdrop-blur-sm hover:border-primary/50 transition-all duration-300 group hover:shadow-xl hover:shadow-primary/10">
       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      <div className="relative z-10 p-3 rounded-xl bg-muted border border-border group-hover:scale-110 transition-transform duration-300">
-        {icon}
-      </div>
-      <div className="flex flex-col flex-1 relative z-10">
-        <h3 className="text-xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{title}</h3>
-        <p className="text-muted-foreground text-sm">{description}</p>
+      
+      <div className="flex items-start md:items-center gap-x-4 flex-1 z-10">
+        <div className="p-3 rounded-xl bg-muted border border-border group-hover:scale-110 transition-transform duration-300 shrink-0">
+          {icon}
+        </div>
+        <div className="flex flex-col">
+          <h3 className="text-xl font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{title}</h3>
+          <p className="text-muted-foreground text-sm">{description}</p>
+          {integrated && (integrated as any).username && (
+            <p className="text-primary text-xs font-bold mt-2.5 flex items-center gap-x-1.5 bg-primary/10 w-fit px-3 py-1 rounded-full border border-primary/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+              Connected as @{(integrated as any).username}
+            </p>
+          )}
+        </div>
       </div>
       
-      <div className="relative z-10 flex gap-2">
+      <div className="relative z-10 flex flex-row gap-2 w-full md:w-auto justify-end">
         {integrated ? (
           <>
             <Button

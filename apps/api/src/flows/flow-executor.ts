@@ -144,6 +144,53 @@ export class FlowExecutor {
           await this.enqueueSend(run, contact, { text, source: "AI" });
           break;
         }
+        case "lead_qualify": {
+          const fields = await this.prisma.leadField.findMany({
+            where: { workspaceId: run.workspaceId },
+          });
+          if (fields.length === 0) {
+            const defaults = [
+              { key: "email", label: "Email Address", type: "TEXT" as const },
+              { key: "phone", label: "Phone Number", type: "TEXT" as const },
+              { key: "budget", label: "Estimated Budget", type: "NUMBER" as const },
+            ];
+            for (const d of defaults) {
+              await this.prisma.leadField.upsert({
+                where: { workspaceId_key: { workspaceId: run.workspaceId, key: d.key } },
+                create: { workspaceId: run.workspaceId, key: d.key, label: d.label, type: d.type },
+                update: {},
+              });
+            }
+          }
+          const allFields = await this.prisma.leadField.findMany({
+            where: { workspaceId: run.workspaceId },
+          });
+
+          const conversation = await this.prisma.conversation.findFirst({
+            where: { contactId: run.contactId },
+            include: {
+              messages: {
+                orderBy: { createdAt: "desc" },
+                take: 10,
+              },
+            },
+          });
+          const historyText = (conversation?.messages ?? [])
+            .reverse()
+            .map((m) => `${m.direction === "IN" ? "User" : "Agent"}: ${m.text}`)
+            .join("\n");
+
+          const responseText = await this.executeLeadQualification(
+            run.workspaceId,
+            run.contactId,
+            data.prompt || "Qualify lead kindly.",
+            historyText,
+            allFields,
+          );
+
+          await this.enqueueSend(run, contact, { text: responseText, source: "AI" });
+          break;
+        }
         case "add_tag":
           await this.updateTags(contact, data.tag, "add");
           break;
@@ -334,6 +381,131 @@ export class FlowExecutor {
       const detail = err instanceof Error ? err.message : String(err);
       this.logger.warn(`ai_reply call failed: ${detail}`);
       throw new FlowExecutionError(`ai_reply failed: ${detail}`);
+    }
+  }
+
+  private async executeLeadQualification(
+    workspaceId: string,
+    contactId: string,
+    prompt: string,
+    historyText: string,
+    fields: { id: string; key: string; label: string; type: string }[],
+  ): Promise<string> {
+    const openRouterKey = this.config.get<string>("OPENROUTER_API_KEY") ?? "";
+    const openAiKey = this.config.get<string>("OPENAI_API_KEY") ?? "";
+    if (!openRouterKey && !openAiKey) {
+      throw new FlowExecutionError(
+        "lead_qualify failed: no AI API key configured — set OPENROUTER_API_KEY or OPENAI_API_KEY",
+      );
+    }
+    try {
+      if (!this.openai) {
+        const useOpenRouter = !!openRouterKey;
+        this.openai = new OpenAI({
+          apiKey: useOpenRouter ? openRouterKey : openAiKey,
+          ...(useOpenRouter && {
+            baseURL:
+              this.config.get<string>("OPENROUTER_BASE_URL") ??
+              "https://openrouter.ai/api/v1",
+            defaultHeaders: {
+              "X-OpenRouter-Title": "DM Automation",
+              "HTTP-Referer": "https://dmautomation.com",
+            },
+          }),
+        });
+      }
+      
+      const fieldsDescription = fields.map(f => `- ${f.key} (${f.label}, type: ${f.type})`).join("\n");
+      const systemPrompt = `You are an AI lead qualification assistant. Your goal is to qualify a prospect by collecting the following details:
+${fieldsDescription}
+
+Instructions:
+1. Analyze the conversation history.
+2. If any of the requested fields are present in the user's messages, extract them in the exact type requested.
+3. Determine if you have gathered all the fields.
+4. Draft a short, natural follow-up response (max 2 sentences) to ask for the next missing field, or say thank you if everything is gathered.
+5. Return your response ONLY as a JSON object matching this schema:
+{
+  "extracted": { "fieldKey": "extractedValue" },
+  "reply": "Follow-up message text"
+}
+Do not add markdown formatting or backticks around the JSON.
+
+Additional rules:
+${prompt}`;
+
+      const model = this.config.get<string>("AI_MODEL") ?? "gpt-4o-mini";
+      const completion = await this.openai.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: historyText || "Start the qualification conversation." },
+        ],
+        response_format: { type: "json_object" },
+      });
+
+      const text = completion.choices[0]?.message?.content?.trim();
+      if (!text) {
+        throw new FlowExecutionError("lead_qualify failed: empty completion");
+      }
+
+      const parsed = JSON.parse(text);
+      if (parsed.extracted) {
+        for (const [key, val] of Object.entries(parsed.extracted)) {
+          const field = fields.find(f => f.key === key);
+          if (field && val !== null && val !== undefined) {
+            await this.prisma.leadFieldValue.upsert({
+              where: {
+                contactId_fieldId: {
+                  contactId,
+                  fieldId: field.id,
+                },
+              },
+              create: {
+                contactId,
+                fieldId: field.id,
+                value: String(val),
+              },
+              update: {
+                value: String(val),
+              },
+            });
+          }
+        }
+      }
+
+      // Check if all fields are qualified
+      const currentValues = await this.prisma.leadFieldValue.findMany({
+        where: { contactId },
+      });
+      const hasAll = fields.every(f => currentValues.some(cv => cv.fieldId === f.id));
+      if (hasAll) {
+        await this.prisma.lead.upsert({
+          where: { contactId },
+          create: {
+            contactId,
+            status: "QUALIFIED",
+            qualifiedAt: new Date(),
+          },
+          update: {
+            status: "QUALIFIED",
+            qualifiedAt: new Date(),
+          },
+        });
+      } else {
+        await this.prisma.lead.upsert({
+          where: { contactId },
+          create: { contactId, status: "NEW" },
+          update: {},
+        });
+      }
+
+      return parsed.reply || "Thank you for the information!";
+    } catch (err) {
+      if (err instanceof FlowExecutionError) throw err;
+      const detail = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`lead_qualify call failed: ${detail}`);
+      throw new FlowExecutionError(`lead_qualify failed: ${detail}`);
     }
   }
 

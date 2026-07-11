@@ -3,6 +3,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { QUEUES } from "@repo/shared";
 import { InboxModule } from "../inbox/inbox.module";
 import { InstagramModule } from "../instagram/instagram.module";
+import { AutomationsModule } from "../automations/automations.module";
 import { WebhookCleanupProcessor } from "./webhook-cleanup.processor";
 import { WebhookCleanupService } from "./webhook-cleanup.service";
 import { WebhookEventsProcessor } from "./webhook-events.processor";
@@ -15,6 +16,7 @@ import { WebhooksController } from "./webhooks.controller";
     BullModule.registerQueue({ name: QUEUES.WEBHOOK_EVENT_CLEANUP }),
     InboxModule,
     InstagramModule,
+    AutomationsModule,
   ],
   controllers: [WebhooksController],
   providers: [

@@ -257,6 +257,7 @@ model Workspace {
   segments       Segment[]
   broadcasts     Broadcast[]
   auditLogs      AuditLog[]
+  leadFields     LeadField[]
 
   @@index([organizationId])
 }
@@ -312,6 +313,8 @@ model Contact {
   updatedAt     DateTime       @default(now()) @updatedAt
   conversation  Conversation?
   flowRuns      FlowRun[]
+  lead          Lead?
+  fieldValues   LeadFieldValue[]
 
   @@unique([igAccountId, igUserId])
   @@index([workspaceId])
@@ -492,4 +495,55 @@ model AuditLog {
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+enum LEAD_FIELD_TYPE {
+  TEXT
+  NUMBER
+  BOOLEAN
+}
+
+enum LEAD_STATUS {
+  NEW
+  CONTACTED
+  QUALIFIED
+  DISQUALIFIED
+}
+
+model LeadField {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String           @db.Uuid
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  key         String
+  label       String
+  type        LEAD_FIELD_TYPE  @default(TEXT)
+  createdAt   DateTime         @default(now())
+  values      LeadFieldValue[]
+
+  @@unique([workspaceId, key])
+}
+
+model LeadFieldValue {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactId   String    @db.Uuid
+  contact     Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  fieldId     String    @db.Uuid
+  field       LeadField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value       String
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  @@unique([contactId, fieldId])
+}
+
+model Lead {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contactId       String      @unique @db.Uuid
+  contact         Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status          LEAD_STATUS @default(NEW)
+  score           Int         @default(0)
+  notes           String?
+  qualifiedAt     DateTime?
+  disqualifiedAt  DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now()) @updatedAt
 }

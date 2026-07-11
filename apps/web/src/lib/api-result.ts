@@ -87,6 +87,7 @@ export type UserProfile = {
     expiresAt: Date | null;
     instagramId: string | null;
     createdAt: Date;
+    username?: string | null;
   }>;
 };
 

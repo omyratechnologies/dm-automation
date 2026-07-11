@@ -120,6 +120,7 @@ const PALETTE: { group: string; items: PaletteItem[] }[] = [
         data: { kind: "send_message", text: "", quickReplies: [] },
       },
       { type: "action", label: "AI reply", data: { kind: "ai_reply", prompt: "" } },
+      { type: "action", label: "Lead Qualifier", data: { kind: "lead_qualify", prompt: "" } },
       { type: "action", label: "Add tag", data: { kind: "add_tag", tag: "" } },
       {
         type: "action",
@@ -380,7 +381,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(runsQuery.data?.items ?? []).map((run) => (
+                        {(runsQuery.data?.items ?? []).map((run: FlowRun) => (
                           <TableRow key={run.id}>
                             <TableCell>
                               <span
@@ -468,14 +469,14 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
         </div>
 
         {/* Palette + canvas */}
-        <div className="flex flex-1 gap-4 min-h-0">
-          <div className="w-52 shrink-0 rounded-2xl bg-card border border-border p-3 overflow-y-auto space-y-4">
+        <div className="flex flex-col md:flex-row flex-1 gap-4 min-h-0">
+          <div className="w-full md:w-52 shrink-0 rounded-2xl bg-card border border-border p-3 overflow-y-auto space-y-4">
             {PALETTE.map((group) => (
               <div key={group.group}>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                   {group.group}
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-1 flex flex-row md:flex-col gap-1.5 md:gap-1 flex-wrap md:flex-nowrap">
                   {group.items.map((item) => {
                     const disabled = item.type === "trigger" && hasTrigger;
                     return (
@@ -485,11 +486,11 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
                         disabled={disabled}
                         title={
                           disabled
-                            ? "A flow can only have one trigger"
-                            : `Add ${item.label}`
+                             ? "A flow can only have one trigger"
+                             : `Add ${item.label}`
                         }
                         className={cn(
-                          "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                          "px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors text-left shrink-0 md:shrink md:w-full",
                           disabled
                             ? "border-border text-muted-foreground/50 cursor-not-allowed"
                             : "border-border text-foreground hover:border-primary/40 hover:bg-accent"
@@ -504,21 +505,26 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
             ))}
           </div>
 
-          <div className="flex-1 rounded-2xl border border-border overflow-hidden bg-card">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              fitView
-              proOptions={{ hideAttribution: true }}
-              deleteKeyCode={["Backspace", "Delete"]}
-            >
-              <Background gap={20} />
-              <Controls />
-            </ReactFlow>
+          <div className="flex-1 flex flex-col gap-y-2 rounded-2xl bg-transparent min-h-[400px]">
+            <div className="md:hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-semibold">
+              💡 Pro-tip: Canvas is optimized for larger screens. Use a desktop to build complex automation flows.
+            </div>
+            <div className="flex-1 rounded-2xl border border-border overflow-hidden bg-card relative">
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                fitView
+                proOptions={{ hideAttribution: true }}
+                deleteKeyCode={["Backspace", "Delete"]}
+              >
+                <Background gap={20} />
+                <Controls />
+              </ReactFlow>
+            </div>
           </div>
         </div>
       </div>

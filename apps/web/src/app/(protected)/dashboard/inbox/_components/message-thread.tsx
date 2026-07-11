@@ -21,7 +21,7 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { AlertTriangle, Bot, Send, UserRound } from "lucide-react";
+import { AlertTriangle, Bot, Send, UserRound, ArrowLeft } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { initialsOf } from "./conversation-list";
@@ -29,6 +29,7 @@ import { initialsOf } from "./conversation-list";
 type Props = {
   conversation: Conversation;
   members: Member[];
+  onBack?: () => void;
 };
 
 const UNASSIGNED = "__unassigned__";
@@ -37,7 +38,7 @@ const memberName = (m: Member) =>
   [m.user.firstname, m.user.lastname].filter(Boolean).join(" ") ||
   m.user.email;
 
-const MessageThread = ({ conversation, members }: Props) => {
+const MessageThread = ({ conversation, members, onBack }: Props) => {
   const { api, wsPath, workspaceId } = useApi();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
@@ -164,6 +165,16 @@ const MessageThread = ({ conversation, members }: Props) => {
     <div className="h-full flex flex-col rounded-2xl bg-card border border-border overflow-hidden">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-border">
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="lg:hidden h-8 w-8 mr-1 rounded-lg hover:bg-muted"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
         <Avatar className="h-8 w-8">
           <AvatarImage
             src={conversation.contact.profilePicUrl ?? undefined}

@@ -247,6 +247,9 @@ export class AutomationsService {
       throw new NotFoundException("Automation not found");
     }
 
+    // Clean up old post attachments first
+    await this.prisma.post.deleteMany({ where: { automationId } });
+
     return this.prisma.automation.update({
       where: { id: automationId },
       data: {

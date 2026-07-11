@@ -25,6 +25,7 @@ import { AutomationsModule } from "./automations/automations.module";
 import { UserModule } from "./user/user.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { AdminModule } from "./admin/admin.module";
+import { LeadsModule } from "./leads/leads.module";
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { AdminModule } from "./admin/admin.module";
     GdprModule,
     MetricsModule,
     AdminModule,
+    LeadsModule,
   ],
   providers: [
     {

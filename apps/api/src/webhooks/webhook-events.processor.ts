@@ -8,6 +8,7 @@ import { TokenCrypto } from "../common/crypto/kms";
 import { InboxGateway } from "../inbox/inbox.gateway";
 import { IgGraphClient } from "../instagram/ig-graph.client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AutomationsExecutorService } from "../automations/automations-executor.service";
 
 type TriggerSource = "dm" | "comment" | "story_reply";
 
@@ -64,6 +65,7 @@ export class WebhookEventsProcessor extends WorkerHost {
     private readonly tokenCrypto: TokenCrypto,
     @InjectQueue(QUEUES.FLOW_RUNS)
     private readonly flowQueue: Queue<FlowRunJob>,
+    private readonly automationsExecutor: AutomationsExecutorService,
   ) {
     super();
   }
@@ -257,6 +259,7 @@ export class WebhookEventsProcessor extends WorkerHost {
         },
       };
       await this.flowQueue.add("trigger", trigger);
+      await this.automationsExecutor.trigger(igAccount, contact, conversation, message, input);
     }
 
     this.inbox.emitToWorkspace(
