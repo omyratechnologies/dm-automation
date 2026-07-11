@@ -54,11 +54,11 @@ COPY packages/db/prisma ./packages/db/prisma
 
 # 1) prod deps only (scripts skipped — prisma CLI is a root devDependency, so
 #    the postinstall `prisma generate` cannot run yet)
-# 2) add the prisma CLI (needed at container start for migrate deploy); its
-#    install triggers the root postinstall, regenerating the client + engines
-#    inside this final image.
+# 2) add the prisma CLI (needed at container start for migrate deploy)
+# 3) explicitly generate the Prisma Client since scripts were ignored
 RUN npm ci --omit=dev --ignore-scripts \
   && npm install --no-save --omit=dev prisma@^6.18.0 \
+  && npx prisma generate --schema packages/db/prisma/schema.prisma \
   && npm cache clean --force
 
 # Compiled output
