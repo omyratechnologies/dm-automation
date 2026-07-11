@@ -10,11 +10,13 @@ import { verifyToken } from "@clerk/backend";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { IS_PUBLIC_KEY } from "./public.decorator";
+import { AuditService } from "../audit/audit.service";
 
 export interface AuthedRequestUser {
   id: string;
   clerkId: string;
   email: string;
+  role?: string;
 }
 
 @Injectable()
@@ -23,6 +25,7 @@ export class ClerkAuthGuard implements CanActivate {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly reflector: Reflector,
+    private readonly audit: AuditService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -39,7 +42,7 @@ export class ClerkAuthGuard implements CanActivate {
     }
     const token = header.slice("Bearer ".length);
 
-    let claims: { sub: string; email?: string };
+    let claims: { sub: string; email?: string; role?: string };
     try {
       claims = await Promise.race([
         verifyToken(token, {
@@ -54,10 +57,58 @@ export class ClerkAuthGuard implements CanActivate {
     }
 
     const user = await this.prisma.user.findUnique({ where: { clerkId: claims.sub } });
+    
+    // Check for Impersonation Mode
+    const impersonateUserId = req.headers["x-impersonate-user-id"];
+    const isSuperAdmin = (claims.role === "SUPER_ADMIN" || (claims as any).metadata?.role === "SUPER_ADMIN");
+    const isImpersonationEnabled = this.config.get<string>("SUPPORT_IMPERSONATION_ENABLED") === "true";
+
+    if (isSuperAdmin && isImpersonationEnabled && typeof impersonateUserId === "string" && impersonateUserId.length > 0) {
+      const targetUser = await this.prisma.user.findUnique({
+        where: { id: impersonateUserId },
+        include: {
+          memberships: {
+            select: {
+              workspace: {
+                select: { organizationId: true },
+              },
+            },
+            take: 1,
+          },
+        },
+      });
+
+      if (targetUser) {
+        const orgId = targetUser.memberships[0]?.workspace.organizationId;
+        if (orgId && user) {
+          this.audit.log({
+            organizationId: orgId,
+            actorUserId: user.id,
+            action: "admin.impersonate",
+            targetType: "User",
+            targetId: targetUser.id,
+            meta: {
+              adminEmail: user.email,
+              targetEmail: targetUser.email,
+            },
+          });
+        }
+
+        req.user = {
+          id: targetUser.id,
+          clerkId: targetUser.clerkId,
+          email: targetUser.email,
+          role: "IMPERSONATED",
+        } satisfies AuthedRequestUser;
+        return true;
+      }
+    }
+
     req.user = {
       id: user?.id ?? randomUUID(),
       clerkId: claims.sub,
       email: user?.email ?? claims.email ?? "",
+      role: claims.role || (claims as any).metadata?.role || "",
     } satisfies AuthedRequestUser;
     return true;
   }

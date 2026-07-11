@@ -145,11 +145,18 @@ const AutomationList = (props: Props) => {
           <div className="flex flex-col justify-between items-end relative z-10">
             <div className="flex items-center gap-2">
               <p className="capitalize text-xs font-light text-muted-foreground">
-                {getMonth(automation.createdAt.getUTCMonth() + 1)}{" "}
-                {automation.createdAt.getUTCDate() === 1
-                  ? `${automation.createdAt.getUTCDate()}st`
-                  : `${automation.createdAt.getUTCDate()}th`}{" "}
-                {automation.createdAt.getUTCFullYear()}
+                {(() => {
+                  const date = new Date(automation.createdAt);
+                  const day = date.getUTCDate();
+                  const suffix = day === 1 || day === 21 || day === 31 
+                    ? "st" 
+                    : day === 2 || day === 22 
+                      ? "nd" 
+                      : day === 3 || day === 23 
+                        ? "rd" 
+                        : "th";
+                  return `${getMonth(date.getUTCMonth() + 1)} ${day}${suffix} ${date.getUTCFullYear()}`;
+                })()}
               </p>
               
               <DropdownMenu>

@@ -36,4 +36,27 @@ export class AuditService {
       })
       .catch((err) => this.logger.error(`audit write failed: ${err.message}`));
   }
+
+  logAdminAction(
+    adminUserId: string,
+    action: string,
+    targetType?: string,
+    targetId?: string,
+    meta?: Prisma.InputJsonValue,
+    orgId?: string,
+  ): void {
+    if (!orgId) {
+      this.logger.warn(`Admin action '${action}' logged without orgId`);
+      return;
+    }
+    this.log({
+      organizationId: orgId,
+      actorUserId: adminUserId,
+      actorType: "USER",
+      action: `admin.${action}`,
+      targetType,
+      targetId,
+      meta,
+    });
+  }
 }

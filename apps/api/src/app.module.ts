@@ -24,6 +24,7 @@ import { MetricsModule } from "./metrics/metrics.module";
 import { AutomationsModule } from "./automations/automations.module";
 import { UserModule } from "./user/user.module";
 import { GdprModule } from "./gdpr/gdpr.module";
+import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { GdprModule } from "./gdpr/gdpr.module";
     UserModule,
     GdprModule,
     MetricsModule,
+    AdminModule,
   ],
   providers: [
     {

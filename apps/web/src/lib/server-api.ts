@@ -20,6 +20,24 @@ export async function serverApiFetch<T>(
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (workspaceId) headers["x-workspace-id"] = workspaceId;
 
+  // Transparently forward impersonation header/cookie if present in client request context
+  try {
+    const { headers: getHeaders, cookies: getCookies } = await import("next/headers");
+    const clientHeaders = await getHeaders();
+    let impersonateHeader = clientHeaders.get("x-impersonate-user-id");
+    
+    if (!impersonateHeader) {
+      const clientCookies = await getCookies();
+      impersonateHeader = clientCookies.get("x-impersonate-user-id")?.value || null;
+    }
+    
+    if (impersonateHeader) {
+      headers["x-impersonate-user-id"] = impersonateHeader;
+    }
+  } catch (err) {
+    // Safe fallback if called outside Next.js request context (e.g., build-time pre-render)
+  }
+
   let res: Response;
   try {
     res = await fetch(`${API_URL}/v1${path}`, {

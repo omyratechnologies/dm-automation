@@ -7,6 +7,8 @@ import { Toaster } from "sonner";
 import ReactQueryProvider from "@/providers/react-query-provider";
 import ReduxProvider from "@/providers/redux-provider";
 import ErrorBoundary from "@/components/global/error-boundary";
+import ImpersonationBanner from "@/components/admin/impersonation-banner";
+
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -89,6 +91,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ErrorBoundary>
+              <ImpersonationBanner />
               <ReduxProvider>
                 <ReactQueryProvider>{children}</ReactQueryProvider>
               </ReduxProvider>
