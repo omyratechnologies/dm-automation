@@ -65,6 +65,8 @@ RUN npm ci --omit=dev --ignore-scripts \
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 
+RUN chown -R node:node /app
+
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
