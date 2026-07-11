@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: saas-dm-web
+    env: docker
+    dockerfilePath: apps/web/Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://your-backend-api.onrender.com
+      - key: NEXT_PUBLIC_HOST_URL
+        value: https://your-frontend-web.onrender.com
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        value: pk_test_ZnJlc2gtcmFjZXItNi5jbGVyay5hY2NvdW50cy5kZXYk
+      - key: CLERK_SECRET_KEY
+        value: sk_test_V0RbD4aOh33u1QSeADWjoLeuUBDleSf1abCuPlSzCk
+      - key: NEXT_PUBLIC_INSTAGRAM_APP_ID
+        value: "1334533028765160"
+      - key: NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL
+        value: "https://www.instagram.com/oauth/authorize?client_id=1334533028765160&redirect_uri=https%3A%2F%2Fyour-frontend-web.onrender.com%2Fcallback%2Finstagram&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments"
+      - key: UPSTASH_REDIS_REST_URL
+        value: https://hopeful-kiwi-158126.upstash.io
+      - key: UPSTASH_REDIS_REST_TOKEN
+        value: gQAAAAAAAmmuAAIgcDE3MDFhZjI1NzNhZjQ0MzMxOTVmNjRjNDc5NGVjODM2OA
+      - key: NEXT_PUBLIC_CLERK_SIGN_IN_URL
+        value: /sign-in
+      - key: NEXT_PUBLIC_CLERK_SIGN_UP_URL
+        value: /sign-up
+      - key: NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+        value: /
+      - key: NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
+        value: /

@@ -17,13 +17,16 @@ export class TenancyService {
   ) {}
 
   async me(userId: string) {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
+        clerkId: true,
         email: true,
         firstname: true,
         lastname: true,
+        createdAt: true,
+        subscription: true,
         memberships: {
           select: {
             role: true,
@@ -31,13 +34,75 @@ export class TenancyService {
               select: {
                 id: true,
                 name: true,
-                organization: { select: { id: true, name: true, plan: true } },
+                organization: {
+                  select: {
+                    id: true,
+                    name: true,
+                    plan: true,
+                    stripeCustomerId: true,
+                  },
+                },
+                igAccounts: {
+                  where: {
+                    status: "ACTIVE",
+                  },
+                  select: {
+                    id: true,
+                    igUserId: true,
+                    tokenExpiresAt: true,
+                    createdAt: true,
+                  },
+                },
               },
             },
           },
         },
       },
     });
+
+    if (!user) return null;
+
+    // Resolve active membership/workspace
+    const activeMembership = user.memberships[0];
+    const activeWorkspace = activeMembership?.workspace;
+    const activeOrg = activeWorkspace?.organization;
+    
+    // Map active plan from organization (multi-tenant)
+    const plan = activeOrg?.plan === "PRO" ? "PRO" : "FREE";
+
+    // Map igAccounts from active workspace to frontend integration format
+    const integrations = (activeWorkspace?.igAccounts || []).map((acc) => ({
+      id: acc.id,
+      name: "INSTAGRAM" as const,
+      expiresAt: acc.tokenExpiresAt,
+      instagramId: acc.igUserId,
+      createdAt: acc.createdAt,
+    }));
+
+    return {
+      id: user.id,
+      clerkId: user.clerkId,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      createdAt: user.createdAt,
+      subscription: user.subscription
+        ? {
+            ...user.subscription,
+            plan,
+            customerId: activeOrg?.stripeCustomerId || user.subscription.customerId,
+          }
+        : {
+            id: user.id,
+            userId: user.id,
+            createdAt: user.createdAt,
+            plan,
+            updatedAt: user.createdAt,
+            customerId: activeOrg?.stripeCustomerId || null,
+          },
+      integrations,
+      memberships: user.memberships,
+    };
   }
 
   async createOrganization(userId: string, name: string) {
