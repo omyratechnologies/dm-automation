@@ -79,43 +79,45 @@ const ContactPanel = ({ conversation }: Props) => {
     Date.now() - new Date(lastInboundAt).getTime() < WINDOW_MS;
 
   return (
-    <div className="h-full flex flex-col rounded-2xl bg-card border border-border overflow-y-auto">
-      <div className="flex flex-col items-center text-center p-6 border-b border-border">
-        <Avatar className="h-16 w-16 mb-3">
+    <div className="h-full flex flex-col rounded-xl border border-border bg-card overflow-y-auto">
+      {/* Profile */}
+      <div className="flex flex-col items-center text-center p-5 border-b border-border">
+        <Avatar className="h-14 w-14 mb-3">
           <AvatarImage
             src={summary.profilePicUrl ?? undefined}
             alt={summary.username}
           />
-          <AvatarFallback className="bg-gradient-to-br from-[#3352CC] to-[#1C2D70] text-white text-lg font-semibold">
+          <AvatarFallback className="bg-primary/15 text-primary text-base font-medium">
             {initialsOf(summary.name, summary.username)}
           </AvatarFallback>
         </Avatar>
-        <p className="text-base font-semibold text-foreground">
+        <p className="text-sm font-semibold text-foreground">
           {summary.name ?? summary.username}
         </p>
-        <p className="text-sm text-muted-foreground">@{summary.username}</p>
+        <p className="text-xs text-muted-foreground">@{summary.username}</p>
         {contact?.optedOut && (
           <Badge
             variant="outline"
-            className="mt-2 border-red-500/40 text-red-500"
+            className="mt-2 border-destructive/40 text-destructive"
           >
             Opted out
           </Badge>
         )}
       </div>
 
-      <div className="p-4 border-b border-border space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {/* Messaging window */}
+      <div className="p-4 border-b border-border space-y-2.5">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Messaging window
         </p>
         {withinWindow ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
+            <span className="w-1.5 h-1.5 rounded-full bg-success" />
             In 24h window
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning">
+            <span className="w-1.5 h-1.5 rounded-full bg-warning" />
             Window expired
           </span>
         )}
@@ -128,8 +130,9 @@ const ContactPanel = ({ conversation }: Props) => {
         )}
       </div>
 
-      <div className="p-4 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      {/* Tags */}
+      <div className="p-4 space-y-2.5">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Tags
         </p>
         {contactQuery.isLoading ? (
@@ -145,13 +148,13 @@ const ContactPanel = ({ conversation }: Props) => {
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 border border-primary/30 text-xs text-foreground"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-xs text-foreground"
               >
                 {tag}
                 <button
                   onClick={() => removeTag(tag)}
                   disabled={tagsMutation.isPending}
-                  className="text-muted-foreground hover:text-red-500 transition-colors"
+                  className="text-muted-foreground hover:text-destructive transition-colors duration-quiet"
                   aria-label={`Remove tag ${tag}`}
                 >
                   <X className="h-3 w-3" />
