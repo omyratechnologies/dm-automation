@@ -3,7 +3,6 @@
 import Link from "next/link";
 import GemaiLogo from "@/components/global/gemai-logo";
 import { Instagram, Twitter, Linkedin, Mail, Youtube } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -12,24 +11,21 @@ export default function Footer() {
     product: [
       { label: "Features", href: "/#features" },
       { label: "Pricing", href: "/#pricing" },
-      { label: "Testimonials", href: "/#testimonials" },
       { label: "FAQ", href: "/#faq" },
     ],
     company: [
-      { label: "About Us", href: "https://omyratech.com/pages/about/" },
+      { label: "About", href: "https://omyratech.com/pages/about/" },
       { label: "Blog", href: "https://omyratech.com/pages/blog/" },
       { label: "Contact", href: "/contact" },
     ],
     legal: [
-      { label: "Privacy Policy", href: "/privacy-policy" },
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Cookie Policy", href: "/cookies" },
-      { label: "GDPR Compliance", href: "/gdpr" },
+      { label: "Privacy", href: "/privacy-policy" },
+      { label: "Terms", href: "/terms" },
+      { label: "Cookies", href: "/cookies" },
+      { label: "GDPR", href: "/gdpr" },
     ],
     support: [
-      { label: "Help Center", href: "/help" },
-      { label: "Documentation", href: "/docs" },
-      { label: "API Reference", href: "/api" },
+      { label: "Help", href: "/help" },
       { label: "Status", href: "https://status.gemai.in" },
     ],
   };
@@ -42,126 +38,69 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-slate-bg-secondary border-t border-slate-text-tertiary/10">
-      <div className="container px-4 py-12 md:py-16">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-6 lg:gap-12">
-          {/* Brand Column */}
+    <footer className="border-t border-black/5 bg-[#F5F5F7]">
+      <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
-            <Link href="/" className="inline-block mb-4">
-              <GemaiLogo size="lg" className="h-8" />
+            <Link href="/" className="inline-block">
+              <GemaiLogo size="lg" className="h-6" />
             </Link>
-            <p className="text-sm text-slate-text-secondary mb-6 max-w-sm">
-              Transform Instagram DMs into revenue with AI-powered automation. Engage, qualify, and convert—24/7.
+            <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-slate-500">
+              Instagram automation that feels human—for creators and teams who care about every conversation.
             </p>
-            
-            {/* Social Links */}
-            <div className="flex gap-3">
+            <div className="mt-5 flex gap-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-10 w-10 rounded-lg bg-slate-bg-tertiary border border-slate-text-tertiary/10 flex items-center justify-center hover:bg-slate-bg-primary hover:border-slate-primary/50 transition-all group"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-black/5 text-slate-500 transition-colors hover:text-slate-900"
                   aria-label={social.label}
                 >
-                  <social.icon className="h-5 w-5 text-slate-text-secondary group-hover:text-slate-primary transition-colors" />
+                  <social.icon className="h-4 w-4" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Product Links */}
-          <div>
-            <h4 className="font-semibold text-slate-text-primary mb-4">Product</h4>
-            <ul className="space-y-3">
-              {footerLinks.product.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-text-secondary hover:text-slate-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company Links */}
-          <div>
-            <h4 className="font-semibold text-slate-text-primary mb-4">Company</h4>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-text-secondary hover:text-slate-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div>
-            <h4 className="font-semibold text-slate-text-primary mb-4">Legal</h4>
-            <ul className="space-y-3">
-              {footerLinks.legal.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-text-secondary hover:text-slate-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support Links */}
-          <div>
-            <h4 className="font-semibold text-slate-text-primary mb-4">Support</h4>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-text-secondary hover:text-slate-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {(
+            [
+              ["Product", footerLinks.product],
+              ["Company", footerLinks.company],
+              ["Legal", footerLinks.legal],
+              ["Support", footerLinks.support],
+            ] as const
+          ).map(([title, links]) => (
+            <div key={title}>
+              <h4 className="text-[12px] font-semibold uppercase tracking-wider text-slate-400">
+                {title}
+              </h4>
+              <ul className="mt-4 space-y-2.5">
+                {links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-slate-600 transition-colors hover:text-slate-900"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <Separator className="my-8 bg-slate-text-tertiary/10" />
-
-        {/* Bottom Footer */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-slate-text-tertiary">
-            <p>© {currentYear} Omyra Technologies. All rights reserved.</p>
-            <span className="hidden md:inline">•</span>
-            <a
-              href="mailto:support@gemai.in"
-              className="flex items-center gap-2 hover:text-slate-primary transition-colors"
-            >
-              <Mail className="h-4 w-4" />
-              support@gemai.in
-            </a>
-          </div>
-          
-          <div className="flex items-center gap-2 text-sm text-slate-text-tertiary">
-            <span>Made with</span>
-            <span className="text-red-500">❤️</span>
-            <span>in India</span>
-          </div>
+        <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-black/5 pt-8 text-[12px] text-slate-400 sm:flex-row sm:items-center">
+          <p>© {currentYear} Omyra Technologies. All rights reserved.</p>
+          <a
+            href="mailto:support@gemai.in"
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-600"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            support@gemai.in
+          </a>
         </div>
       </div>
     </footer>
