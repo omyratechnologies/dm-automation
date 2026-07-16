@@ -6,7 +6,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  ArrowDown,
   ArrowRight,
   Check,
   Inbox,
@@ -20,6 +19,8 @@ import Link from "next/link";
 import GemaiLogo from "@/components/global/gemai-logo";
 import Footer from "@/components/global/footer";
 import { Reveal } from "@/components/marketing/reveal";
+import { MarketingHero } from "@/components/marketing/hero";
+import { MagneticButton } from "@/components/marketing/magnetic-button";
 
 export default function Home() {
   return (
@@ -64,79 +65,10 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ─── Hero ─── */}
-      <section className="relative min-h-[100svh] flex flex-col justify-center pt-14">
-        {/* Soft ambient light */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 overflow-hidden"
-        >
-          <div className="absolute left-1/2 top-[-10%] h-[60vh] w-[80vw] -translate-x-1/2 rounded-full bg-[#5B6AF0]/15 blur-[120px]" />
-          <div className="absolute bottom-0 left-1/4 h-[40vh] w-[50vw] rounded-full bg-[#5B6AF0]/[0.07] blur-[100px]" />
-        </div>
-
-        <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-20 lg:px-8 lg:pt-28">
-          <Reveal>
-            <p className="mb-6 text-[12px] font-medium uppercase tracking-[0.28em] text-[#8B9AFF]">
-              AI Instagram automation
-            </p>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <h1 className="max-w-5xl text-[clamp(2.5rem,7vw,5.25rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-white">
-              Every DM.
-              <br />
-              <span className="text-white/40">Answered.</span>
-              <br />
-              Every lead.
-              <br />
-              <span className="text-white/40">Qualified.</span>
-            </h1>
-          </Reveal>
-
-          <Reveal delay={160}>
-            <p className="mt-8 max-w-xl text-lg leading-relaxed text-white/50 sm:text-xl">
-              Gemai turns Instagram messages and comments into calm,
-              converting conversations — in your voice, around the clock.
-            </p>
-          </Reveal>
-
-          <Reveal delay={240}>
-            <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button
-                asChild
-                size="lg"
-                className="h-12 rounded-full bg-[#5B6AF0] px-8 text-[15px] font-medium text-white hover:bg-[#4F5DE0]"
-              >
-                <Link href="/sign-in">
-                  Start free
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 rounded-full border-white/15 bg-transparent px-8 text-[15px] font-medium text-white hover:bg-white/5 hover:text-white"
-              >
-                <a href="#product">Explore product</a>
-              </Button>
-            </div>
-            <p className="mt-5 text-[13px] text-white/30">
-              Free plan · No card · Cancel anytime
-            </p>
-          </Reveal>
-        </div>
-
-        {/* Scroll cue */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
-          <span className="text-[10px] uppercase tracking-[0.25em]">Scroll</span>
-          <ArrowDown className="h-4 w-4 animate-bounce" />
-        </div>
-      </section>
+      <MarketingHero />
 
       {/* ─── Product frame ─── */}
-      <section id="product" className="relative pb-32">
+      <section id="product" className="relative pb-32 pt-8">
         <div className="mx-auto max-w-6xl px-5 lg:px-8">
           <Reveal>
             <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0C0E14] shadow-[0_40px_120px_-20px_rgba(91,106,240,0.25)]">
@@ -648,10 +580,7 @@ export default function Home() {
 
       {/* ─── Final CTA ─── */}
       <section className="relative overflow-hidden border-t border-white/[0.06] py-28 md:py-40">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-        >
+        <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/2 top-1/2 h-[50vh] w-[70vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5B6AF0]/15 blur-[100px]" />
         </div>
         <div className="relative mx-auto max-w-3xl px-5 text-center lg:px-8">
@@ -665,16 +594,10 @@ export default function Home() {
               Join teams and creators who let Gemai handle the noise — so they can focus on the work that matters.
             </p>
             <div className="mt-10">
-              <Button
-                asChild
-                size="lg"
-                className="h-12 rounded-full bg-white px-8 text-[15px] font-medium text-[#07080C] hover:bg-white/90"
-              >
-                <Link href="/sign-in">
-                  Get started free
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              <MagneticButton href="/sign-in" variant="light">
+                Get started free
+                <ArrowRight className="h-4 w-4" />
+              </MagneticButton>
             </div>
             <p className="mt-5 text-[13px] text-white/30">
               No credit card · 14-day Pro trial · Cancel anytime
