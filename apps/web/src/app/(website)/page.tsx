@@ -1,762 +1,622 @@
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { CheckCircle, Play, ArrowRight, Zap, Users, TrendingUp, Clock } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import GemaiLogo from "@/components/global/gemai-logo";
-import Footer from "@/components/global/footer";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  ArrowRight,
+  Check,
+  Inbox,
+  MessageSquare,
+  Sparkles,
+  Workflow,
+  BarChart3,
+  Shield,
+  Zap,
+} from "lucide-react";
+import Link from "next/link";
+import GemaiLogo from "@/components/global/gemai-logo";
+import Footer from "@/components/global/footer";
 
 export default function Home() {
-  const plans = [
-    {
-      name: "Starter Plan",
-      description: "Perfect for getting started",
-      price: "₹0",
-      features: [
-        "200 automated responses per month",
-        "AI-powered keyword triggers",
-        "Smart response templates",
-        "Email support",
-        "Instagram DM automation",
-        "Comment automation",
-      ],
-      cta: "Start Free",
-      popular: false,
-    },
-    {
-      name: "Pro Plan",
-      description: "Best for growing businesses",
-      price: "₹999",
-      features: [
-        "Unlimited automated responses",
-        "Advanced AI smart replies",
-        "Real-time analytics dashboard",
-        "24/7 priority support",
-        "Custom branding & workflows",
-        "Multi-account management",
-        "Lead qualification automation",
-        "Integration with CRM systems",
-      ],
-      cta: "Start 14-Day Free Trial",
-      popular: true,
-    },
-  ];
   return (
-    <main>
-      <section className="relative bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-950">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
-        <div className="relative">
-          <div className="container px-4 py-8">
-            <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center">
-                <GemaiLogo size="lg" className="h-10" />
+    <main className="bg-white text-slate-900 antialiased">
+      {/* ─── Nav ─── */}
+      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-5 lg:px-8">
+          <Link href="/" className="flex items-center">
+            <GemaiLogo size="lg" className="h-6" />
+          </Link>
+          <nav className="hidden items-center gap-8 text-[13px] text-slate-600 md:flex">
+            <a href="#product" className="hover:text-slate-900 transition-colors">
+              Product
+            </a>
+            <a href="#features" className="hover:text-slate-900 transition-colors">
+              Features
+            </a>
+            <a href="#pricing" className="hover:text-slate-900 transition-colors">
+              Pricing
+            </a>
+            <a href="#faq" className="hover:text-slate-900 transition-colors">
+              FAQ
+            </a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm" className="text-[13px] text-slate-600">
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              className="rounded-full bg-[#5B6AF0] px-4 text-[13px] font-medium text-white hover:bg-[#4F5DE0]"
+            >
+              <Link href="/sign-in">Get started</Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* ─── Hero ─── */}
+      <section className="relative overflow-hidden">
+        <div className="mx-auto max-w-6xl px-5 pb-16 pt-20 text-center lg:px-8 lg:pb-24 lg:pt-28">
+          <p className="mb-5 text-[13px] font-medium tracking-wide text-[#5B6AF0]">
+            AI Instagram automation for creators & teams
+          </p>
+          <h1 className="mx-auto max-w-4xl text-[40px] font-semibold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl md:text-6xl lg:text-[68px]">
+            Turn every DM into
+            <br className="hidden sm:block" /> a conversation that converts.
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-500 sm:text-xl">
+            Gemai replies to Instagram messages and comments in your voice—
+            qualifies leads, routes handoffs, and keeps your inbox calm.
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 rounded-full bg-[#5B6AF0] px-8 text-[15px] font-medium text-white hover:bg-[#4F5DE0]"
+            >
+              <Link href="/sign-in">
+                Start free
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-              <nav className="hidden space-x-6 text-sm text-slate-text-secondary md:block">
-                <Link href="#features" className="hover:text-slate-primary transition-colors">Features</Link>
-                <Link href="#pricing" className="hover:text-slate-primary transition-colors">Pricing</Link>
-                <Link href="#testimonials" className="hover:text-slate-primary transition-colors">Success Stories</Link>
-              </nav>
-              <Button className="bg-gradient-brand text-white font-semibold hover:shadow-glow transition-all">
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-12 rounded-full border-slate-200 bg-white px-8 text-[15px] font-medium text-slate-700 hover:bg-slate-50"
+            >
+              <a href="#product">See how it works</a>
+            </Button>
+          </div>
+          <p className="mt-5 text-[13px] text-slate-400">
+            Free plan available · No card required · Cancel anytime
+          </p>
+        </div>
+
+        {/* Product frame */}
+        <div className="mx-auto max-w-5xl px-5 lg:px-8">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-[#0B0F19] shadow-[0_24px_80px_-12px_rgba(15,23,42,0.35)]">
+            <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+              <span className="ml-3 text-[11px] text-white/30">gemai.app / inbox</span>
             </div>
-
-            <div className="mx-auto mt-20 max-w-4xl text-center">
-              <div className="inline-block mb-4 px-4 py-1.5 bg-slate-bg-tertiary border border-slate-primary/20 rounded-full text-sm text-slate-text-secondary">
-                ✨ Trusted by 5,000+ businesses and creators worldwide
-              </div>
-              
-              <h1 className="text-5xl font-bold leading-tight tracking-tight text-slate-text-primary sm:text-6xl md:text-7xl lg:text-8xl">
-                Transform Instagram DMs into<br />
-                <span className="bg-gradient-brand bg-clip-text text-transparent">
-                  Revenue with AI
-                </span>
-              </h1>
-
-              <p className="mt-8 text-xl text-slate-text-secondary max-w-2xl mx-auto">
-                Gemai automates Instagram DMs and comments with intelligent AI responses 
-                that engage customers, qualify leads, and drive sales—24/7, no manual work required.
-              </p>
-
-              <div className="mt-10 flex justify-center gap-4 flex-wrap">
-                <Link href="/sign-in">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-brand text-white hover:shadow-glow transition-all text-base px-8 py-6 font-semibold"
+            <div className="grid grid-cols-12 min-h-[320px] md:min-h-[420px]">
+              {/* Sidebar mock */}
+              <div className="col-span-3 hidden border-r border-white/5 p-4 md:block">
+                <div className="mb-6 text-[11px] font-medium text-white/40">Workspace</div>
+                {["Overview", "Inbox", "Flows", "Contacts"].map((item, i) => (
+                  <div
+                    key={item}
+                    className={`mb-1 rounded-md px-2.5 py-2 text-[12px] ${
+                      i === 1
+                        ? "bg-[#5B6AF0]/15 text-[#8B9AFF]"
+                        : "text-white/50"
+                    }`}
                   >
-                    Start Free - No Credit Card
-                  </Button>
-                </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-slate-text-tertiary text-slate-text-secondary hover:bg-slate-bg-tertiary hover:border-slate-primary transition-all text-base px-8 py-6"
-                >
-                  <Play className="mr-2 h-5 w-5" />
-                  Watch Demo
-                </Button>
+                    {item}
+                  </div>
+                ))}
               </div>
-              
-              <p className="mt-6 text-sm text-slate-text-tertiary">
-                Free forever plan available • No credit card required • 14-day Pro trial • Cancel anytime
-              </p>
+              {/* Conversation list mock */}
+              <div className="col-span-12 border-r border-white/5 p-3 md:col-span-4">
+                <div className="mb-3 text-[11px] font-medium text-white/40 px-1">
+                  Open · 12
+                </div>
+                {[
+                  { name: "Ananya R.", preview: "Do you ship to Bangalore?", time: "2m" },
+                  { name: "Rahul K.", preview: "Price for the starter kit?", time: "14m" },
+                  { name: "Meera P.", preview: "Loved the new drop 🔥", time: "1h" },
+                ].map((c, i) => (
+                  <div
+                    key={c.name}
+                    className={`mb-1 flex items-center gap-3 rounded-lg px-2.5 py-2.5 ${
+                      i === 0 ? "bg-white/5" : ""
+                    }`}
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5B6AF0]/20 text-[11px] font-medium text-[#8B9AFF]">
+                      {c.name[0]}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-[12px] font-medium text-white/90">
+                          {c.name}
+                        </span>
+                        <span className="text-[10px] text-white/30">{c.time}</span>
+                      </div>
+                      <p className="truncate text-[11px] text-white/40">{c.preview}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Thread mock */}
+              <div className="col-span-12 flex flex-col p-4 md:col-span-5">
+                <div className="mb-4 border-b border-white/5 pb-3">
+                  <p className="text-[13px] font-medium text-white/90">Ananya R.</p>
+                  <p className="text-[11px] text-white/35">@ananya.creates</p>
+                </div>
+                <div className="flex flex-1 flex-col gap-3">
+                  <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/8 px-3.5 py-2.5 text-[12px] text-white/80">
+                    Hi! Do you ship to Bangalore?
+                  </div>
+                  <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#5B6AF0] px-3.5 py-2.5 text-[12px] text-white">
+                    Yes — we ship across India. Bangalore usually arrives in 2–3 days. Free over ₹499.
+                  </div>
+                  <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/8 px-3.5 py-2.5 text-[12px] text-white/80">
+                    Perfect, I'll order tonight 🙏
+                  </div>
+                </div>
+              </div>
             </div>
-            {/* <div className="relative h-40 md:h-80 w-full mt-16 rounded-xl overflow-hidden border border-slate-primary/20">
-              <Image
-                src="/Ig-creators.png"
-                alt="Gemai AI-Powered Instagram Automation Dashboard"
-                fill
-                className="object-cover"
-              />
-            </div> */}
           </div>
         </div>
       </section>
 
-      {/* Features Section - Redesigned */}
-      <section id="features" className="relative w-full py-24 md:py-32 bg-gradient-to-b from-slate-bg-primary via-slate-900 to-slate-bg-primary overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse animation-delay-4000"></div>
-        </div>
-
-        <div className="container relative px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-6 text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-primary/20 to-purple-500/20 border border-slate-primary/30 rounded-full">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-primary"></span>
-              </span>
-              <span className="text-sm font-medium text-slate-text-primary">Powerful Automation Features</span>
+      {/* ─── Social proof strip ─── */}
+      <section className="border-y border-black/5 bg-[#F5F5F7] py-12">
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 px-5 text-center md:grid-cols-4 lg:px-8">
+          {[
+            { value: "5,000+", label: "Teams & creators" },
+            { value: "<5s", label: "Avg. reply time" },
+            { value: "3×", label: "More conversions" },
+            { value: "20h+", label: "Saved weekly" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <div className="text-3xl font-semibold tracking-tight text-slate-900">
+                {stat.value}
+              </div>
+              <div className="mt-1 text-[13px] text-slate-500">{stat.label}</div>
             </div>
-            
-            <h2 className="text-4xl font-bold tracking-tight text-slate-text-primary sm:text-5xl md:text-6xl max-w-4xl">
-              Everything You Need to
-              <span className="block bg-gradient-brand bg-clip-text text-transparent mt-2">
-                Dominate Instagram DMs
-              </span>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Product story ─── */}
+      <section id="product" className="py-24 md:py-32">
+        <div className="mx-auto max-w-6xl px-5 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+              Built for the way you actually work.
             </h2>
-            <p className="max-w-[900px] text-xl text-slate-text-secondary">
-              Automate conversations, engage followers, qualify leads, and boost sales—all on complete autopilot
+            <p className="mt-4 text-lg text-slate-500">
+              One workspace for inbox, flows, and leads—calm enough for creators,
+              structured enough for agencies.
             </p>
           </div>
-          
-          {/* Main Feature - Spotlight */}
-          <div className="max-w-6xl mx-auto mb-16">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-brand rounded-2xl blur-xl opacity-25 group-hover:opacity-40 transition duration-1000"></div>
-              <div className="relative bg-slate-bg-secondary/80 backdrop-blur-sm border border-slate-text-tertiary/20 rounded-2xl p-8 md:p-12">
-                <div className="grid md:grid-cols-2 gap-12 items-center">
+
+          <div className="mt-20 space-y-24">
+            {[
+              {
+                eyebrow: "Inbox",
+                title: "Human when it matters. Automated when it doesn't.",
+                body: "AI handles the routine. You take over in one click. Assignment, status, and delivery—always visible.",
+                icon: Inbox,
+                points: [
+                  "Optimistic send with delivery status",
+                  "Bot ↔ human handoff in one action",
+                  "Shared team inbox with assignment",
+                ],
+              },
+              {
+                eyebrow: "Flows",
+                title: "Design journeys, not just auto-replies.",
+                body: "Triggers, conditions, AI steps, and tags—connected in a visual builder that stays clear under pressure.",
+                icon: Workflow,
+                points: [
+                  "Keyword, comment, and story triggers",
+                  "Branching conditions & wait steps",
+                  "AI reply and lead qualification nodes",
+                ],
+              },
+              {
+                eyebrow: "Leads",
+                title: "Qualify without leaving Instagram.",
+                body: "Capture fields, score intent, and move prospects through a simple board your whole team can follow.",
+                icon: Sparkles,
+                points: [
+                  "Custom lead fields",
+                  "Status pipeline",
+                  "Tags that sync with automations",
+                ],
+              },
+            ].map((block, idx) => {
+              const Icon = block.icon;
+              return (
+                <div
+                  key={block.eyebrow}
+                  className={`grid items-center gap-12 lg:grid-cols-2 ${
+                    idx % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
+                  }`}
+                >
                   <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-brand rounded-full text-xs font-bold text-white mb-6">
-                      ⭐ MOST LOVED FEATURE
+                    <div className="mb-4 inline-flex items-center gap-2 text-[13px] font-medium text-[#5B6AF0]">
+                      <Icon className="h-4 w-4" />
+                      {block.eyebrow}
                     </div>
-                    <h3 className="text-3xl md:text-4xl font-bold text-slate-text-primary mb-4">
-                      AI-Powered Smart Replies
-                    </h3>
-                    <p className="text-lg text-slate-text-secondary mb-6">
-                      Our advanced AI doesn&apos;t just respond—it understands context, learns your brand voice, and delivers personalized conversations that feel genuinely human. Watch your engagement soar while you sleep.
+                    <h3
+                      className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl"
+                      dangerouslySetInnerHTML={{ __html: block.title }}
+                    />
+                    <p className="mt-4 text-base leading-relaxed text-slate-500">
+                      {block.body}
                     </p>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-3">
-                        <div className="mt-1 h-5 w-5 rounded-full bg-gradient-brand flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="h-3 w-3 text-white" />
-                        </div>
-                        <span className="text-slate-text-secondary">Contextual understanding of customer intent</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="mt-1 h-5 w-5 rounded-full bg-gradient-brand flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="h-3 w-3 text-white" />
-                        </div>
-                        <span className="text-slate-text-secondary">Learns and adapts to your brand voice</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="mt-1 h-5 w-5 rounded-full bg-gradient-brand flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="h-3 w-3 text-white" />
-                        </div>
-                        <span className="text-slate-text-secondary">Handles multiple languages seamlessly</span>
-                      </li>
+                    <ul className="mt-6 space-y-3">
+                      {block.points.map((p) => (
+                        <li key={p} className="flex items-start gap-3 text-[15px] text-slate-600">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5B6AF0]/10">
+                            <Check className="h-3 w-3 text-[#5B6AF0]" />
+                          </span>
+                          {p}
+                        </li>
+                      ))}
                     </ul>
                   </div>
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-brand rounded-xl blur-2xl opacity-20"></div>
-                    <div className="relative bg-slate-900 rounded-xl p-6 border border-slate-primary/30">
-                      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-text-tertiary/20">
-                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                        <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                  <div className="rounded-2xl border border-slate-200 bg-[#F5F5F7] p-6 sm:p-10">
+                    <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5B6AF0]/10 text-[#5B6AF0]">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{block.eyebrow}</p>
+                          <p className="text-xs text-slate-400">Live in Gemai</p>
+                        </div>
                       </div>
-                      <div className="space-y-4">
-                        <div className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-gradient-accent flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <div className="bg-slate-bg-tertiary rounded-lg rounded-tl-none p-3">
-                              <p className="text-sm text-slate-text-secondary">Hi! Do you ship to Mumbai?</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-3 justify-end">
-                          <div className="flex-1 flex justify-end">
-                            <div className="bg-gradient-brand rounded-lg rounded-tr-none p-3 max-w-[80%]">
-                              <p className="text-sm text-white">Yes! We ship to Mumbai with free delivery on orders over ₹499. Usually arrives in 2-3 days. 🚀</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-gradient-accent flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <div className="bg-slate-bg-tertiary rounded-lg rounded-tl-none p-3">
-                              <p className="text-sm text-slate-text-secondary">Great! What about returns?</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-primary">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-slate-primary rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-slate-primary rounded-full animate-bounce animation-delay-200"></div>
-                            <div className="w-2 h-2 bg-slate-primary rounded-full animate-bounce animation-delay-400"></div>
-                          </div>
-                          <span className="text-xs">AI typing...</span>
-                        </div>
+                      <div className="space-y-2">
+                        {[1, 2, 3].map((n) => (
+                          <div
+                            key={n}
+                            className="h-10 rounded-lg bg-slate-50 border border-slate-100"
+                            style={{ width: `${100 - n * 12}%` }}
+                          />
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {/* Feature 1 */}
-            <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur"></div>
-              <div className="relative h-full bg-slate-bg-secondary/90 backdrop-blur-sm border border-slate-text-tertiary/10 rounded-2xl p-6 hover:border-slate-primary/30 transition-all duration-300">
-                <div className="relative h-14 w-14 mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl opacity-20 blur-md"></div>
-                  <div className="relative h-full w-full bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                    <Zap className="h-7 w-7 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-text-primary mb-3 group-hover:text-transparent group-hover:bg-gradient-brand group-hover:bg-clip-text transition-all">
-                  Lightning-Fast Responses
-                </h3>
-                <p className="text-slate-text-secondary leading-relaxed">
-                  Never miss a potential customer. Gemai responds to every DM and comment in under 5 seconds, 24/7—even while you sleep.
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-primary">
-                    <span className="font-semibold">5 sec</span>
-                    <span className="text-slate-text-tertiary">avg response</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur"></div>
-              <div className="relative h-full bg-slate-bg-secondary/90 backdrop-blur-sm border border-slate-text-tertiary/10 rounded-2xl p-6 hover:border-slate-primary/30 transition-all duration-300">
-                <div className="relative h-14 w-14 mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl opacity-20 blur-md"></div>
-                  <div className="relative h-full w-full bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="h-7 w-7 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-text-primary mb-3 group-hover:text-transparent group-hover:bg-gradient-brand group-hover:bg-clip-text transition-all">
-                  Real-Time Analytics
-                </h3>
-                <p className="text-slate-text-secondary leading-relaxed">
-                  Track engagement rates, conversion metrics, and ROI with comprehensive analytics that show exactly how automation drives sales.
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-primary">
-                    <span className="font-semibold">Live Dashboard</span>
-                    <span className="text-slate-text-tertiary">updates</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur"></div>
-              <div className="relative h-full bg-slate-bg-secondary/90 backdrop-blur-sm border border-slate-text-tertiary/10 rounded-2xl p-6 hover:border-slate-primary/30 transition-all duration-300">
-                <div className="relative h-14 w-14 mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl opacity-20 blur-md"></div>
-                  <div className="relative h-full w-full bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">🎯</span>
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-text-primary mb-3 group-hover:text-transparent group-hover:bg-gradient-brand group-hover:bg-clip-text transition-all">
-                  No-Code Automation
-                </h3>
-                <p className="text-slate-text-secondary leading-relaxed">
-                  Create sophisticated automation workflows with visual triggers, smart conditions, and custom actions—zero coding needed.
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-primary">
-                    <span className="font-semibold">Drag & Drop</span>
-                    <span className="text-slate-text-tertiary">builder</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur"></div>
-              <div className="relative h-full bg-slate-bg-secondary/90 backdrop-blur-sm border border-slate-text-tertiary/10 rounded-2xl p-6 hover:border-slate-primary/30 transition-all duration-300">
-                <div className="relative h-14 w-14 mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl opacity-20 blur-md"></div>
-                  <div className="relative h-full w-full bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">🔒</span>
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-text-primary mb-3 group-hover:text-transparent group-hover:bg-gradient-brand group-hover:bg-clip-text transition-all">
-                  Enterprise Security
-                </h3>
-                <p className="text-slate-text-secondary leading-relaxed">
-                  Bank-level encryption, GDPR compliance, and full adherence to Instagram&apos;s official Meta API standards for complete peace of mind.
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-primary">
-                    <span className="font-semibold">100% Secure</span>
-                    <span className="text-slate-text-tertiary">& compliant</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-600 to-red-600 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur"></div>
-              <div className="relative h-full bg-slate-bg-secondary/90 backdrop-blur-sm border border-slate-text-tertiary/10 rounded-2xl p-6 hover:border-slate-primary/30 transition-all duration-300">
-                <div className="relative h-14 w-14 mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl opacity-20 blur-md"></div>
-                  <div className="relative h-full w-full bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                    <Users className="h-7 w-7 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-text-primary mb-3 group-hover:text-transparent group-hover:bg-gradient-brand group-hover:bg-clip-text transition-all">
-                  Multi-Account Support
-                </h3>
-                <p className="text-slate-text-secondary leading-relaxed">
-                  Manage multiple Instagram business profiles from a single dashboard. Perfect for agencies and growing brands.
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-primary">
-                    <span className="font-semibold">Unlimited</span>
-                    <span className="text-slate-text-tertiary">accounts</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur"></div>
-              <div className="relative h-full bg-slate-bg-secondary/90 backdrop-blur-sm border border-slate-text-tertiary/10 rounded-2xl p-6 hover:border-slate-primary/30 transition-all duration-300">
-                <div className="relative h-14 w-14 mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl opacity-20 blur-md"></div>
-                  <div className="relative h-full w-full bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">💎</span>
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-slate-text-primary mb-3 group-hover:text-transparent group-hover:bg-gradient-brand group-hover:bg-clip-text transition-all">
-                  24/7 Priority Support
-                </h3>
-                <p className="text-slate-text-secondary leading-relaxed">
-                  Get expert onboarding assistance, custom automation strategy sessions, and priority support to maximize your results.
-                </p>
-                <div className="mt-4 pt-4 border-t border-slate-text-tertiary/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-primary">
-                    <span className="font-semibold">Always Here</span>
-                    <span className="text-slate-text-tertiary">for you</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom CTA */}
-          <div className="mt-16 text-center">
-            <Link href="/sign-in">
-              <Button size="lg" className="bg-gradient-brand text-white hover:shadow-glow hover:scale-105 transition-all duration-300 text-base px-10 py-6 font-semibold">
-                Explore All Features
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="container w-full py-24 md:py-32 bg-slate-bg-secondary">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <h2 className="text-4xl font-bold tracking-tight text-slate-text-primary sm:text-5xl">
-              Choose Your Plan
+      {/* ─── Features ─── */}
+      <section id="features" className="border-t border-black/5 bg-[#F5F5F7] py-24 md:py-32">
+        <div className="mx-auto max-w-6xl px-5 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Everything you need. Nothing you don't.
             </h2>
-            <p className="max-w-[900px] text-lg text-slate-text-secondary">
-              Start free, upgrade as you grow. No hidden fees.
+            <p className="mt-4 text-lg text-slate-500">
+              Powerful automation, presented with restraint.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 md:gap-8 max-w-5xl mx-auto">
-            {plans.map((plan, index) => (
-              <Card key={index} className={`flex flex-col justify-between bg-slate-bg-tertiary border-slate-text-tertiary/10 hover:border-slate-primary/50 transition-all ${plan.popular ? 'ring-2 ring-slate-primary' : ''}`}>
-                <CardHeader>
-                  {plan.popular && (
-                    <div className="inline-block mb-2 px-3 py-1 bg-gradient-brand rounded-full text-xs font-semibold text-white w-fit">
-                      MOST POPULAR
-                    </div>
-                  )}
-                  <CardTitle className="text-slate-text-primary text-2xl">{plan.name}</CardTitle>
-                  <CardDescription className="text-slate-text-secondary">{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-6">
-                  <div className="text-5xl font-bold text-slate-text-primary">
-                    {plan.price}
-                    <span className="text-lg font-normal text-slate-text-secondary">
-                      /month
-                    </span>
+
+          <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                icon: Zap,
+                title: "Instant replies",
+                body: "Respond in seconds—day or night—without sounding robotic.",
+              },
+              {
+                icon: MessageSquare,
+                title: "AI that knows context",
+                body: "Understands intent, keeps your tone, and knows when to escalate.",
+              },
+              {
+                icon: Workflow,
+                title: "Visual flow builder",
+                body: "Triggers, branches, waits, and AI steps in one clear canvas.",
+              },
+              {
+                icon: BarChart3,
+                title: "Clear analytics",
+                body: "See what converts. No vanity dashboards, just signal.",
+              },
+              {
+                icon: Shield,
+                title: "Official Meta API",
+                body: "Built on Instagram’s platform standards—secure by design.",
+              },
+              {
+                icon: Inbox,
+                title: "Team inbox",
+                body: "Assign, take over, and close—together, without chaos.",
+              },
+            ].map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="rounded-2xl border border-black/5 bg-white p-6 transition-colors hover:border-black/10"
+                >
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#5B6AF0]/10 text-[#5B6AF0]">
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start">
-                        <CheckCircle className="mr-3 h-5 w-5 text-slate-success mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-slate-text-secondary">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Link href="/sign-in" className="w-full">
-                    <Button className={`w-full font-semibold ${plan.popular ? 'bg-gradient-brand text-white hover:shadow-glow' : 'bg-slate-bg-secondary border border-slate-text-tertiary hover:bg-slate-bg-primary'} transition-all`}>
-                      {plan.cta}
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
+                  <h3 className="text-[17px] font-semibold text-slate-900">{f.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{f.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── How it works ─── */}
+      <section className="py-24 md:py-32">
+        <div className="mx-auto max-w-6xl px-5 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Live in minutes.
+            </h2>
+            <p className="mt-4 text-lg text-slate-500">
+              Three steps. No engineering required.
+            </p>
+          </div>
+          <div className="mt-16 grid gap-10 md:grid-cols-3">
+            {[
+              {
+                step: "01",
+                title: "Connect Instagram",
+                body: "Link your business account securely via Meta’s official API.",
+              },
+              {
+                step: "02",
+                title: "Build a flow",
+                body: "Choose triggers, write replies, or let AI handle the nuance.",
+              },
+              {
+                step: "03",
+                title: "Go live",
+                body: "Publish and watch conversations move while you focus elsewhere.",
+              },
+            ].map((s) => (
+              <div key={s.step} className="text-center md:text-left">
+                <div className="text-[13px] font-medium tracking-widest text-[#5B6AF0]">
+                  {s.step}
+                </div>
+                <h3 className="mt-3 text-xl font-semibold text-slate-900">{s.title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-slate-500">{s.body}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="container w-full py-24 md:py-32 bg-slate-bg-primary">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight text-slate-text-primary sm:text-5xl">
-              Trusted by Businesses Worldwide
+      {/* ─── Pricing ─── */}
+      <section id="pricing" className="border-t border-black/5 bg-[#F5F5F7] py-24 md:py-32">
+        <div className="mx-auto max-w-5xl px-5 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Simple pricing.
             </h2>
-            <p className="max-w-[900px] text-lg text-slate-text-secondary">
-              See how Gemai is helping businesses scale their Instagram presence and boost revenue
+            <p className="mt-4 text-lg text-slate-500">
+              Start free. Upgrade when you're ready.
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-slate-bg-secondary border border-slate-text-tertiary/10 rounded-xl p-6">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-400">★</span>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-2">
+            {/* Free */}
+            <div className="flex flex-col rounded-2xl border border-black/5 bg-white p-8">
+              <p className="text-[13px] font-medium text-slate-500">Starter</p>
+              <div className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-semibold tracking-tight text-slate-900">₹0</span>
+                <span className="text-slate-400">/month</span>
+              </div>
+              <p className="mt-2 text-[15px] text-slate-500">Perfect for getting started.</p>
+              <ul className="mt-8 flex-1 space-y-3">
+                {[
+                  "200 automated responses / month",
+                  "Keyword triggers",
+                  "Smart templates",
+                  "Email support",
+                  "DM & comment automation",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-[14px] text-slate-600">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#5B6AF0]" />
+                    {f}
+                  </li>
                 ))}
-              </div>
-              <p className="text-slate-text-secondary mb-4">
-                &quot;Gemai transformed our Instagram sales! We now convert 3x more followers into customers with instant, intelligent responses. Game-changer for our e-commerce business.&quot;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-accent" />
-                <div>
-                  <p className="font-semibold text-slate-text-primary">Priya Sharma</p>
-                  <p className="text-sm text-slate-text-tertiary">@stylebypriya</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-slate-bg-secondary border border-slate-text-tertiary/10 rounded-xl p-6">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-400">★</span>
-                ))}
-              </div>
-              <p className="text-slate-text-secondary mb-4">
-                &quot;We were drowning in DMs. Gemai handles everything automatically while maintaining our brand voice. Response time went from 4 hours to 5 seconds!&quot;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-accent" />
-                <div>
-                  <p className="font-semibold text-slate-text-primary">Rahul Verma</p>
-                  <p className="text-sm text-slate-text-tertiary">@fitnesswithrahul</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-slate-bg-secondary border border-slate-text-tertiary/10 rounded-xl p-6">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-400">★</span>
-                ))}
-              </div>
-              <p className="text-slate-text-secondary mb-4">
-                &quot;The AI is incredibly smart! It understands context and qualifies leads automatically. Gemai saved us 20+ hours per week while increasing our conversion rate by 45%.&quot;
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-accent" />
-                <div>
-                  <p className="font-semibold text-slate-text-primary">Meera Patel</p>
-                  <p className="text-sm text-slate-text-tertiary">@meera_jewelry</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="container w-full py-16 bg-gradient-to-r from-slate-primary/10 to-purple-500/10 border-y border-slate-text-tertiary/10">
-        <div className="container px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Users className="h-8 w-8 text-slate-primary" />
-              </div>
-              <div className="text-4xl font-bold text-slate-text-primary mb-1">5,000+</div>
-              <div className="text-sm text-slate-text-secondary">Active Users</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Zap className="h-8 w-8 text-slate-primary" />
-              </div>
-              <div className="text-4xl font-bold text-slate-text-primary mb-1">5 sec</div>
-              <div className="text-sm text-slate-text-secondary">Avg Response Time</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="h-8 w-8 text-slate-primary" />
-              </div>
-              <div className="text-4xl font-bold text-slate-text-primary mb-1">3x</div>
-              <div className="text-sm text-slate-text-secondary">Conversion Increase</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Clock className="h-8 w-8 text-slate-primary" />
-              </div>
-              <div className="text-4xl font-bold text-slate-text-primary mb-1">20+ hrs</div>
-              <div className="text-sm text-slate-text-secondary">Saved Per Week</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="container w-full py-24 md:py-32 bg-slate-bg-primary">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight text-slate-text-primary sm:text-5xl">
-              Get Started in 3 Simple Steps
-            </h2>
-            <p className="max-w-[900px] text-lg text-slate-text-secondary">
-              Set up your AI-powered Instagram automation in minutes
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="relative">
-              <div className="flex flex-col items-center text-center">
-                <div className="h-16 w-16 rounded-full bg-gradient-brand flex items-center justify-center text-white text-2xl font-bold mb-4">
-                  1
-                </div>
-                <h3 className="text-xl font-semibold text-slate-text-primary mb-3">
-                  Connect Instagram
-                </h3>
-                <p className="text-slate-text-secondary">
-                  Securely link your Instagram business account with one click. We use official Meta API for complete safety.
-                </p>
-              </div>
-              <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-slate-primary to-transparent -translate-x-1/2" />
-            </div>
-
-            <div className="relative">
-              <div className="flex flex-col items-center text-center">
-                <div className="h-16 w-16 rounded-full bg-gradient-brand flex items-center justify-center text-white text-2xl font-bold mb-4">
-                  2
-                </div>
-                <h3 className="text-xl font-semibold text-slate-text-primary mb-3">
-                  Set Up Automations
-                </h3>
-                <p className="text-slate-text-secondary">
-                  Create triggers, keywords, and responses using our no-code builder. Customize AI to match your brand voice.
-                </p>
-              </div>
-              <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-slate-primary to-transparent -translate-x-1/2" />
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="h-16 w-16 rounded-full bg-gradient-brand flex items-center justify-center text-white text-2xl font-bold mb-4">
-                3
-              </div>
-              <h3 className="text-xl font-semibold text-slate-text-primary mb-3">
-                Watch It Work
-              </h3>
-              <p className="text-slate-text-secondary">
-                Activate your automations and watch Gemai handle DMs and comments 24/7. Track results in real-time analytics.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-center mt-12">
-            <Link href="/sign-in">
-              <Button size="lg" className="bg-gradient-brand text-white hover:shadow-glow">
-                Get Started Now <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section id="faq" className="container w-full py-24 md:py-32 bg-slate-bg-secondary">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight text-slate-text-primary sm:text-5xl">
-              Frequently Asked Questions
-            </h2>
-            <p className="max-w-[900px] text-lg text-slate-text-secondary">
-              Everything you need to know about Gemai
-            </p>
-          </div>
-          
-          <div className="max-w-3xl mx-auto">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-1" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  How does Gemai work?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  Gemai connects to your Instagram account via Meta&apos;s official API and monitors DMs and comments 24/7. When someone messages you or comments on your posts, our AI analyzes the message, understands the intent, and responds automatically based on your configured rules and brand voice.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-2" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  Is it safe to connect my Instagram account?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  Absolutely! We use Instagram&apos;s official Meta Business API, which is the same technology used by major brands worldwide. Your account credentials are never stored on our servers, and we follow strict security protocols including bank-level encryption and GDPR compliance.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-3" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  Can I customize the AI responses?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  Yes! On the PRO plan, you can fully customize AI behavior including tone, style, and specific responses. You can train the AI on your product catalog, FAQs, and brand guidelines to ensure responses match your voice perfectly.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-4" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  What&apos;s the difference between FREE and PRO?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  The FREE plan includes 200 automated responses per month with basic features. The PRO plan (₹999/month) offers unlimited responses, advanced AI capabilities, real-time analytics, priority support, custom workflows, and integration options. Plus, you get a 14-day free trial to test all PRO features.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-5" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  Can I cancel anytime?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  Yes, you can cancel your subscription at any time with no questions asked. Your service will remain active until the end of your billing period, and you won&apos;t be charged again.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-6" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  Do you offer refunds?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  We offer a 14-day free trial for the PRO plan, so you can test all features risk-free. If you&apos;re not satisfied within the first 7 days of your paid subscription, contact our support team for a full refund.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-7" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  How fast does Gemai respond to messages?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  Gemai responds within 5 seconds on average. This instant response time helps you engage customers at the perfect moment and significantly improves conversion rates compared to manual responses.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-8" className="border-slate-text-tertiary/20">
-                <AccordionTrigger className="text-left text-slate-text-primary hover:text-slate-primary">
-                  Can I manage multiple Instagram accounts?
-                </AccordionTrigger>
-                <AccordionContent className="text-slate-text-secondary">
-                  Yes! The PRO plan includes multi-account management, allowing you to automate DMs and comments across multiple Instagram business profiles from a single dashboard.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="container w-full py-24 md:py-32 bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#667eea_1px,transparent_1px),linear-gradient(to_bottom,#667eea_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10" />
-        <div className="container px-4 md:px-6 relative">
-          <div className="flex flex-col items-center justify-center space-y-8 text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold tracking-tight text-slate-text-primary sm:text-5xl md:text-6xl">
-              Ready to Transform Your Instagram Into a Revenue Machine?
-            </h2>
-            <p className="text-xl text-slate-text-secondary">
-              Join 5,000+ businesses already automating their Instagram success with Gemai
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Link href="/sign-in">
-                <Button
-                  size="lg"
-                  className="bg-gradient-brand text-white hover:shadow-glow transition-all text-base px-10 py-7 font-semibold w-full sm:w-auto"
-                >
-                  Start Your Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              </ul>
               <Button
-                size="lg"
+                asChild
                 variant="outline"
-                className="border-slate-text-tertiary text-slate-text-secondary hover:bg-slate-bg-tertiary hover:border-slate-primary transition-all text-base px-10 py-7 w-full sm:w-auto"
+                className="mt-8 h-11 w-full rounded-full border-slate-200 font-medium"
               >
-                Schedule a Demo
+                <Link href="/sign-in">Start free</Link>
               </Button>
             </div>
-            <p className="text-sm text-slate-text-tertiary">
-              ✓ No credit card required &nbsp;•&nbsp; ✓ 14-day free trial &nbsp;•&nbsp; ✓ Cancel anytime
-            </p>
+
+            {/* Pro */}
+            <div className="relative flex flex-col rounded-2xl border border-[#5B6AF0]/30 bg-white p-8 shadow-[0_0_0_1px_rgba(91,106,240,0.08)]">
+              <div className="absolute -top-3 left-8 rounded-full bg-[#5B6AF0] px-3 py-0.5 text-[11px] font-medium text-white">
+                Most popular
+              </div>
+              <p className="text-[13px] font-medium text-slate-500">Pro</p>
+              <div className="mt-3 flex items-baseline gap-1">
+                <span className="text-4xl font-semibold tracking-tight text-slate-900">₹999</span>
+                <span className="text-slate-400">/month</span>
+              </div>
+              <p className="mt-2 text-[15px] text-slate-500">For growing brands and teams.</p>
+              <ul className="mt-8 flex-1 space-y-3">
+                {[
+                  "Unlimited automated responses",
+                  "Advanced AI replies",
+                  "Visual flow builder",
+                  "Analytics dashboard",
+                  "Lead qualification",
+                  "Priority support",
+                  "Multi-account management",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-[14px] text-slate-600">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#5B6AF0]" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                asChild
+                className="mt-8 h-11 w-full rounded-full bg-[#5B6AF0] font-medium text-white hover:bg-[#4F5DE0]"
+              >
+                <Link href="/sign-in">Start 14-day trial</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ─── Testimonials ─── */}
+      <section className="py-24 md:py-32">
+        <div className="mx-auto max-w-6xl px-5 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Trusted by people who ship.
+            </h2>
+          </div>
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
+            {[
+              {
+                quote:
+                  "We convert far more followers now. Instant, on-brand replies changed our DMs completely.",
+                name: "Priya Sharma",
+                handle: "@stylebypriya",
+              },
+              {
+                quote:
+                  "Response time went from hours to seconds. The team inbox finally feels under control.",
+                name: "Rahul Verma",
+                handle: "@fitnesswithrahul",
+              },
+              {
+                quote:
+                  "The AI understands context. Lead qualification runs while we focus on product.",
+                name: "Meera Patel",
+                handle: "@meera_jewelry",
+              },
+            ].map((t) => (
+              <figure
+                key={t.handle}
+                className="flex flex-col rounded-2xl border border-black/5 bg-[#F5F5F7] p-6"
+              >
+                <blockquote className="flex-1 text-[15px] leading-relaxed text-slate-600">
+                  “{t.quote}”
+                </blockquote>
+                <figcaption className="mt-6 flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#5B6AF0]/15 text-[13px] font-medium text-[#5B6AF0]">
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">{t.name}</div>
+                    <div className="text-xs text-slate-400">{t.handle}</div>
+                  </div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ ─── */}
+      <section id="faq" className="border-t border-black/5 bg-[#F5F5F7] py-24 md:py-32">
+        <div className="mx-auto max-w-3xl px-5 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              Questions, answered.
+            </h2>
+          </div>
+          <Accordion type="single" collapsible className="mt-12 w-full">
+            {[
+              {
+                q: "How does Gemai work?",
+                a: "Gemai connects via Meta’s official API, watches DMs and comments, and responds using your flows and AI rules—24/7.",
+              },
+              {
+                q: "Is connecting Instagram safe?",
+                a: "Yes. We use Instagram’s official Business API. Credentials aren’t stored on our servers, and we follow standard security practices including encryption and GDPR readiness.",
+              },
+              {
+                q: "Can I customize AI responses?",
+                a: "On Pro you can shape tone, prompts, and workflows so replies match your brand—and hand off to a human anytime.",
+              },
+              {
+                q: "What’s the difference between Free and Pro?",
+                a: "Free includes 200 automated responses per month. Pro unlocks unlimited replies, advanced AI, the flow builder, analytics, and priority support—with a 14-day trial.",
+              },
+              {
+                q: "Can I cancel anytime?",
+                a: "Yes. Cancel whenever you like. Access continues until the end of your billing period.",
+              },
+            ].map((item, i) => (
+              <AccordionItem
+                key={item.q}
+                value={`item-${i}`}
+                className="border-black/5"
+              >
+                <AccordionTrigger className="text-left text-[15px] font-medium text-slate-900 hover:no-underline">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-[15px] leading-relaxed text-slate-500">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* ─── Final CTA ─── */}
+      <section className="py-24 md:py-32">
+        <div className="mx-auto max-w-3xl px-5 text-center lg:px-8">
+          <h2 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            Your inbox, on autopilot.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-slate-500">
+            Join teams and creators who let Gemai handle the noise—so they can focus on the work that matters.
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 rounded-full bg-[#5B6AF0] px-8 text-[15px] font-medium text-white hover:bg-[#4F5DE0]"
+            >
+              <Link href="/sign-in">
+                Get started free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          <p className="mt-5 text-[13px] text-slate-400">
+            No credit card · 14-day Pro trial · Cancel anytime
+          </p>
+        </div>
+      </section>
+
       <Footer />
     </main>
   );
