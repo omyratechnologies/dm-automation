@@ -24,6 +24,7 @@ import { ProductStage } from "@/components/marketing/product-stage";
 import { ProductChapters } from "@/components/marketing/product-chapters";
 import { ScrollProgress } from "@/components/marketing/scroll-progress";
 import { FloatingNav } from "@/components/marketing/floating-nav";
+import { BrandFilm } from "@/components/marketing/brand-film";
 
 export default function Home() {
   return (
@@ -32,6 +33,7 @@ export default function Home() {
       <FloatingNav />
 
       <MarketingHero />
+      <BrandFilm />
       <ProductStage />
 
       {/* ─── Stats ─── */}
