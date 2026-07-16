@@ -15,81 +15,62 @@ const Sidebar = () => {
   const { page } = usePaths();
 
   return (
-    <div
-      className="w-[280px] 
-    border
-    fixed 
-    left-0 
-    lg:inline-block
-    border-border
-    bg-background/95
-    backdrop-blur-2xl
-     hidden 
-     bottom-0 
-     top-0 
-     m-4 
-     rounded-3xl 
-     overflow-hidden
-     shadow-2xl shadow-primary/5"
+    <aside
+      className="w-[240px] fixed left-0 top-0 bottom-0 z-40
+        hidden lg:flex flex-col
+        border-r border-border
+        bg-sidebar
+        text-sidebar-foreground"
     >
-      <div
-        className="flex flex-col 
-       w-full 
-       h-full 
-       p-4"
-      >
-        {/* Logo Section with Enhanced Styling */}
-        <div className="flex gap-x-3 items-center p-4 mb-2 justify-center">
-          <GemaiLogo size="lg" className="h-8" />
+      <div className="flex flex-col h-full p-3">
+        {/* Logo */}
+        <div className="flex items-center gap-x-2.5 px-2 py-3 mb-1">
+          <GemaiLogo size="lg" className="h-7" />
         </div>
 
         {/* Workspace Switcher */}
-        <div className="px-1 pb-2">
+        <div className="px-1 pb-3">
           <WorkspaceSwitcher />
         </div>
 
-        {/* Navigation Items */}
-        <div className="flex flex-col py-4 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 flex flex-col gap-0.5 overflow-y-auto py-1">
           <Items page={page} />
+        </nav>
+
+        <div className="px-2 my-3">
+          <Separator className="bg-border" />
         </div>
 
-        <div className="px-4 my-4">
-          <Separator orientation="horizontal" className="bg-border" />
-        </div>
-
-        {/* Profile & Help Section */}
-        <div className="px-3 flex flex-col gap-y-2">
-          {/* Profile Link */}
-          <Link 
+        {/* Utility links */}
+        <div className="px-1 flex flex-col gap-0.5 pb-2">
+          <Link
             href="/dashboard/settings"
-            className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer group"
+            className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground
+              hover:bg-accent hover:text-foreground transition-all duration-quiet ease-quiet"
           >
-            <User className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-            <p className="text-muted-foreground text-sm font-medium group-hover:text-foreground transition-colors">
-              Profile
-            </p>
+            <User className="h-4 w-4 shrink-0" />
+            <span className="font-medium">Profile</span>
           </Link>
 
-          {/* Help Link */}
-          <Link 
+          <Link
             href="/dashboard/help"
-            className="flex gap-x-3 items-center p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer group"
+            className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground
+              hover:bg-accent hover:text-foreground transition-all duration-quiet ease-quiet"
           >
             <HelpDuoToneWhite />
-            <p className="text-muted-foreground text-sm font-medium group-hover:text-foreground transition-colors">
-              Help
-            </p>
+            <span className="font-medium">Help</span>
           </Link>
         </div>
 
-        {/* Upgrade Card */}
+        {/* Upgrade card for free plan */}
         <SubscriptionPlan type="FREE">
-          <div className="flex-1 flex flex-col justify-end mt-4">
+          <div className="mt-auto pt-2">
             <UpgradeCard />
           </div>
         </SubscriptionPlan>
       </div>
-    </div>
+    </aside>
   );
 };
 
