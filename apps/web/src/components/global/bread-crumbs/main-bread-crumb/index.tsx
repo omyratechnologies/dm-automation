@@ -7,13 +7,13 @@ type Props = {
 
 const MainBreadCrumb = ({ page }: Props) => {
   return (
-    <div className="flex flex-col items-start">
-      <span className="inline-flex py-3 gap-x-3 items-center group">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 group-hover:scale-110 transition-transform duration-200">
-          {PAGE_ICON[page.toUpperCase()]}
-        </div>
-        <h2 className="font-bold text-3xl capitalize text-foreground">{page}</h2>
-      </span>
+    <div className="flex items-center gap-x-3">
+      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+        {PAGE_ICON[page.toUpperCase()]}
+      </div>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground capitalize">
+        {page}
+      </h1>
     </div>
   );
 };
