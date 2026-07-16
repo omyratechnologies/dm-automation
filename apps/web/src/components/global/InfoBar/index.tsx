@@ -12,11 +12,9 @@ import { HelpDuoToneWhite } from "@/icons";
 import { SubscriptionPlan } from "../subscription-plan";
 import UpgradeCard from "../sidebar/upgrade";
 import GemaiLogo from "@/components/global/gemai-logo";
-import CreateAutomation from "../create-automation";
 import Search from "./search";
 import { Notifications } from "./notifications";
 import MainBreadCrumb from "../bread-crumbs/main-bread-crumb";
-import GoToAutomationsButton from "../go-to-automations-button";
 import { ThemeToggle } from "../theme-toggle";
 
 const InfoBar = () => {
@@ -25,54 +23,57 @@ const InfoBar = () => {
 
   return (
     currentPage && (
-      <div className="flex flex-col gap-y-4 mb-6">
-        <div className="flex gap-x-3 lg:gap-x-5 justify-end items-center">
+      <div className="flex flex-col gap-y-5 mb-6">
+        <div className="flex items-center justify-between gap-x-3">
           {/* Mobile Menu */}
-          <span className="lg:hidden flex items-center flex-1 gap-x-2">
-            <Sheet trigger={
-              <div className="p-2 rounded-lg bg-muted border border-border hover:bg-muted/80 transition-colors">
-                <Menu className="text-foreground" />
-              </div>
-            } className="lg:hidden" side="left">
-              <div className="flex flex-col gap-y-5 w-full h-full p-4 bg-background/95 backdrop-blur-2xl">
-                <div className="flex gap-x-3 items-center justify-center p-4">
-                  <GemaiLogo size="lg" className="h-8" />
+          <div className="lg:hidden flex items-center gap-x-2">
+            <Sheet
+              trigger={
+                <button className="p-2 rounded-md border border-border bg-surface-1 hover:bg-accent transition-all duration-quiet ease-quiet">
+                  <Menu className="h-4 w-4 text-foreground" />
+                </button>
+              }
+              className="lg:hidden"
+              side="left"
+            >
+              <div className="flex flex-col h-full p-4 bg-background">
+                <div className="flex items-center justify-center py-4 mb-2">
+                  <GemaiLogo size="lg" className="h-7" />
                 </div>
-                <div className="flex flex-col py-3">
+                <nav className="flex flex-col gap-0.5 py-2">
                   <Items page={page} />
+                </nav>
+                <div className="my-3 px-1">
+                  <Separator className="bg-border" />
                 </div>
-                <div className="px-4">
-                  <Separator orientation="horizontal" className="bg-border" />
-                </div>
-                <div className="px-3 flex flex-col gap-y-4">
-                  <div className="flex gap-x-3 items-center">
+                <div className="flex flex-col gap-0.5 px-1">
+                  <div className="flex items-center gap-x-2.5 px-2.5 py-2 text-sm text-muted-foreground">
                     <ClerkAuthState />
-                    <p className="text-muted-foreground text-sm">Profile</p>
+                    <span>Profile</span>
                   </div>
-                  <div className="flex gap-x-3 items-center">
+                  <div className="flex items-center gap-x-2.5 px-2.5 py-2 text-sm text-muted-foreground">
                     <HelpDuoToneWhite />
-                    <p className="text-muted-foreground text-sm">Help</p>
+                    <span>Help</span>
                   </div>
                 </div>
                 <SubscriptionPlan type="FREE">
-                  <div className="flex-1 flex flex-col justify-end">
+                  <div className="mt-auto pt-4">
                     <UpgradeCard />
                   </div>
                 </SubscriptionPlan>
               </div>
             </Sheet>
-          </span>
-          
+          </div>
+
           {/* Search & Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 ml-auto">
             <Search />
-            {/* <GoToAutomationsButton /> */}
             <ThemeToggle />
             <Notifications />
           </div>
         </div>
-        
-        {/* Breadcrumb */}
+
+        {/* Breadcrumb / Page title */}
         <MainBreadCrumb page={page === "dashboard" ? "Home" : page} />
       </div>
     )
