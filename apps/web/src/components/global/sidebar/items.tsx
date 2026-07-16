@@ -8,31 +8,34 @@ type Props = {
 };
 
 const Items = ({ page }: Props) => {
-  return SIDEBAR_MENU.map((item) => (
-    <Link
-      key={item.id}
-      href={`/dashboard/${item.label === "overview" ? "" : item.label}`}
-      className={cn(
-        "capitalize flex gap-x-3 rounded-xl p-3 mb-1 transition-all duration-200 items-center group",
-        page === item.label 
-          ? "bg-primary/10 dark:bg-gradient-to-r dark:from-slate-primary/20 dark:to-primary/10 border border-primary/30 text-foreground shadow-lg shadow-primary/10" 
-          : "text-muted-foreground hover:bg-accent hover:text-foreground",
-        page === "dashboard" && item.label === "overview"
-          ? "bg-primary/10 dark:bg-gradient-to-r dark:from-slate-primary/20 dark:to-primary/10 border border-primary/30 text-foreground shadow-lg shadow-primary/10"
-          : ""
-      )}
-    >
-      <span className={cn(
-        "transition-transform duration-200",
-        page === item.label || (page === "dashboard" && item.label === "overview") 
-          ? "scale-110" 
-          : "group-hover:scale-105"
-      )}>
-        {item.icon}
-      </span>
-      <span className="font-medium text-sm">{item.label}</span>
-    </Link>
-  ));
+  return SIDEBAR_MENU.map((item) => {
+    const isActive =
+      page === item.label ||
+      (page === "dashboard" && item.label === "overview");
+
+    return (
+      <Link
+        key={item.id}
+        href={`/dashboard/${item.label === "overview" ? "" : item.label}`}
+        className={cn(
+          "flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-all duration-quiet ease-quiet",
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+        )}
+      >
+        <span
+          className={cn(
+            "flex shrink-0 transition-colors duration-quiet",
+            isActive ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          {item.icon}
+        </span>
+        <span className="capitalize truncate">{item.label}</span>
+      </Link>
+    );
+  });
 };
 
 export default Items;
