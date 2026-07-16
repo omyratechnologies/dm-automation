@@ -19,7 +19,6 @@ const config = {
     },
     extend: {
       colors: {
-        // Core shadcn tokens (driven by CSS variables)
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -70,25 +69,19 @@ const config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-
-        // Quiet Professional semantic tokens
         canvas: "hsl(var(--canvas))",
         "surface-1": "hsl(var(--surface-1))",
         "surface-2": "hsl(var(--surface-2))",
         "surface-3": "hsl(var(--surface-3))",
         hairline: "hsl(var(--hairline))",
         "hairline-strong": "hsl(var(--hairline-strong))",
-
         ink: "hsl(var(--ink))",
         "ink-muted": "hsl(var(--ink-muted))",
         "ink-subtle": "hsl(var(--ink-subtle))",
         "ink-tertiary": "hsl(var(--ink-tertiary))",
-
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         error: "hsl(var(--error))",
-
-        // Legacy compatibility (gradually remove)
         "in-active": "#545454",
         connector: "#F0F1F6",
         "keyword-yellow": "#E1CE26",
@@ -98,8 +91,6 @@ const config = {
         "light-blue": "#5B6AF0",
         "background-90": "hsl(var(--card))",
         "background-80": "hsl(var(--muted))",
-
-        // Keep old slate keys mapped to new primary for compatibility
         slate: {
           primary: "#5B6AF0",
           "primary-dark": "#4F5DE0",
@@ -118,20 +109,20 @@ const config = {
         },
       },
       borderRadius: {
-        lg: "var(--radius)", // 8px
-        md: "calc(var(--radius) - 2px)", // 6px
-        sm: "calc(var(--radius) - 4px)", // 4px
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
         xl: "12px",
         "2xl": "16px",
       },
       boxShadow: {
-        // Quiet elevation – prefer surface ladder over heavy shadows
         soft: "0 4px 12px rgba(0, 0, 0, 0.06)",
         "soft-dark": "0 4px 12px rgba(0, 0, 0, 0.25)",
         focus: "0 0 0 2px hsl(var(--ring) / 0.4)",
       },
       transitionTimingFunction: {
         quiet: "cubic-bezier(0.2, 0, 0, 1)",
+        premium: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
       transitionDuration: {
         quiet: "140ms",
@@ -147,10 +138,15 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        marquee: "marquee 40s linear infinite",
       },
     },
   },
