@@ -99,7 +99,7 @@ const NewBroadcastDialog = ({ igAccounts, segments }: Props) => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90">
+        <Button>
           <Plus className="h-4 w-4 mr-2" />
           New broadcast
         </Button>
@@ -170,7 +170,7 @@ const NewBroadcastDialog = ({ igAccounts, segments }: Props) => {
               <span
                 className={
                   messageText.length > MAX_LENGTH
-                    ? "text-xs text-red-500"
+                    ? "text-xs text-destructive"
                     : "text-xs text-muted-foreground"
                 }
               >
@@ -204,7 +204,6 @@ const NewBroadcastDialog = ({ igAccounts, segments }: Props) => {
           <Button
             onClick={() => createMutation.mutate()}
             disabled={!canCreate || createMutation.isPending}
-            className="bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90"
           >
             {createMutation.isPending ? "Creating…" : "Create draft"}
           </Button>
