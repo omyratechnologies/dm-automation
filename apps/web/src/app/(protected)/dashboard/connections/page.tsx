@@ -5,11 +5,15 @@ import React, { useEffect, useState, Suspense } from "react";
 import IntegrationCard from "./_components/integration-card";
 import { useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Link2 } from "lucide-react";
+import PageHeader from "@/components/global/page-header";
 
 function ConnectionsContent() {
   const searchParams = useSearchParams();
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     const success = searchParams.get("success");
@@ -21,18 +25,16 @@ function ConnectionsContent() {
         type: "success",
         text: "Instagram account connected successfully! You can now create automations.",
       });
-      // Clear message after 5 seconds
       setTimeout(() => setMessage(null), 5000);
     } else if (success === "disconnected") {
       setMessage({
         type: "success",
         text: "Instagram account disconnected successfully.",
       });
-      // Clear message after 5 seconds
       setTimeout(() => setMessage(null), 5000);
     } else if (error) {
       let errorText = "Failed to connect Instagram account. Please try again.";
-      
+
       switch (error) {
         case "already_connected":
           errorText = "You already have an Instagram account connected.";
@@ -44,8 +46,8 @@ function ConnectionsContent() {
           errorText = "Failed to exchange authorization code for access token.";
           break;
         case "integration_failed":
-          errorText = details 
-            ? `Integration failed: ${decodeURIComponent(details)}` 
+          errorText = details
+            ? `Integration failed: ${decodeURIComponent(details)}`
             : "Failed to save Instagram connection. Please try again.";
           break;
         case "access_denied":
@@ -57,24 +59,26 @@ function ConnectionsContent() {
             : "An unexpected error occurred. Please try again.";
           break;
       }
-      
+
       setMessage({ type: "error", text: errorText });
-      // Clear message after 10 seconds for error messages
       setTimeout(() => setMessage(null), 10000);
     }
   }, [searchParams]);
 
   return (
-    <>
-      {/* Success/Error Messages */}
+    <div className="flex flex-col gap-4">
       {message && (
-        <Alert variant={message.type === "success" ? "default" : "destructive"} className="mb-4">
+        <Alert
+          variant={message.type === "success" ? "default" : "destructive"}
+        >
           {message.type === "success" ? (
             <CheckCircle2 className="h-4 w-4" />
           ) : (
             <XCircle className="h-4 w-4" />
           )}
-          <AlertTitle>{message.type === "success" ? "Success" : "Error"}</AlertTitle>
+          <AlertTitle>
+            {message.type === "success" ? "Success" : "Error"}
+          </AlertTitle>
           <AlertDescription>{message.text}</AlertDescription>
         </Alert>
       )}
@@ -82,25 +86,26 @@ function ConnectionsContent() {
       {INTEGRATION_CARDS.map((card, key) => (
         <IntegrationCard key={key} {...card} />
       ))}
-    </>
+    </div>
   );
 }
 
 function Page() {
   return (
-    <div className="flex justify-center pb-10">
-      <div className="flex flex-col w-full lg:w-10/12 xl:w-8/12 gap-y-6">
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Connections</h1>
-          <p className="text-muted-foreground">Connect your social media accounts to start automating</p>
-        </div>
+    <div className="flex flex-col pb-10 max-w-3xl">
+      <PageHeader
+        title="Connections"
+        description="Connect your social accounts to start automating."
+        icon={<Link2 className="h-5 w-5" />}
+      />
 
-        <Suspense fallback={
-          <div className="text-muted-foreground">Loading...</div>
-        }>
-          <ConnectionsContent />
-        </Suspense>
-      </div>
+      <Suspense
+        fallback={
+          <div className="text-sm text-muted-foreground">Loading…</div>
+        }
+      >
+        <ConnectionsContent />
+      </Suspense>
     </div>
   );
 }
