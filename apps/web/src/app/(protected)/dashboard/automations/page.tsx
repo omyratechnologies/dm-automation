@@ -3,34 +3,35 @@ import CreateAutomation from "@/components/global/create-automation";
 import { Check } from "lucide-react";
 import React from "react";
 
-type Props = {};
-
-const Page = (props: Props) => {
+const Page = () => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-6 gap-5">
       <div className="lg:col-span-4">
         <AutomationList />
       </div>
       <div className="lg:col-span-2">
-        <div className="flex flex-col rounded-2xl bg-card backdrop-blur-sm gap-y-6 p-6 border border-border overflow-hidden hover:border-primary/40 transition-colors duration-300">
+        <div className="flex flex-col rounded-xl border border-border bg-card gap-y-5 p-5">
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Automations</h2>
-            <p className="text-muted-foreground text-sm">
+            <h2 className="text-lg font-semibold text-foreground mb-1">
+              Automations
+            </h2>
+            <p className="text-sm text-muted-foreground">
               Your live automations will show here.
             </p>
           </div>
-          <div className="flex flex-col gap-y-4">
+          <div className="flex flex-col gap-y-2">
             {[1, 2, 3].map((item) => (
-              <div key={item} className="flex items-start justify-between p-4 rounded-xl bg-muted border border-border hover:border-primary/40 transition-colors">
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-foreground mb-1">
+              <div
+                key={item}
+                className="flex items-start justify-between p-3 rounded-lg bg-muted border border-border"
+              >
+                <div className="flex flex-col min-w-0">
+                  <h3 className="text-sm font-medium text-foreground truncate">
                     Direct traffic towards website
                   </h3>
-                  <p className="text-muted-foreground text-xs">
-                    October 5th 2024
-                  </p>
+                  <p className="text-xs text-muted-foreground">October 5th 2024</p>
                 </div>
-                <Check className="w-5 h-5 text-green-500" />
+                <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
               </div>
             ))}
           </div>
