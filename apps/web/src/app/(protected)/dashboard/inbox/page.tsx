@@ -1,15 +1,17 @@
 import React from "react";
 import InboxView from "./_components/inbox-view";
+import PageHeader from "@/components/global/page-header";
+import { Inbox } from "lucide-react";
 
 const InboxPage = () => {
   return (
-    <div className="flex flex-col gap-y-4 pb-4">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Inbox</h1>
-        <p className="text-sm text-muted-foreground">
-          Reply to your Instagram conversations in real time.
-        </p>
-      </div>
+    <div className="flex flex-col pb-4">
+      <PageHeader
+        title="Inbox"
+        description="Reply to your Instagram conversations in real time."
+        icon={<Inbox className="h-5 w-5" />}
+        className="mb-4"
+      />
       <InboxView />
     </div>
   );
