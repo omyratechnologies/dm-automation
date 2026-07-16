@@ -1,15 +1,16 @@
 import React from "react";
 import ContactsView from "./_components/contacts-view";
+import PageHeader from "@/components/global/page-header";
+import { Users } from "lucide-react";
 
 const ContactsPage = () => {
   return (
-    <div className="flex flex-col gap-y-6 pb-10">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
-        <p className="text-sm text-muted-foreground">
-          Everyone who has messaged your connected Instagram accounts.
-        </p>
-      </div>
+    <div className="flex flex-col pb-10">
+      <PageHeader
+        title="Contacts"
+        description="Everyone who has messaged your connected Instagram accounts."
+        icon={<Users className="h-5 w-5" />}
+      />
       <ContactsView />
     </div>
   );
