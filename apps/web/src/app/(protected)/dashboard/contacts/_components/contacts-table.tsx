@@ -90,7 +90,7 @@ const RowTagEditor = ({ contact }: { contact: Contact }) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64" align="end">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
           Tags
         </p>
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -100,7 +100,7 @@ const RowTagEditor = ({ contact }: { contact: Contact }) => {
           {contact.tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-xs"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-xs"
             >
               {tag}
               <button
@@ -108,7 +108,7 @@ const RowTagEditor = ({ contact }: { contact: Contact }) => {
                   mutation.mutate(contact.tags.filter((t) => t !== tag))
                 }
                 disabled={mutation.isPending}
-                className="text-muted-foreground hover:text-red-500"
+                className="text-muted-foreground hover:text-destructive transition-colors duration-quiet"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -207,7 +207,7 @@ const ContactsTable = () => {
         </Select>
       </div>
 
-      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         {contactsQuery.isLoading ? (
           <div className="p-4 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -243,7 +243,10 @@ const ContactsTable = () => {
             </TableHeader>
             <TableBody>
               {contacts.map((contact) => (
-                <TableRow key={contact.id} className="hover:bg-accent/50">
+                <TableRow
+                  key={contact.id}
+                  className="hover:bg-accent/50 transition-colors duration-quiet"
+                >
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
@@ -251,7 +254,7 @@ const ContactsTable = () => {
                           src={contact.profilePicUrl ?? undefined}
                           alt={contact.username}
                         />
-                        <AvatarFallback className="bg-gradient-to-br from-[#3352CC] to-[#1C2D70] text-white text-xs font-semibold">
+                        <AvatarFallback className="bg-primary/15 text-primary text-xs font-medium">
                           {initials(contact)}
                         </AvatarFallback>
                       </Avatar>
@@ -273,7 +276,7 @@ const ContactsTable = () => {
                         contact.tags.slice(0, 4).map((t) => (
                           <span
                             key={t}
-                            className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 text-[11px]"
+                            className="px-2 py-0.5 rounded-full bg-primary/10 text-[11px]"
                           >
                             {t}
                           </span>
@@ -297,14 +300,14 @@ const ContactsTable = () => {
                     {contact.optedOut ? (
                       <Badge
                         variant="outline"
-                        className="border-red-500/40 text-red-500 text-[11px]"
+                        className="border-destructive/40 text-destructive text-[11px]"
                       >
                         Opted out
                       </Badge>
                     ) : (
                       <Badge
                         variant="outline"
-                        className="border-green-500/40 text-green-500 text-[11px]"
+                        className="border-success/40 text-success text-[11px]"
                       >
                         Subscribed
                       </Badge>
