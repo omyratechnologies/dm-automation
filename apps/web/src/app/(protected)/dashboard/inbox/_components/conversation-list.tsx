@@ -43,17 +43,18 @@ const ConversationList = ({
   fetchNextPage,
 }: Props) => {
   return (
-    <div className="h-full flex flex-col rounded-2xl bg-card border border-border overflow-hidden">
-      <div className="p-3 border-b border-border">
-        <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-muted">
+    <div className="h-full flex flex-col rounded-xl border border-border bg-card overflow-hidden">
+      {/* Status tabs */}
+      <div className="p-2.5 border-b border-border">
+        <div className="grid grid-cols-2 gap-0.5 p-0.5 rounded-md bg-muted">
           {(["OPEN", "CLOSED"] as const).map((s) => (
             <button
               key={s}
               onClick={() => onStatusChange(s)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-semibold transition-all capitalize",
+                "px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all duration-quiet ease-quiet",
                 status === s
-                  ? "bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white shadow"
+                  ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -68,7 +69,7 @@ const ConversationList = ({
           <div className="p-3 space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                <Skeleton className="h-9 w-9 rounded-full shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-3 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
@@ -87,18 +88,18 @@ const ConversationList = ({
                 key={c.id}
                 onClick={() => onSelect(c)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 text-left border-b border-border/60 transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 text-left border-b border-border/50 transition-colors duration-quiet ease-quiet",
                   selectedId === c.id
-                    ? "bg-primary/10 border-l-2 border-l-[#3352CC]"
+                    ? "bg-primary/10"
                     : "hover:bg-accent"
                 )}
               >
-                <Avatar className="h-10 w-10 shrink-0">
+                <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage
                     src={c.contact.profilePicUrl ?? undefined}
                     alt={c.contact.username}
                   />
-                  <AvatarFallback className="bg-gradient-to-br from-[#3352CC] to-[#1C2D70] text-white text-xs font-semibold">
+                  <AvatarFallback className="bg-primary/15 text-primary text-xs font-medium">
                     {initialsOf(c.contact.name, c.contact.username)}
                   </AvatarFallback>
                 </Avatar>
@@ -122,7 +123,7 @@ const ConversationList = ({
                         <Bot className="h-3.5 w-3.5 text-muted-foreground" />
                       )}
                       {c.unreadCount > 0 && (
-                        <Badge className="h-5 min-w-5 px-1.5 justify-center rounded-full bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white text-[10px] hover:from-[#3352CC] hover:to-[#1C2D70]">
+                        <Badge className="h-5 min-w-5 px-1.5 justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium border-0 hover:bg-primary">
                           {c.unreadCount}
                         </Badge>
                       )}
