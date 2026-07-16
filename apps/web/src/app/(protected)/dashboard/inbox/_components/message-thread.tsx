@@ -162,15 +162,15 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
   };
 
   return (
-    <div className="h-full flex flex-col rounded-2xl bg-card border border-border overflow-hidden">
+    <div className="h-full flex flex-col rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-border">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-border">
         {onBack && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="lg:hidden h-8 w-8 mr-1 rounded-lg hover:bg-muted"
+            className="lg:hidden h-8 w-8"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -180,12 +180,12 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
             src={conversation.contact.profilePicUrl ?? undefined}
             alt={conversation.contact.username}
           />
-          <AvatarFallback className="bg-gradient-to-br from-[#3352CC] to-[#1C2D70] text-white text-[10px] font-semibold">
+          <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-medium">
             {initialsOf(conversation.contact.name, conversation.contact.username)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 mr-auto">
-          <p className="text-sm font-semibold text-foreground truncate">
+          <p className="text-sm font-medium text-foreground truncate">
             {conversation.contact.name ?? conversation.contact.username}
           </p>
           <p className="text-[11px] text-muted-foreground truncate">
@@ -201,7 +201,7 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
             })
           }
         >
-          <SelectTrigger className="h-8 w-[150px] text-xs">
+          <SelectTrigger className="h-8 w-[140px] text-xs">
             <SelectValue placeholder="Assign" />
           </SelectTrigger>
           <SelectContent>
@@ -217,7 +217,7 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
         {conversation.mode === "BOT" ? (
           <Button
             size="sm"
-            className="h-8 bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90"
+            className="h-8"
             disabled={patchMutation.isPending}
             onClick={() => patchMutation.mutate({ mode: "HUMAN" })}
           >
@@ -279,9 +279,9 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
         )}
         {messagesQuery.isLoading ? (
           <div className="space-y-4">
-            <Skeleton className="h-12 w-2/3 rounded-2xl" />
-            <Skeleton className="h-12 w-1/2 rounded-2xl ml-auto" />
-            <Skeleton className="h-12 w-3/5 rounded-2xl" />
+            <Skeleton className="h-12 w-2/3 rounded-lg" />
+            <Skeleton className="h-12 w-1/2 rounded-lg ml-auto" />
+            <Skeleton className="h-12 w-3/5 rounded-lg" />
           </div>
         ) : messages.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-10">
@@ -298,11 +298,11 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
               >
                 <div
                   className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2.5",
+                    "max-w-[75%] rounded-lg px-3.5 py-2",
                     isOut
-                      ? "bg-gradient-to-br from-[#3352CC] to-[#1C2D70] text-white rounded-br-md"
-                      : "bg-muted text-foreground rounded-bl-md",
-                    rejected && "opacity-80 ring-1 ring-red-500/60"
+                      ? "bg-primary text-primary-foreground rounded-br-sm"
+                      : "bg-muted text-foreground rounded-bl-sm",
+                    rejected && "opacity-80 ring-1 ring-destructive/50"
                   )}
                   title={rejected && m.errorCode ? m.errorCode : undefined}
                 >
@@ -316,18 +316,13 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
                     )}
                   >
                     {isOut && m.source && (
-                      <span
-                        className={cn(
-                          "text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded",
-                          "bg-white/15 text-white/90"
-                        )}
-                      >
+                      <span className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/15 text-primary-foreground/80">
                         {m.source}
                       </span>
                     )}
                     {rejected && (
                       <span
-                        className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/20 text-red-200"
+                        className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/20 text-destructive"
                         title={m.errorCode ?? "Rejected"}
                       >
                         <AlertTriangle className="h-2.5 w-2.5" />
@@ -337,7 +332,9 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
                     <span
                       className={cn(
                         "text-[10px]",
-                        isOut ? "text-white/60" : "text-muted-foreground"
+                        isOut
+                          ? "text-primary-foreground/60"
+                          : "text-muted-foreground"
                       )}
                     >
                       {format(new Date(m.createdAt), "MMM d, HH:mm")}
@@ -374,7 +371,8 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
           <Button
             onClick={handleSend}
             disabled={!draft.trim() || sendMutation.isPending}
-            className="h-11 px-4 bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90 shrink-0"
+            size="icon"
+            className="h-11 w-11 shrink-0"
           >
             <Send className="h-4 w-4" />
           </Button>
