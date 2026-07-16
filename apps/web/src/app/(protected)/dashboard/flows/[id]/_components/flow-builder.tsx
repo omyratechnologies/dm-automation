@@ -141,7 +141,7 @@ const edgeLabel = (sourceHandle?: string | null) =>
   sourceHandle === "true" ? "✓" : sourceHandle === "false" ? "✗" : undefined;
 
 /* ------------------------------------------------------------------ */
-/* Canvas (mounted once the flow has loaded)                           */
+/* Canvas                                                              */
 /* ------------------------------------------------------------------ */
 
 const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
@@ -321,12 +321,12 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
 
   return (
     <FlowNodeContext.Provider value={nodeContext}>
-      <div className="flex flex-col gap-y-4 h-[calc(100vh-140px)] min-h-[600px]">
+      <div className="flex flex-col gap-y-3 h-[calc(100vh-140px)] min-h-[600px]">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-card border border-border px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
           <Link
             href="/dashboard/flows"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors duration-quiet"
             aria-label="Back to flows"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -340,7 +340,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
                 patchMutation.mutate({ name: trimmed });
               }
             }}
-            className="h-8 w-[220px] font-semibold"
+            className="h-8 w-[200px] font-medium"
           />
           <FlowStatusChip status={flow.status} />
 
@@ -388,9 +388,9 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
                                 className={cn(
                                   "px-2 py-0.5 rounded-full text-[11px] font-medium",
                                   run.status === "COMPLETED"
-                                    ? "bg-green-500/10 text-green-500"
+                                    ? "bg-success/10 text-success"
                                     : run.status === "FAILED"
-                                      ? "bg-red-500/10 text-red-500"
+                                      ? "bg-destructive/10 text-destructive"
                                       : "bg-muted text-muted-foreground"
                                 )}
                               >
@@ -410,7 +410,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
                                   )
                                 : "—"}
                             </TableCell>
-                            <TableCell className="text-xs text-red-500 max-w-[160px] truncate">
+                            <TableCell className="text-xs text-destructive max-w-[160px] truncate">
                               {run.error ?? "—"}
                             </TableCell>
                           </TableRow>
@@ -458,7 +458,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
             </Button>
             <Button
               size="sm"
-              className="h-8 bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90"
+              className="h-8"
               disabled={publishMutation.isPending}
               onClick={() => publishMutation.mutate()}
             >
@@ -469,11 +469,11 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
         </div>
 
         {/* Palette + canvas */}
-        <div className="flex flex-col md:flex-row flex-1 gap-4 min-h-0">
-          <div className="w-full md:w-52 shrink-0 rounded-2xl bg-card border border-border p-3 overflow-y-auto space-y-4">
+        <div className="flex flex-col md:flex-row flex-1 gap-3 min-h-0">
+          <div className="w-full md:w-52 shrink-0 rounded-xl border border-border bg-card p-3 overflow-y-auto space-y-4">
             {PALETTE.map((group) => (
               <div key={group.group}>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
                   {group.group}
                 </p>
                 <div className="space-y-1 flex flex-row md:flex-col gap-1.5 md:gap-1 flex-wrap md:flex-nowrap">
@@ -486,14 +486,14 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
                         disabled={disabled}
                         title={
                           disabled
-                             ? "A flow can only have one trigger"
-                             : `Add ${item.label}`
+                            ? "A flow can only have one trigger"
+                            : `Add ${item.label}`
                         }
                         className={cn(
-                          "px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors text-left shrink-0 md:shrink md:w-full",
+                          "px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors duration-quiet text-left shrink-0 md:shrink md:w-full",
                           disabled
                             ? "border-border text-muted-foreground/50 cursor-not-allowed"
-                            : "border-border text-foreground hover:border-primary/40 hover:bg-accent"
+                            : "border-border text-foreground hover:border-hairline-strong hover:bg-accent"
                         )}
                       >
                         {item.label}
@@ -505,11 +505,11 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
             ))}
           </div>
 
-          <div className="flex-1 flex flex-col gap-y-2 rounded-2xl bg-transparent min-h-[400px]">
-            <div className="md:hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-semibold">
-              💡 Pro-tip: Canvas is optimized for larger screens. Use a desktop to build complex automation flows.
+          <div className="flex-1 flex flex-col gap-y-2 min-h-[400px]">
+            <div className="md:hidden p-3 rounded-lg bg-warning/10 border border-warning/20 text-warning text-xs font-medium">
+              Canvas is optimized for larger screens. Use a desktop to build complex flows.
             </div>
-            <div className="flex-1 rounded-2xl border border-border overflow-hidden bg-card relative">
+            <div className="flex-1 rounded-xl border border-border overflow-hidden bg-card relative">
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -547,11 +547,11 @@ const FlowBuilder = ({ flowId }: { flowId: string }) => {
 
   if (flowQuery.isLoading || !workspaceId) {
     return (
-      <div className="flex flex-col gap-y-4">
-        <Skeleton className="h-14 w-full rounded-2xl" />
-        <div className="flex gap-4">
-          <Skeleton className="h-[520px] w-52 rounded-2xl" />
-          <Skeleton className="h-[520px] flex-1 rounded-2xl" />
+      <div className="flex flex-col gap-y-3">
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <div className="flex gap-3">
+          <Skeleton className="h-[520px] w-52 rounded-xl" />
+          <Skeleton className="h-[520px] flex-1 rounded-xl" />
         </div>
       </div>
     );
@@ -559,7 +559,7 @@ const FlowBuilder = ({ flowId }: { flowId: string }) => {
 
   if (flowQuery.isError || !flowQuery.data) {
     return (
-      <div className="p-8 rounded-xl bg-card border border-red-500/20 text-center">
+      <div className="p-8 rounded-xl border border-destructive/20 bg-card text-center">
         <p className="text-sm text-muted-foreground mb-4">
           Failed to load this flow.
         </p>
