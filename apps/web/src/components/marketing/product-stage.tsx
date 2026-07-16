@@ -10,8 +10,8 @@ import {
 import { useRef } from "react";
 
 /**
- * Framed product UI with subtle scroll parallax.
- * Ready to host a real <video> or screenshot later.
+ * Product film stage — Flow Builder journey video.
+ * Asset: public/marketing/flow-demo.mp4
  */
 export function ProductStage() {
   const ref = useRef<HTMLDivElement>(null);
@@ -25,105 +25,78 @@ export function ProductStage() {
     damping: 28,
   });
 
-  const y = useTransform(smooth, [0, 1], reduced ? [0, 0] : [80, -40]);
-  const scale = useTransform(smooth, [0, 0.4, 1], reduced ? [1, 1, 1] : [0.94, 1, 0.98]);
+  const y = useTransform(smooth, [0, 1], reduced ? [0, 0] : [60, -30]);
+  const scale = useTransform(
+    smooth,
+    [0, 0.35, 1],
+    reduced ? [1, 1, 1] : [0.92, 1, 0.98]
+  );
   const opacity = useTransform(
     smooth,
     [0, 0.15, 0.85, 1],
-    reduced ? [1, 1, 1, 1] : [0.4, 1, 1, 0.7]
+    reduced ? [1, 1, 1, 1] : [0.35, 1, 1, 0.75]
   );
-  const glow = useTransform(smooth, [0, 0.5, 1], [0.15, 0.35, 0.12]);
+  const glow = useTransform(smooth, [0, 0.45, 1], [0.12, 0.32, 0.1]);
 
   return (
-    <section id="product" className="relative pb-24 pt-6 md:pb-32">
+    <section id="product" className="relative pb-20 pt-4 md:pb-28">
       <div className="mx-auto max-w-6xl px-5 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-10%" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-10 max-w-2xl"
+        >
+          <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+            Product
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Design the journey.
+            <span className="text-white/40"> Watch it run.</span>
+          </h2>
+        </motion.div>
+
         <motion.div ref={ref} style={{ y, scale, opacity }} className="relative">
           <motion.div
             aria-hidden
             style={{ opacity: glow }}
-            className="pointer-events-none absolute -inset-8 rounded-[2rem] bg-[#5B6AF0] blur-[80px]"
+            className="pointer-events-none absolute -inset-10 rounded-[2.5rem] bg-[#5B6AF0] blur-[90px]"
           />
 
-          <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0C0E14] shadow-[0_40px_120px_-20px_rgba(91,106,240,0.25)]">
-            <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-              <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-              <span className="ml-3 text-[11px] text-white/25">gemai · inbox</span>
+          <div className="relative overflow-hidden rounded-2xl border border-white/[0.1] bg-[#111318] shadow-[0_50px_120px_-25px_rgba(91,106,240,0.35)]">
+            {/* Window chrome */}
+            <div className="flex items-center gap-2 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
+              <span className="ml-3 text-[11px] text-white/30">
+                gemai · flow builder
+              </span>
             </div>
 
-            <div className="grid grid-cols-12 min-h-[340px] md:min-h-[460px]">
-              <div className="col-span-3 hidden border-r border-white/[0.06] p-4 md:block">
-                <div className="mb-5 text-[10px] font-medium uppercase tracking-wider text-white/25">
-                  Workspace
-                </div>
-                {["Overview", "Inbox", "Flows", "Contacts", "Leads"].map(
-                  (item, i) => (
-                    <div
-                      key={item}
-                      className={`mb-0.5 rounded-md px-2.5 py-2 text-[12px] ${
-                        i === 1
-                          ? "bg-[#5B6AF0]/15 text-[#A5B0FF]"
-                          : "text-white/40"
-                      }`}
-                    >
-                      {item}
-                    </div>
-                  )
-                )}
-              </div>
-
-              <div className="col-span-12 border-r border-white/[0.06] p-3 md:col-span-4">
-                <div className="mb-3 px-1 text-[10px] font-medium uppercase tracking-wider text-white/25">
-                  Open · 12
-                </div>
-                {[
-                  { name: "Ananya R.", preview: "Do you ship to Bangalore?", time: "2m" },
-                  { name: "Rahul K.", preview: "Price for the starter kit?", time: "14m" },
-                  { name: "Meera P.", preview: "Loved the new drop", time: "1h" },
-                  { name: "Dev S.", preview: "Can I get a bulk quote?", time: "3h" },
-                ].map((c, i) => (
-                  <div
-                    key={c.name}
-                    className={`mb-1 flex items-center gap-3 rounded-lg px-2.5 py-2.5 ${
-                      i === 0 ? "bg-white/[0.04]" : ""
-                    }`}
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5B6AF0]/20 text-[11px] font-medium text-[#A5B0FF]">
-                      {c.name[0]}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-[12px] font-medium text-white/85">
-                          {c.name}
-                        </span>
-                        <span className="text-[10px] text-white/25">{c.time}</span>
-                      </div>
-                      <p className="truncate text-[11px] text-white/35">{c.preview}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="col-span-12 flex flex-col p-4 md:col-span-5">
-                <div className="mb-4 border-b border-white/[0.06] pb-3">
-                  <p className="text-[13px] font-medium text-white/90">Ananya R.</p>
-                  <p className="text-[11px] text-white/30">@ananya.creates</p>
-                </div>
-                <div className="flex flex-1 flex-col gap-3">
-                  <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5 text-[12px] text-white/75">
-                    Hi! Do you ship to Bangalore?
-                  </div>
-                  <div className="ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-[#5B6AF0] px-3.5 py-2.5 text-[12px] text-white">
-                    Yes — we ship across India. Bangalore usually arrives in 2–3 days. Free over ₹499.
-                  </div>
-                  <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5 text-[12px] text-white/75">
-                    Perfect, I'll order tonight
-                  </div>
-                </div>
-              </div>
+            {/* Video — light UI product film sits inside dark frame */}
+            <div className="relative aspect-[16/10] w-full bg-[#E8E8E8]">
+              <video
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                src="/marketing/flow-demo.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+              {/* Soft vignette so edges blend into frame */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/5"
+              />
             </div>
           </div>
+
+          <p className="mt-5 text-center text-[13px] text-white/30">
+            Triggers → Instant DMs → Questions → Capture details — one visual canvas
+          </p>
         </motion.div>
       </div>
     </section>
