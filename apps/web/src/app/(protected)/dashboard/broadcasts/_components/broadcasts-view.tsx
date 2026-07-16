@@ -37,21 +37,21 @@ import NewBroadcastDialog from "./new-broadcast-dialog";
 
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: "bg-muted text-muted-foreground",
-  QUEUED: "bg-blue-500/10 text-blue-500",
-  SENDING: "bg-blue-500/10 text-blue-500",
-  COMPLETED: "bg-green-500/10 text-green-500",
-  CANCELED: "bg-red-500/10 text-red-500",
+  QUEUED: "bg-primary/10 text-primary",
+  SENDING: "bg-primary/10 text-primary",
+  COMPLETED: "bg-success/10 text-success",
+  CANCELED: "bg-destructive/10 text-destructive",
 };
 
 const StatusChip = ({ status }: { status: string }) => (
   <span
     className={cn(
-      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize",
+      "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium capitalize",
       STATUS_STYLES[status] ?? STATUS_STYLES.DRAFT
     )}
   >
     {status === "SENDING" && (
-      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
     )}
     {status.toLowerCase()}
   </span>
@@ -147,7 +147,7 @@ const BroadcastsView = () => {
         />
       </div>
 
-      <div className="rounded-2xl bg-card border border-border overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         {broadcastsQuery.isLoading ? (
           <div className="p-4 space-y-3">
             {[1, 2, 3].map((i) => (
@@ -156,9 +156,9 @@ const BroadcastsView = () => {
           </div>
         ) : broadcasts.length === 0 ? (
           <div className="p-12 text-center">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3352CC] to-[#1C2D70] mb-4">
-              <Megaphone className="h-6 w-6 text-white" />
-            </span>
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4">
+              <Megaphone className="h-6 w-6" />
+            </div>
             <h3 className="text-base font-semibold text-foreground mb-1">
               No broadcasts yet
             </h3>
@@ -180,7 +180,10 @@ const BroadcastsView = () => {
             </TableHeader>
             <TableBody>
               {broadcasts.map((b) => (
-                <TableRow key={b.id} className="hover:bg-accent/50">
+                <TableRow
+                  key={b.id}
+                  className="hover:bg-accent/50 transition-colors duration-quiet"
+                >
                   <TableCell>
                     <p className="text-sm font-medium text-foreground">
                       {b.name}
@@ -212,7 +215,7 @@ const BroadcastsView = () => {
                       {b.status === "DRAFT" && (
                         <Button
                           size="sm"
-                          className="h-7 bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90"
+                          className="h-7"
                           onClick={() => setConfirmSend(b)}
                         >
                           <Send className="h-3 w-3 mr-1.5" />
@@ -223,7 +226,7 @@ const BroadcastsView = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 text-red-500 hover:text-red-600"
+                          className="h-7 text-destructive hover:text-destructive"
                           disabled={cancelMutation.isPending}
                           onClick={() => cancelMutation.mutate(b.id)}
                         >
@@ -246,7 +249,7 @@ const BroadcastsView = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Send &quot;{confirmSend?.name}&quot;?</AlertDialogTitle>
+            <AlertDialogTitle>Send "{confirmSend?.name}"?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmSend?.segmentId ? (
                 previewQuery.isLoading ? (
@@ -268,7 +271,6 @@ const BroadcastsView = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-gradient-to-r from-[#3352CC] to-[#1C2D70] text-white hover:opacity-90"
               onClick={() => {
                 if (confirmSend) sendMutation.mutate(confirmSend.id);
                 setConfirmSend(null);
