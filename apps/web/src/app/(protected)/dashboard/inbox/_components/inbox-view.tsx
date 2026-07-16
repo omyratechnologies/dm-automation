@@ -89,7 +89,7 @@ const InboxView = () => {
     conversations.find((c) => c.id === selectedId) ?? null;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:h-[calc(100vh-190px)] min-h-[560px]">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:h-[calc(100vh-190px)] min-h-[560px]">
       <div className={cn("lg:col-span-3 h-full min-h-0", selected && "hidden lg:block")}>
         <ConversationList
           conversations={conversations}
@@ -106,6 +106,7 @@ const InboxView = () => {
           fetchNextPage={() => conversationsQuery.fetchNextPage()}
         />
       </div>
+
       <div className={cn("lg:col-span-6 h-full min-h-0", !selected && "hidden lg:block")}>
         {selected ? (
           <MessageThread
@@ -115,24 +116,25 @@ const InboxView = () => {
             onBack={() => setSelectedId(null)}
           />
         ) : (
-          <div className="h-full flex flex-col items-center justify-center rounded-2xl bg-card border border-border text-center p-8">
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3352CC] to-[#1C2D70] mb-4">
-              <MessageCircle className="h-7 w-7 text-white" />
-            </span>
-            <h3 className="text-lg font-semibold text-foreground mb-1">
+          <div className="h-full flex flex-col items-center justify-center rounded-xl border border-border bg-card text-center p-8">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4">
+              <MessageCircle className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1">
               Select a conversation
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-[240px]">
               Pick a conversation on the left to view messages.
             </p>
           </div>
         )}
       </div>
+
       <div className="hidden lg:block lg:col-span-3 h-full min-h-0">
         {selected ? (
           <ContactPanel conversation={selected} />
         ) : (
-          <div className="h-full rounded-2xl bg-card border border-border p-6 text-sm text-muted-foreground">
+          <div className="h-full rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
             Contact details will appear here.
           </div>
         )}
