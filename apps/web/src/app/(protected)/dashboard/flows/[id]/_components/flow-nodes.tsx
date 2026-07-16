@@ -17,7 +17,7 @@ import React, { createContext, useContext, useState } from "react";
 import FlowPostSelector from "./post-selector";
 
 /* ------------------------------------------------------------------ */
-/* Context so node components can mutate their own data                */
+/* Context                                                             */
 /* ------------------------------------------------------------------ */
 
 type FlowNodeContextValue = {
@@ -34,11 +34,11 @@ const useNodeData = (id: string, data: Record<string, unknown>) => {
 };
 
 /* ------------------------------------------------------------------ */
-/* Small form controls (all marked nodrag so they stay interactive)    */
+/* Form controls                                                       */
 /* ------------------------------------------------------------------ */
 
 const inputCls =
-  "nodrag w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary/60";
+  "nodrag w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/20";
 
 const ChipInput = ({
   values,
@@ -65,11 +65,11 @@ const ChipInput = ({
           {values.map((v) => (
             <span
               key={v}
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/30 px-1.5 py-0.5 text-[10px] text-foreground"
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-foreground"
             >
               {v}
               <button
-                className="nodrag text-muted-foreground hover:text-red-500"
+                className="nodrag text-muted-foreground hover:text-destructive transition-colors"
                 onClick={() => onChange(values.filter((x) => x !== v))}
               >
                 ×
@@ -113,7 +113,7 @@ const MatchTypeSelect = ({
 );
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
     {children}
   </p>
 );
@@ -169,13 +169,13 @@ const NodeShell = ({
 }) => (
   <div
     className={cn(
-      "w-64 rounded-xl border bg-card shadow-lg overflow-hidden",
-      selected ? "border-primary shadow-primary/20" : "border-border"
+      "w-64 rounded-lg border bg-card overflow-hidden shadow-sm",
+      selected ? "border-primary ring-1 ring-primary/20" : "border-border"
     )}
   >
     <div
       className={cn(
-        "flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold text-white",
+        "flex items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-white",
         headerCls
       )}
     >
@@ -199,7 +199,7 @@ export const TriggerNode = ({ id, data, selected }: NodeProps) => {
     <NodeShell
       selected={selected}
       header={`Trigger · ${meta.label}`}
-      headerCls="bg-gradient-to-r from-[#3352CC] to-[#1C2D70]"
+      headerCls="bg-primary"
       icon={meta.icon}
     >
       {(d.kind === "keyword" ||
@@ -236,14 +236,14 @@ export const TriggerNode = ({ id, data, selected }: NodeProps) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-3 !w-3 !bg-[#3352CC] !border-2 !border-background"
+        className="!h-2.5 !w-2.5 !bg-primary !border-2 !border-background"
       />
     </NodeShell>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/* Condition node — true/false branch handles                          */
+/* Condition node                                                      */
 /* ------------------------------------------------------------------ */
 
 export const ConditionNode = ({ id, data, selected }: NodeProps) => {
@@ -256,7 +256,7 @@ export const ConditionNode = ({ id, data, selected }: NodeProps) => {
       <NodeShell
         selected={selected}
         header={`Condition · ${meta.label}`}
-        headerCls="bg-gradient-to-r from-amber-500 to-orange-600"
+        headerCls="bg-warning"
         icon={meta.icon}
       >
         {d.kind === "text_matches" && (
@@ -290,29 +290,29 @@ export const ConditionNode = ({ id, data, selected }: NodeProps) => {
             True when the contact messaged within the last 24 hours.
           </p>
         )}
-        <div className="flex justify-between px-1 pt-1 text-[10px] font-semibold">
-          <span className="text-green-500">✓ true</span>
-          <span className="text-red-500">✗ false</span>
+        <div className="flex justify-between px-1 pt-1 text-[10px] font-medium">
+          <span className="text-success">✓ true</span>
+          <span className="text-destructive">✗ false</span>
         </div>
       </NodeShell>
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-3 !w-3 !bg-amber-500 !border-2 !border-background"
+        className="!h-2.5 !w-2.5 !bg-warning !border-2 !border-background"
       />
       <Handle
         id="true"
         type="source"
         position={Position.Bottom}
         style={{ left: "25%" }}
-        className="!h-3 !w-3 !bg-green-500 !border-2 !border-background"
+        className="!h-2.5 !w-2.5 !bg-success !border-2 !border-background"
       />
       <Handle
         id="false"
         type="source"
         position={Position.Bottom}
         style={{ left: "75%" }}
-        className="!h-3 !w-3 !bg-red-500 !border-2 !border-background"
+        className="!h-2.5 !w-2.5 !bg-destructive !border-2 !border-background"
       />
     </div>
   );
@@ -332,7 +332,7 @@ export const ActionNode = ({ id, data, selected }: NodeProps) => {
       <NodeShell
         selected={selected}
         header={`Action · ${meta.label}`}
-        headerCls="bg-gradient-to-r from-emerald-500 to-teal-600"
+        headerCls="bg-success"
         icon={meta.icon}
       >
         {d.kind === "send_message" && (
@@ -357,12 +357,20 @@ export const ActionNode = ({ id, data, selected }: NodeProps) => {
         )}
         {(d.kind === "ai_reply" || d.kind === "lead_qualify") && (
           <>
-            <FieldLabel>{d.kind === "lead_qualify" ? "Qualification Prompt" : "AI prompt"}</FieldLabel>
+            <FieldLabel>
+              {d.kind === "lead_qualify"
+                ? "Qualification Prompt"
+                : "AI prompt"}
+            </FieldLabel>
             <textarea
               className={cn(inputCls, "min-h-[64px] resize-none")}
               value={(d.prompt as string) ?? ""}
               maxLength={4000}
-              placeholder={d.kind === "lead_qualify" ? "Define lead target rules & tone guidelines…" : "Instructions for the AI…"}
+              placeholder={
+                d.kind === "lead_qualify"
+                  ? "Define lead target rules & tone guidelines…"
+                  : "Instructions for the AI…"
+              }
               onChange={(e) => update({ prompt: e.target.value })}
             />
           </>
@@ -403,12 +411,12 @@ export const ActionNode = ({ id, data, selected }: NodeProps) => {
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-3 !w-3 !bg-emerald-500 !border-2 !border-background"
+        className="!h-2.5 !w-2.5 !bg-success !border-2 !border-background"
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-3 !w-3 !bg-emerald-500 !border-2 !border-background"
+        className="!h-2.5 !w-2.5 !bg-success !border-2 !border-background"
       />
     </div>
   );
