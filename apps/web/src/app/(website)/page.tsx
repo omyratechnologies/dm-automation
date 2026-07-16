@@ -16,7 +16,6 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import GemaiLogo from "@/components/global/gemai-logo";
 import Footer from "@/components/global/footer";
 import { Reveal } from "@/components/marketing/reveal";
 import { MarketingHero } from "@/components/marketing/hero";
@@ -24,51 +23,13 @@ import { MagneticButton } from "@/components/marketing/magnetic-button";
 import { ProductStage } from "@/components/marketing/product-stage";
 import { ProductChapters } from "@/components/marketing/product-chapters";
 import { ScrollProgress } from "@/components/marketing/scroll-progress";
+import { FloatingNav } from "@/components/marketing/floating-nav";
 
 export default function Home() {
   return (
     <main className="bg-[#07080C] text-white antialiased overflow-x-hidden">
       <ScrollProgress />
-
-      {/* ─── Nav ─── */}
-      <header className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] bg-[#07080C]/70 backdrop-blur-2xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 lg:px-8">
-          <Link href="/" className="flex items-center">
-            <GemaiLogo size="lg" className="h-6" />
-          </Link>
-          <nav className="hidden items-center gap-9 text-[13px] text-white/55 md:flex">
-            <a href="#product" className="hover:text-white transition-colors duration-300">
-              Product
-            </a>
-            <a href="#features" className="hover:text-white transition-colors duration-300">
-              Features
-            </a>
-            <a href="#pricing" className="hover:text-white transition-colors duration-300">
-              Pricing
-            </a>
-            <a href="#faq" className="hover:text-white transition-colors duration-300">
-              FAQ
-            </a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-[13px] text-white/60 hover:text-white hover:bg-white/5"
-            >
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              className="rounded-full bg-white px-4 text-[13px] font-medium text-[#07080C] hover:bg-white/90"
-            >
-              <Link href="/sign-in">Get started</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <FloatingNav />
 
       <MarketingHero />
       <ProductStage />
