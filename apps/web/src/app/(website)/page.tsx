@@ -21,10 +21,15 @@ import Footer from "@/components/global/footer";
 import { Reveal } from "@/components/marketing/reveal";
 import { MarketingHero } from "@/components/marketing/hero";
 import { MagneticButton } from "@/components/marketing/magnetic-button";
+import { ProductStage } from "@/components/marketing/product-stage";
+import { ProductChapters } from "@/components/marketing/product-chapters";
+import { ScrollProgress } from "@/components/marketing/scroll-progress";
 
 export default function Home() {
   return (
     <main className="bg-[#07080C] text-white antialiased overflow-x-hidden">
+      <ScrollProgress />
+
       {/* ─── Nav ─── */}
       <header className="fixed top-0 inset-x-0 z-50 border-b border-white/[0.06] bg-[#07080C]/70 backdrop-blur-2xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 lg:px-8">
@@ -66,91 +71,7 @@ export default function Home() {
       </header>
 
       <MarketingHero />
-
-      {/* ─── Product frame ─── */}
-      <section id="product" className="relative pb-32 pt-8">
-        <div className="mx-auto max-w-6xl px-5 lg:px-8">
-          <Reveal>
-            <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0C0E14] shadow-[0_40px_120px_-20px_rgba(91,106,240,0.25)]">
-              <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-                <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                <span className="ml-3 text-[11px] text-white/25">gemai · inbox</span>
-              </div>
-              <div className="grid grid-cols-12 min-h-[340px] md:min-h-[460px]">
-                <div className="col-span-3 hidden border-r border-white/[0.06] p-4 md:block">
-                  <div className="mb-5 text-[10px] font-medium uppercase tracking-wider text-white/25">
-                    Workspace
-                  </div>
-                  {["Overview", "Inbox", "Flows", "Contacts", "Leads"].map(
-                    (item, i) => (
-                      <div
-                        key={item}
-                        className={`mb-0.5 rounded-md px-2.5 py-2 text-[12px] ${
-                          i === 1
-                            ? "bg-[#5B6AF0]/15 text-[#A5B0FF]"
-                            : "text-white/40"
-                        }`}
-                      >
-                        {item}
-                      </div>
-                    )
-                  )}
-                </div>
-                <div className="col-span-12 border-r border-white/[0.06] p-3 md:col-span-4">
-                  <div className="mb-3 px-1 text-[10px] font-medium uppercase tracking-wider text-white/25">
-                    Open · 12
-                  </div>
-                  {[
-                    { name: "Ananya R.", preview: "Do you ship to Bangalore?", time: "2m" },
-                    { name: "Rahul K.", preview: "Price for the starter kit?", time: "14m" },
-                    { name: "Meera P.", preview: "Loved the new drop", time: "1h" },
-                    { name: "Dev S.", preview: "Can I get a bulk quote?", time: "3h" },
-                  ].map((c, i) => (
-                    <div
-                      key={c.name}
-                      className={`mb-1 flex items-center gap-3 rounded-lg px-2.5 py-2.5 ${
-                        i === 0 ? "bg-white/[0.04]" : ""
-                      }`}
-                    >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5B6AF0]/20 text-[11px] font-medium text-[#A5B0FF]">
-                        {c.name[0]}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-[12px] font-medium text-white/85">
-                            {c.name}
-                          </span>
-                          <span className="text-[10px] text-white/25">{c.time}</span>
-                        </div>
-                        <p className="truncate text-[11px] text-white/35">{c.preview}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="col-span-12 flex flex-col p-4 md:col-span-5">
-                  <div className="mb-4 border-b border-white/[0.06] pb-3">
-                    <p className="text-[13px] font-medium text-white/90">Ananya R.</p>
-                    <p className="text-[11px] text-white/30">@ananya.creates</p>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-3">
-                    <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5 text-[12px] text-white/75">
-                      Hi! Do you ship to Bangalore?
-                    </div>
-                    <div className="ml-auto max-w-[88%] rounded-2xl rounded-br-md bg-[#5B6AF0] px-3.5 py-2.5 text-[12px] text-white">
-                      Yes — we ship across India. Bangalore usually arrives in 2–3 days. Free over ₹499.
-                    </div>
-                    <div className="max-w-[88%] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5 text-[12px] text-white/75">
-                      Perfect, I'll order tonight
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <ProductStage />
 
       {/* ─── Stats ─── */}
       <section className="border-y border-white/[0.06] py-16">
@@ -171,118 +92,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Product chapters ─── */}
-      <section className="py-28 md:py-36">
-        <div className="mx-auto max-w-6xl px-5 lg:px-8">
-          <Reveal>
-            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
-              Product
-            </p>
-            <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-[1.1]">
-              Built for how conversations
-              <span className="text-white/40"> actually happen.</span>
-            </h2>
-          </Reveal>
-
-          <div className="mt-24 space-y-32">
-            {[
-              {
-                num: "01",
-                eyebrow: "Inbox",
-                title: "Human when it matters. Automated when it doesn't.",
-                body: "AI handles the routine. You take over in one click. Assignment, status, and delivery — always visible.",
-                points: [
-                  "Optimistic send with delivery status",
-                  "Bot to human handoff in one action",
-                  "Shared team inbox with assignment",
-                ],
-              },
-              {
-                num: "02",
-                eyebrow: "Flows",
-                title: "Design journeys, not just auto-replies.",
-                body: "Triggers, conditions, AI steps, and tags — connected in a visual builder that stays clear under pressure.",
-                points: [
-                  "Keyword, comment, and story triggers",
-                  "Branching conditions and wait steps",
-                  "AI reply and lead qualification nodes",
-                ],
-              },
-              {
-                num: "03",
-                eyebrow: "Leads",
-                title: "Qualify without leaving Instagram.",
-                body: "Capture fields, score intent, and move prospects through a simple board your whole team can follow.",
-                points: [
-                  "Custom lead fields",
-                  "Status pipeline",
-                  "Tags that sync with automations",
-                ],
-              },
-            ].map((block, idx) => (
-              <div
-                key={block.num}
-                className={`grid items-center gap-12 lg:grid-cols-2 ${
-                  idx % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
-                }`}
-              >
-                <Reveal from={idx % 2 === 1 ? "right" : "left"}>
-                  <div className="text-[13px] font-medium tracking-[0.2em] text-[#8B9AFF]">
-                    {block.num} — {block.eyebrow}
-                  </div>
-                  <h3
-                    className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl sm:leading-snug"
-                    dangerouslySetInnerHTML={{ __html: block.title }}
-                  />
-                  <p className="mt-4 text-base leading-relaxed text-white/45">
-                    {block.body}
-                  </p>
-                  <ul className="mt-8 space-y-3">
-                    {block.points.map((p) => (
-                      <li
-                        key={p}
-                        className="flex items-start gap-3 text-[15px] text-white/60"
-                      >
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5B6AF0]/15">
-                          <Check className="h-3 w-3 text-[#8B9AFF]" />
-                        </span>
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </Reveal>
-                <Reveal delay={120} from={idx % 2 === 1 ? "left" : "right"}>
-                  <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-transparent p-8 sm:p-12">
-                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#5B6AF0]/10 blur-3xl" />
-                    <div className="relative rounded-xl border border-white/[0.08] bg-[#0C0E14] p-6">
-                      <div className="mb-5 flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5B6AF0]/15 text-[#8B9AFF]">
-                          {block.eyebrow === "Inbox" && <Inbox className="h-4 w-4" />}
-                          {block.eyebrow === "Flows" && <Workflow className="h-4 w-4" />}
-                          {block.eyebrow === "Leads" && <BarChart3 className="h-4 w-4" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white/90">{block.eyebrow}</p>
-                          <p className="text-xs text-white/30">Live in Gemai</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2.5">
-                        {[72, 55, 88].map((w, n) => (
-                          <div
-                            key={n}
-                            className="h-11 rounded-lg border border-white/[0.05] bg-white/[0.03]"
-                            style={{ width: `${w}%` }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Reveal>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ProductChapters />
 
       {/* ─── Features ─── */}
       <section id="features" className="border-t border-white/[0.06] py-28 md:py-36">
