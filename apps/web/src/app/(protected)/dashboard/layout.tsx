@@ -12,6 +12,7 @@ import {
   prefetchUserAutomations,
 } from "@/react-query/prefetch";
 import { onBoardUser } from "@/actions/user";
+import DashboardShell from "@/components/global/dashboard-shell";
 
 type Props = {
   children: React.ReactNode;
@@ -28,15 +29,9 @@ async function layout({ children }: Props) {
   return (
     <HydrationBoundary state={dehydrate(query)}>
       <WorkspaceProvider>
-        <div className="min-h-screen bg-background">
-          <Sidebar />
-          <div className="lg:pl-[240px] flex flex-col min-h-screen">
-            <div className="flex-1 flex flex-col px-4 py-4 lg:px-8 lg:py-6 max-w-[1600px]">
-              <InfoBar />
-              <main className="flex-1">{children}</main>
-            </div>
-          </div>
-        </div>
+        <DashboardShell sidebar={<Sidebar />} header={<InfoBar />}>
+          {children}
+        </DashboardShell>
       </WorkspaceProvider>
     </HydrationBoundary>
   );
