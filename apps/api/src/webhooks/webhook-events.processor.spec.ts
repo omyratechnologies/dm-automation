@@ -153,6 +153,116 @@ describe("WebhookEventsProcessor", () => {
     expect(f.prisma.message.create).not.toHaveBeenCalled();
   });
 
+  it("ingests a reaction as a conversation without triggering flows", async () => {
+    const f = makeFixture();
+    f.prisma.webhookEvent.findUnique.mockResolvedValue({
+      id: "evt-reaction-1",
+      status: "RECEIVED",
+      payload: {
+        id: "ig-biz",
+        messaging: [
+          {
+            sender: { id: "ig-contact" },
+            reaction: {
+              mid: "reaction-mid-1",
+              emoji: "😂",
+              action: "react",
+              reaction: "laugh",
+            },
+          },
+        ],
+      },
+    });
+    f.prisma.igAccount.findUnique.mockResolvedValue({
+      id: "iga-1",
+      igUserId: "ig-biz",
+      workspaceId: "ws-1",
+      status: "ACTIVE",
+    });
+    f.prisma.contact.upsert.mockResolvedValue({ id: "contact-1" });
+    f.prisma.conversation.upsert.mockResolvedValue({
+      id: "conv-1",
+      mode: "BOT",
+    });
+    f.prisma.message.create.mockResolvedValue({ id: "msg-1" });
+
+    await f.processor.process({ data: { webhookEventId: "evt-reaction-1" } } as never);
+
+    expect(f.prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          text: "😂",
+          igMessageId: "reaction-mid-1",
+          direction: "IN",
+        }),
+      }),
+    );
+    expect(f.flowQueue.add).not.toHaveBeenCalled();
+    expect(f.automationsExecutor.trigger).not.toHaveBeenCalled();
+    expect(f.inbox.emitToWorkspace).toHaveBeenCalledWith(
+      "ws-1",
+      WS_EVENTS.MESSAGE_CREATED,
+      expect.any(Object),
+    );
+    expect(f.prisma.webhookEvent.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "PROCESSED" }),
+      }),
+    );
+  });
+
+  it("skips unreact events", async () => {
+    const f = makeFixture();
+    f.prisma.webhookEvent.findUnique.mockResolvedValue({
+      id: "evt-unreact-1",
+      status: "RECEIVED",
+      payload: {
+        id: "ig-biz",
+        messaging: [
+          {
+            sender: { id: "ig-contact" },
+            reaction: { mid: "reaction-mid-2", emoji: "😂", action: "unreact" },
+          },
+        ],
+      },
+    });
+    f.prisma.igAccount.findUnique.mockResolvedValue({
+      id: "iga-1",
+      igUserId: "ig-biz",
+      status: "ACTIVE",
+    });
+
+    await f.processor.process({ data: { webhookEventId: "evt-unreact-1" } } as never);
+
+    expect(f.prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it("skips reactions from self", async () => {
+    const f = makeFixture();
+    f.prisma.webhookEvent.findUnique.mockResolvedValue({
+      id: "evt-self-reaction-1",
+      status: "RECEIVED",
+      payload: {
+        id: "ig-biz",
+        messaging: [
+          {
+            sender: { id: "ig-biz" },
+            reaction: { mid: "reaction-mid-3", emoji: "❤️", action: "react" },
+          },
+        ],
+      },
+    });
+    f.prisma.igAccount.findUnique.mockResolvedValue({
+      id: "iga-1",
+      igUserId: "ig-biz",
+      status: "ACTIVE",
+    });
+
+    await f.processor.process({ data: { webhookEventId: "evt-self-reaction-1" } } as never);
+
+    expect(f.prisma.message.create).not.toHaveBeenCalled();
+  });
+
   it("processes a comment webhook event", async () => {
     const f = makeFixture();
     f.prisma.webhookEvent.findUnique.mockResolvedValue({

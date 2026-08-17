@@ -31,6 +31,11 @@ interface IgMessagingItem {
     reply_to?: { story?: unknown };
     attachments?: Array<{ type?: unknown } | null>;
   };
+  reaction?: {
+    mid?: unknown;
+    emoji?: unknown;
+    action?: unknown;
+  };
 }
 
 interface IgChangeItem {
@@ -102,7 +107,12 @@ export class WebhookEventsProcessor extends WorkerHost {
     if (!igAccount || igAccount.status === "DISCONNECTED") return;
 
     for (const item of entry?.messaging ?? []) {
-      if (item) await this.handleMessaging(igAccount, item);
+      if (!item) continue;
+      if (item.message) {
+        await this.handleMessaging(igAccount, item);
+      } else if (item.reaction) {
+        await this.handleReaction(igAccount, item);
+      }
     }
     for (const change of entry?.changes ?? []) {
       if (change?.field === "comments" && change.value) {
@@ -156,10 +166,41 @@ export class WebhookEventsProcessor extends WorkerHost {
     });
   }
 
+  /**
+   * A reaction is a real contact interaction: surface it as a conversation
+   * (emoji as the message) but never trigger flows — auto-replying to a
+   * reaction would burn the 200 DM/hr budget for no business value.
+   */
+  private async handleReaction(
+    igAccount: IgAccount,
+    item: IgMessagingItem,
+  ): Promise<void> {
+    const reaction = item.reaction;
+    if (!reaction) return;
+    if (String(reaction.action) === "unreact") return;
+
+    const senderId =
+      item.sender?.id !== undefined ? String(item.sender.id) : "";
+    if (!senderId || senderId === igAccount.igUserId) return;
+
+    await this.ingestInbound(
+      igAccount,
+      {
+        senderIgUserId: senderId,
+        text: typeof reaction.emoji === "string" ? reaction.emoji : "👍",
+        mid: typeof reaction.mid === "string" ? reaction.mid : undefined,
+        source: "dm",
+      },
+      { runFlows: false },
+    );
+  }
+
   private async ingestInbound(
     igAccount: IgAccount,
     input: InboundInput,
+    opts: { runFlows?: boolean } = {},
   ): Promise<void> {
+    const { runFlows = true } = opts;
     const now = new Date();
 
     const contact = await this.prisma.contact.upsert({
@@ -243,7 +284,7 @@ export class WebhookEventsProcessor extends WorkerHost {
       throw err;
     }
 
-    if (conversation.mode === "BOT") {
+    if (conversation.mode === "BOT" && runFlows) {
       const trigger: FlowRunJob = {
         kind: "trigger",
         workspaceId: igAccount.workspaceId,
