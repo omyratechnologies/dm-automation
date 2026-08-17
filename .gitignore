@@ -45,3 +45,4 @@ next-env.d.ts
 # pm2 logs
 logs/
 .prisma/
+.gstack/

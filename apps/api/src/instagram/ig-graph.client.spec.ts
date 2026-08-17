@@ -194,6 +194,24 @@ describe("IgGraphClient", () => {
         }),
       );
     });
+
+    it("treats an HTTP error response as reachable (invalid ping token)", async () => {
+      (axios.isAxiosError as jest.Mock).mockReturnValue(true);
+      mockHttpGet.mockRejectedValue({
+        isAxiosError: true,
+        response: { status: 400, data: { error: { code: 190 } } },
+      });
+      const client = new IgGraphClient(mockConfig() as never);
+
+      await expect(client.ping()).resolves.toBeUndefined();
+    });
+
+    it("still fails on network-level errors", async () => {
+      mockHttpGet.mockRejectedValue(new Error("socket hang up"));
+      const client = new IgGraphClient(mockConfig() as never);
+
+      await expect(client.ping()).rejects.toThrow();
+    });
   });
 
   describe("subscribeToWebhooks", () => {

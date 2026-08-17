@@ -5,6 +5,7 @@ import Trigger from "@/components/global/automations/trigger";
 import AutomationsBreadCrumb from "@/components/global/bread-crumbs/automations";
 import { Warning } from "@/icons";
 import { prefetchUserAutomation } from "@/react-query/prefetch";
+import { withinBudget, SSR_METADATA_BUDGET_MS } from "@/lib/ssr";
 
 import {
   dehydrate,
@@ -19,15 +20,15 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const info = await getAutomationInfo(params.id);
+  const info = await withinBudget(getAutomationInfo(params.id), SSR_METADATA_BUDGET_MS);
   return {
-    title: info.status === 200 ? info.data.name : undefined,
+    title: info?.status === 200 ? info.data.name : undefined,
   };
 }
 
 const Page = async ({ params }: Props) => {
   const query = new QueryClient();
-  await prefetchUserAutomation(query, params.id);
+  await withinBudget(prefetchUserAutomation(query, params.id));
 
   return (
     <HydrationBoundary state={dehydrate(query)}>

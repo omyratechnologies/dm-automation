@@ -178,10 +178,17 @@ export class IgGraphClient {
 
   /** Lightweight connectivity check — fetches the API root. */
   async ping(): Promise<void> {
-    await this.http.get(`${this.baseUrl}/me`, {
-      params: { fields: "id", access_token: "ping" },
-      timeout: 5000,
-    });
+    try {
+      await this.http.get(`${this.baseUrl}/me`, {
+        params: { fields: "id", access_token: "ping" },
+        timeout: 5000,
+      });
+    } catch (err) {
+      // A non-2xx response (e.g. 400 for the invalid "ping" token) still proves
+      // Meta's API is reachable — only network-level failures matter here.
+      if (axios.isAxiosError(err) && err.response) return;
+      throw mapGraphError(err);
+    }
   }
 
   /**

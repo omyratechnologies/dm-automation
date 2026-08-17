@@ -13,18 +13,20 @@ import {
 } from "@/react-query/prefetch";
 import { onBoardUser } from "@/actions/user";
 import DashboardShell from "@/components/global/dashboard-shell";
+import { withinBudget } from "@/lib/ssr";
 
 type Props = {
   children: React.ReactNode;
 };
 
 async function layout({ children }: Props) {
-  await onBoardUser();
-
   const query = new QueryClient();
 
-  await prefetchUserProfile(query);
-  await prefetchUserAutomations(query);
+  await Promise.allSettled([
+    withinBudget(onBoardUser()),
+    withinBudget(prefetchUserProfile(query)),
+    withinBudget(prefetchUserAutomations(query)),
+  ]);
 
   return (
     <HydrationBoundary state={dehydrate(query)}>

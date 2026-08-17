@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useScroll, useSpring, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 /** Thin top progress bar — premium detail without noise */
 export function ScrollProgress() {
@@ -11,8 +12,15 @@ export function ScrollProgress() {
     damping: 30,
     restDelta: 0.001,
   });
+  const [mounted, setMounted] = useState(false);
 
-  if (reduced) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // useReducedMotion reads matchMedia during the first client render (null
+  // server-side), so gating on `mounted` keeps the hydrated tree identical.
+  if (mounted && reduced) return null;
 
   return (
     <motion.div

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -23,9 +23,16 @@ export function TextReveal({
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-10%" });
   const reduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const lines = text.split("\n");
 
-  if (reduced) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // useReducedMotion reads matchMedia on first client render (null server-side),
+  // so only apply it after hydration to keep the hydrated tree identical.
+  if (mounted && reduced) {
     return (
       <Tag className={className}>
         {lines.map((line, i) => (

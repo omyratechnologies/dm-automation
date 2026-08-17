@@ -249,7 +249,7 @@ const BroadcastsView = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Send "{confirmSend?.name}"?</AlertDialogTitle>
+            <AlertDialogTitle>Send &ldquo;{confirmSend?.name}&rdquo;?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmSend?.segmentId ? (
                 previewQuery.isLoading ? (

@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { API_URL, ApiError } from "./api";
+import { API_TIMEOUT_MS, API_URL, ApiError } from "./api";
 
 type ServerApiOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
@@ -44,9 +44,13 @@ export async function serverApiFetch<T>(
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      throw new ApiError(0, "Request timed out — the API is unreachable");
+    }
     throw new ApiError(0, "Network error — could not reach the API");
   }
 

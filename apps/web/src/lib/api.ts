@@ -37,6 +37,9 @@ export type ApiOptions = {
   signal?: AbortSignal;
 };
 
+/** Default request timeout — the API must never leave the UI hanging. */
+export const API_TIMEOUT_MS = 15_000;
+
 export async function apiFetch<T>(
   path: string,
   options: ApiOptions = {}
@@ -54,10 +57,13 @@ export async function apiFetch<T>(
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
-      signal,
+      signal: signal ?? AbortSignal.timeout(API_TIMEOUT_MS),
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      throw new ApiError(0, "Request timed out — the API is unreachable");
+    }
     throw new ApiError(0, "Network error — could not reach the API");
   }
 
