@@ -40,7 +40,6 @@ const AutomationList = (props: Props) => {
   const { toast } = useToast();
 
   const { latestVariable } = useMutationDataState(["create-automation"]);
-  console.log(latestVariable);
   const { pathname } = usePaths();
 
   const { isPending: isDeleting, mutate: deleteAutomationMutation } = useMutationData(
@@ -70,8 +69,15 @@ const AutomationList = (props: Props) => {
     }
   };
 
+  // Only prepend the optimistic card while the create mutation is in flight —
+  // the mutation cache retains completed mutations, so without the pending gate
+  // a ghost "Untitled" card would sit next to the real automation forever.
   const optimisticUiData: AutomationListItem[] = useMemo(() => {
-    if (latestVariable && latestVariable?.variables && data) {
+    if (
+      latestVariable?.variables &&
+      latestVariable?.status === "pending" &&
+      data
+    ) {
       return [latestVariable.variables as AutomationListItem, ...data];
     }
     return data ?? [];
