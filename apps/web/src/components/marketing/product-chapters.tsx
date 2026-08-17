@@ -7,7 +7,7 @@ import {
   useSpring,
   useReducedMotion,
 } from "framer-motion";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Inbox, Workflow, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -138,6 +138,7 @@ function Chapter({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -149,21 +150,29 @@ function Chapter({
     restDelta: 0.001,
   });
 
-  const y = useTransform(smooth, [0, 0.5, 1], reduced ? [0, 0, 0] : [48, 0, -24]);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Gate reduced-motion keyframes until after hydration — they render into the
+  // style prop, so they must match between server and client first render.
+  const isReduced = mounted && reduced;
+
+  const y = useTransform(smooth, [0, 0.5, 1], isReduced ? [0, 0, 0] : [48, 0, -24]);
   const opacity = useTransform(
     smooth,
     [0, 0.2, 0.8, 1],
-    reduced ? [1, 1, 1, 1] : [0, 1, 1, 0.35]
+    isReduced ? [1, 1, 1, 1] : [0, 1, 1, 0.35]
   );
   const scale = useTransform(
     smooth,
     [0, 0.25, 0.75, 1],
-    reduced ? [1, 1, 1, 1] : [0.96, 1, 1, 0.98]
+    isReduced ? [1, 1, 1, 1] : [0.96, 1, 1, 0.98]
   );
   const panelY = useTransform(
     smooth,
     [0, 0.5, 1],
-    reduced ? [0, 0, 0] : [64, 0, -16]
+    isReduced ? [0, 0, 0] : [64, 0, -16]
   );
 
   const Icon = chapter.icon;
@@ -237,19 +246,29 @@ function Chapter({
 export function ProductChapters() {
   const headerRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const { scrollYProgress } = useScroll({
     target: headerRef,
     offset: ["start end", "end start"],
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Gate reduced-motion keyframes until after hydration — they render into the
+  // style prop, so they must match between server and client first render.
+  const isReduced = mounted && reduced;
+
   const headerY = useTransform(
     scrollYProgress,
     [0, 1],
-    reduced ? [0, 0] : [40, -20]
+    isReduced ? [0, 0] : [40, -20]
   );
   const headerOpacity = useTransform(
     scrollYProgress,
     [0, 0.25, 0.85, 1],
-    reduced ? [1, 1, 1, 1] : [0, 1, 1, 0.5]
+    isReduced ? [1, 1, 1, 1] : [0, 1, 1, 0.5]
   );
 
   return (

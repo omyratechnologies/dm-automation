@@ -196,7 +196,7 @@ describe("IgGraphClient", () => {
     });
 
     it("treats an HTTP error response as reachable (invalid ping token)", async () => {
-      (axios.isAxiosError as jest.Mock).mockReturnValue(true);
+      jest.spyOn(axios, "isAxiosError").mockReturnValue(true);
       mockHttpGet.mockRejectedValue({
         isAxiosError: true,
         response: { status: 400, data: { error: { code: 190 } } },

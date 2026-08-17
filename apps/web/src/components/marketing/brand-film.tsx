@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Premium product-film opening — uses the GEMAI logo GIF.
@@ -10,20 +10,30 @@ import { useRef } from "react";
 export function BrandFilm() {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // useReducedMotion reads matchMedia on first client render (null server-side),
+  // and transform keyframes render into the style prop — gate until after
+  // hydration so server/client initial styles stay identical.
+  const isReduced = mounted && reduced;
+
   const opacity = useTransform(
     scrollYProgress,
     [0, 0.25, 0.7, 1],
-    reduced ? [1, 1, 1, 1] : [0, 1, 1, 0.4]
+    isReduced ? [1, 1, 1, 1] : [0, 1, 1, 0.4]
   );
   const scale = useTransform(
     scrollYProgress,
     [0, 0.4, 1],
-    reduced ? [1, 1, 1] : [0.92, 1, 1.02]
+    isReduced ? [1, 1, 1] : [0.92, 1, 1.02]
   );
 
   return (

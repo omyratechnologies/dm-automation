@@ -7,7 +7,7 @@ import {
   useSpring,
   useReducedMotion,
 } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 
 /**
  * Product film stage — Flow Builder journey video.
@@ -16,6 +16,7 @@ import { useRef } from "react";
 export function ProductStage() {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
@@ -25,16 +26,24 @@ export function ProductStage() {
     damping: 28,
   });
 
-  const y = useTransform(smooth, [0, 1], reduced ? [0, 0] : [60, -30]);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Gate reduced-motion keyframes until after hydration — they render into the
+  // style prop, so they must match between server and client first render.
+  const isReduced = mounted && reduced;
+
+  const y = useTransform(smooth, [0, 1], isReduced ? [0, 0] : [60, -30]);
   const scale = useTransform(
     smooth,
     [0, 0.35, 1],
-    reduced ? [1, 1, 1] : [0.92, 1, 0.98]
+    isReduced ? [1, 1, 1] : [0.92, 1, 0.98]
   );
   const opacity = useTransform(
     smooth,
     [0, 0.15, 0.85, 1],
-    reduced ? [1, 1, 1, 1] : [0.35, 1, 1, 0.75]
+    isReduced ? [1, 1, 1, 1] : [0.35, 1, 1, 0.75]
   );
   const glow = useTransform(smooth, [0, 0.45, 1], [0.12, 0.32, 0.1]);
 
