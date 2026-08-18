@@ -19,7 +19,7 @@ COPY packages/shared/package.json packages/shared/
 # devDependencies didn't actually get installed, instead of surfacing as a
 # confusing "nest: not found" three layers later in the build stage.
 RUN npm ci --ignore-scripts \
-  && test -x node_modules/.bin/nest || (echo "npm ci did not install @nestjs/cli — devDependencies missing" && exit 1)
+  && test -x apps/api/node_modules/.bin/nest || (echo "npm ci did not install the API workspace @nestjs/cli — devDependencies missing" && exit 1)
 
 # ---------------------------------------------------------------------------
 # build — prisma generate, build @repo/shared then @repo/api
@@ -31,6 +31,10 @@ COPY package.json package-lock.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web/package.json apps/web/package.json
+# Nest 11's CLI is installed inside the API workspace rather than hoisted to
+# the repository root. Preserve workspace-local dependencies from the deps
+# stage so `npm run build --workspace @repo/api` can resolve the CLI.
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 RUN npx prisma generate --schema packages/db/prisma/schema.prisma \
   && npm run build --workspace @repo/shared \
   && npm run build --workspace @repo/api
