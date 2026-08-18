@@ -7,6 +7,7 @@ import type { IgAccount } from "@prisma/client";
 import { TokenCrypto } from "../common/crypto/kms";
 import { InboxGateway } from "../inbox/inbox.gateway";
 import { IgGraphClient, type IgUserProfile } from "../instagram/ig-graph.client";
+import { METRICS_KEYS, MetricsService } from "../metrics/metrics.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AutomationsExecutorService } from "../automations/automations-executor.service";
 
@@ -71,6 +72,7 @@ export class WebhookEventsProcessor extends WorkerHost {
     @InjectQueue(QUEUES.FLOW_RUNS)
     private readonly flowQueue: Queue<FlowRunJob>,
     private readonly automationsExecutor: AutomationsExecutorService,
+    private readonly metrics: MetricsService,
   ) {
     super();
   }
@@ -87,6 +89,7 @@ export class WebhookEventsProcessor extends WorkerHost {
         where: { id: event.id },
         data: { status: "PROCESSED", processedAt: new Date(), error: null },
       });
+      await this.metrics.increment(METRICS_KEYS.WEBHOOKS_PROCESSED);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.error(`Webhook event ${event.id} failed: ${message}`);

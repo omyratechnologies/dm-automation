@@ -20,6 +20,7 @@ import { QUEUES } from "@repo/shared";
 import type { WebhookEventJob } from "@repo/shared";
 import type { Prisma } from "@prisma/client";
 import { Public } from "../auth/public.decorator";
+import { METRICS_KEYS, MetricsService } from "../metrics/metrics.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 /**
@@ -38,6 +39,7 @@ export class WebhooksController {
     private readonly prisma: PrismaService,
     @InjectQueue(QUEUES.WEBHOOK_EVENTS)
     private readonly webhookQueue: Queue<WebhookEventJob>,
+    private readonly metrics: MetricsService,
   ) {}
 
   /** Meta subscription handshake: echo hub.challenge when the token matches. */
@@ -115,6 +117,7 @@ export class WebhooksController {
         select: { id: true },
       });
       webhookEventId = created.id;
+      await this.metrics.increment(METRICS_KEYS.WEBHOOKS_RECEIVED);
     } catch (err) {
       if ((err as { code?: string })?.code === "P2002") {
         // Replay/duplicate delivery — already ingested.

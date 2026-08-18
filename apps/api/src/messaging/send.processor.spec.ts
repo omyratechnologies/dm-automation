@@ -2,6 +2,7 @@ import { UnrecoverableError } from "bullmq";
 import { SEND_REJECTIONS } from "@repo/shared";
 import type { SendMessageJob } from "@repo/shared";
 import { IgApiError, RateLimitedError } from "../instagram/errors";
+import { METRICS_KEYS } from "../metrics/metrics.service";
 import { SendProcessor, currentPeriod } from "./send.processor";
 
 const HOUR = 60 * 60 * 1000;
@@ -20,6 +21,7 @@ interface Fixture {
   graph: { sendDm: jest.Mock; privateReplyToComment: jest.Mock };
   inbox: { emitToWorkspace: jest.Mock };
   rateLimiter: { canSend: jest.Mock; recordSend: jest.Mock };
+  metrics: { increment: jest.Mock };
 }
 
 function makeFixture(opts: {
@@ -87,6 +89,7 @@ function makeFixture(opts: {
     canSend: jest.fn().mockResolvedValue(true),
     recordSend: jest.fn().mockResolvedValue(1),
   };
+  const metrics = { increment: jest.fn().mockResolvedValue(undefined) };
 
   const processor = new SendProcessor(
     prisma as never,
@@ -94,8 +97,9 @@ function makeFixture(opts: {
     tokenCrypto as never,
     inbox as never,
     rateLimiter as never,
+    metrics as never,
   );
-  return { processor, prisma, graph, inbox, rateLimiter };
+  return { processor, prisma, graph, inbox, rateLimiter, metrics };
 }
 
 function makeJob(overrides: Partial<SendMessageJob> = {}) {
@@ -136,6 +140,9 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
     expect(f.prisma.usageCounter.upsert).toHaveBeenCalled();
     expect(f.prisma.contact.update).toHaveBeenCalled();
     expect(f.inbox.emitToWorkspace).toHaveBeenCalled();
+    expect(f.metrics.increment).toHaveBeenCalledWith(
+      METRICS_KEYS.MESSAGES_SENT,
+    );
   });
 
   it("sends with the HUMAN_AGENT tag when window expired but humanAgent within 7 days", async () => {
@@ -258,6 +265,9 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
       where: { id: "bc-1" },
       data: { failedCount: { increment: 1 } },
     });
+    expect(f.metrics.increment).toHaveBeenCalledWith(
+      METRICS_KEYS.MESSAGES_FAILED,
+    );
   });
 
   it("does nothing when the message is no longer QUEUED", async () => {
@@ -280,6 +290,19 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
     );
     expect(f.graph.sendDm).not.toHaveBeenCalled();
     expect(lastMessageUpdate(f.prisma)).toMatchObject({ status: "SENT" });
+  });
+
+  it("counts successful broadcast deliveries separately", async () => {
+    const f = makeFixture();
+
+    await f.processor.process(makeJob({ broadcastId: "bc-1" }));
+
+    expect(f.metrics.increment).toHaveBeenCalledWith(
+      METRICS_KEYS.MESSAGES_SENT,
+    );
+    expect(f.metrics.increment).toHaveBeenCalledWith(
+      METRICS_KEYS.BROADCASTS_SENT,
+    );
   });
 });
 

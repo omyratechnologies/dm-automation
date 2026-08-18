@@ -3,6 +3,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { QUEUES } from "@repo/shared";
 import { PrismaService } from "../prisma/prisma.service";
+import { METRICS_KEYS, MetricsService } from "../metrics/metrics.service";
 import { IgGraphClient } from "./ig-graph.client";
 import { TokenCrypto } from "../common/crypto/kms";
 
@@ -21,6 +22,7 @@ export class TokenRefreshService implements OnModuleInit {
     private readonly tokenCrypto: TokenCrypto,
     @InjectQueue(QUEUES.TOKEN_REFRESH)
     private readonly queue: Queue,
+    private readonly metrics: MetricsService,
   ) {}
 
   async onModuleInit() {
@@ -64,6 +66,7 @@ export class TokenRefreshService implements OnModuleInit {
             tokenExpiresAt: new Date(Date.now() + ttlMs),
           },
         });
+        await this.metrics.increment(METRICS_KEYS.TOKENS_REFRESHED);
         refreshed++;
       } catch (err) {
         this.logger.warn(

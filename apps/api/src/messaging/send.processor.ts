@@ -16,6 +16,7 @@ import { InboxGateway } from "../inbox/inbox.gateway";
 import { IgApiError, RateLimitedError } from "../instagram/errors";
 import { IgGraphClient } from "../instagram/ig-graph.client";
 import type { SendResult } from "../instagram/ig-graph.client";
+import { METRICS_KEYS, MetricsService } from "../metrics/metrics.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { RateLimiterService } from "./rate-limiter.service";
 
@@ -40,6 +41,7 @@ export class SendProcessor extends WorkerHost {
     private readonly tokenCrypto: TokenCrypto,
     private readonly inbox: InboxGateway,
     private readonly rateLimiter: RateLimiterService,
+    private readonly metrics: MetricsService,
   ) {
     super();
   }
@@ -193,8 +195,10 @@ export class SendProcessor extends WorkerHost {
               where: { id: data.broadcastId },
               data: { sentCount: { increment: 1 } },
             }),
+            this.metrics.increment(METRICS_KEYS.BROADCASTS_SENT),
           ]
         : []),
+      this.metrics.increment(METRICS_KEYS.MESSAGES_SENT),
     ]);
     this.inbox.emitToWorkspace(
       data.workspaceId,
@@ -226,6 +230,9 @@ export class SendProcessor extends WorkerHost {
             ? { skippedCount: { increment: 1 } }
             : { failedCount: { increment: 1 } },
       });
+    }
+    if (status === "FAILED") {
+      await this.metrics.increment(METRICS_KEYS.MESSAGES_FAILED);
     }
     this.inbox.emitToWorkspace(
       data.workspaceId,

@@ -1,5 +1,6 @@
 import { FlowExecutor, MAX_STEPS, type RunSnapshot } from "./flow-executor";
 import type { FlowDefinition, FlowNode } from "@repo/shared";
+import { METRICS_KEYS } from "../metrics/metrics.service";
 
 const makeRun = (overrides: Partial<RunSnapshot> = {}): RunSnapshot => ({
   id: "run-1",
@@ -28,15 +29,17 @@ function makeFixture() {
   const config = { get: jest.fn() };
   const sendQueue = { add: jest.fn() };
   const flowRunsQueue = { add: jest.fn() };
+  const metrics = { increment: jest.fn().mockResolvedValue(undefined) };
 
   const executor = new FlowExecutor(
     prisma as never,
     config as never,
     sendQueue as never,
     flowRunsQueue as never,
+    metrics as never,
   );
 
-  return { executor, prisma, config, sendQueue, flowRunsQueue };
+  return { executor, prisma, config, sendQueue, flowRunsQueue, metrics };
 }
 
 describe("FlowExecutor", () => {
@@ -311,6 +314,9 @@ describe("FlowExecutor", () => {
       );
       expect(f.prisma.flowRun.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ status: "COMPLETED" }) }),
+      );
+      expect(f.metrics.increment).toHaveBeenCalledWith(
+        METRICS_KEYS.FLOW_RUNS_COMPLETED,
       );
     });
 

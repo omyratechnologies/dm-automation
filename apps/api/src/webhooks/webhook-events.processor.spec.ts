@@ -1,4 +1,5 @@
 import { QUEUES, WS_EVENTS } from "@repo/shared";
+import { METRICS_KEYS } from "../metrics/metrics.service";
 import { WebhookEventsProcessor } from "./webhook-events.processor";
 
 function makeFixture() {
@@ -25,6 +26,7 @@ function makeFixture() {
   const tokenCrypto = { decrypt: jest.fn().mockReturnValue("mock-token") };
   const flowQueue = { add: jest.fn() };
   const automationsExecutor = { trigger: jest.fn().mockResolvedValue(undefined) };
+  const metrics = { increment: jest.fn().mockResolvedValue(undefined) };
 
   const processor = new WebhookEventsProcessor(
     prisma as never,
@@ -33,9 +35,10 @@ function makeFixture() {
     tokenCrypto as never,
     flowQueue as never,
     automationsExecutor as never,
+    metrics as never,
   );
 
-  return { processor, prisma, inbox, graph, tokenCrypto, flowQueue, automationsExecutor };
+  return { processor, prisma, inbox, graph, tokenCrypto, flowQueue, automationsExecutor, metrics };
 }
 
 describe("WebhookEventsProcessor", () => {
@@ -108,6 +111,9 @@ describe("WebhookEventsProcessor", () => {
         where: { id: "evt-1" },
         data: expect.objectContaining({ status: "PROCESSED" }),
       }),
+    );
+    expect(f.metrics.increment).toHaveBeenCalledWith(
+      METRICS_KEYS.WEBHOOKS_PROCESSED,
     );
   });
 
@@ -506,5 +512,6 @@ describe("WebhookEventsProcessor", () => {
         data: expect.objectContaining({ status: "FAILED" }),
       }),
     );
+    expect(f.metrics.increment).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import { ForbiddenException } from "@nestjs/common";
 import * as crypto from "crypto";
+import { METRICS_KEYS } from "../metrics/metrics.service";
 import { WebhooksController } from "./webhooks.controller";
 
 const APP_SECRET = "test-app-secret";
@@ -18,12 +19,14 @@ function makeController(configOverrides: Record<string, string | undefined> = {}
     },
   };
   const queue = { add: jest.fn().mockResolvedValue(undefined) };
+  const metrics = { increment: jest.fn().mockResolvedValue(undefined) };
   const controller = new WebhooksController(
     config as never,
     prisma as never,
     queue as never,
+    metrics as never,
   );
-  return { controller, prisma, queue };
+  return { controller, prisma, queue, metrics };
 }
 
 function sign(raw: Buffer, secret = APP_SECRET): string {
@@ -63,7 +66,7 @@ describe("WebhooksController", () => {
     const body = { object: "instagram", entry: [{ id: "ig-1", messaging: [] }] };
 
     it("accepts a valid signature and enqueues the event", async () => {
-      const { controller, prisma, queue } = makeController();
+      const { controller, prisma, queue, metrics } = makeController();
       const raw = Buffer.from(JSON.stringify(body));
       const res = await controller.receive(makeRequest(body, sign(raw), raw));
       expect(res).toEqual({ received: true });
@@ -71,6 +74,9 @@ describe("WebhooksController", () => {
       expect(queue.add).toHaveBeenCalledWith("instagram-entry", {
         webhookEventId: "evt-1",
       });
+      expect(metrics.increment).toHaveBeenCalledWith(
+        METRICS_KEYS.WEBHOOKS_RECEIVED,
+      );
     });
 
     it("rejects an invalid signature (wrong secret)", async () => {
@@ -111,7 +117,7 @@ describe("WebhooksController", () => {
 
   describe("dedupe / replay protection", () => {
     it("skips duplicate events on unique-constraint violation and still returns 200", async () => {
-      const { controller, prisma, queue } = makeController();
+      const { controller, prisma, queue, metrics } = makeController();
       prisma.webhookEvent.create.mockRejectedValueOnce(
         Object.assign(new Error("Unique constraint failed"), {
           code: "P2002",
@@ -132,6 +138,7 @@ describe("WebhooksController", () => {
       // First entry hit P2002 and was skipped; second entry was enqueued.
       expect(prisma.webhookEvent.create).toHaveBeenCalledTimes(2);
       expect(queue.add).toHaveBeenCalledTimes(1);
+      expect(metrics.increment).toHaveBeenCalledTimes(1);
     });
 
     it("uses the message mid as the event key when present", async () => {

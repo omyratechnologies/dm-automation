@@ -12,6 +12,7 @@ import type {
   FlowRunJob,
   SendMessageJob,
 } from "@repo/shared";
+import { METRICS_KEYS, MetricsService } from "../metrics/metrics.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { matchText } from "./trigger-matcher";
 import type { TriggerEvent } from "./trigger-matcher";
@@ -61,6 +62,7 @@ export class FlowExecutor {
     private readonly sendQueue: Queue<SendMessageJob>,
     @InjectQueue(QUEUES.FLOW_RUNS)
     private readonly flowRunsQueue: Queue<FlowRunJob>,
+    private readonly metrics: MetricsService,
   ) {}
 
   /**
@@ -554,6 +556,7 @@ ${prompt}`;
       where: { id: runId },
       data: { status: "COMPLETED", finishedAt: new Date() },
     });
+    await this.metrics.increment(METRICS_KEYS.FLOW_RUNS_COMPLETED);
   }
 
   private async fail(runId: string, error: string): Promise<void> {
