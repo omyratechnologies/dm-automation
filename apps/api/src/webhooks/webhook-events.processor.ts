@@ -6,7 +6,7 @@ import type { FlowRunJob, WebhookEventJob } from "@repo/shared";
 import type { IgAccount } from "@prisma/client";
 import { TokenCrypto } from "../common/crypto/kms";
 import { InboxGateway } from "../inbox/inbox.gateway";
-import { IgGraphClient } from "../instagram/ig-graph.client";
+import { IgGraphClient, type IgUserProfile } from "../instagram/ig-graph.client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AutomationsExecutorService } from "../automations/automations-executor.service";
 
@@ -202,6 +202,12 @@ export class WebhookEventsProcessor extends WorkerHost {
   ): Promise<void> {
     const { runFlows = true } = opts;
     const now = new Date();
+    const opensMessagingWindow = input.source !== "comment";
+    const profile = await this.lookupUserProfile(
+      igAccount,
+      input.senderIgUserId,
+    );
+    const isFollow = profile?.isUserFollowBusiness;
 
     const contact = await this.prisma.contact.upsert({
       where: {
@@ -214,30 +220,33 @@ export class WebhookEventsProcessor extends WorkerHost {
         workspaceId: igAccount.workspaceId,
         igAccountId: igAccount.id,
         igUserId: input.senderIgUserId,
-        username: input.username ?? null,
-        lastInboundAt: now,
+        username: input.username ?? profile?.username ?? null,
+        name: profile?.name ?? null,
+        profilePicUrl: profile?.profilePic ?? null,
+        isFollow: isFollow ?? false,
+        ...(opensMessagingWindow ? { lastInboundAt: now } : {}),
       },
       update: {
-        lastInboundAt: now,
-        ...(input.username ? { username: input.username } : {}),
+        ...(opensMessagingWindow ? { lastInboundAt: now } : {}),
+        ...(input.username || profile?.username
+          ? { username: input.username ?? profile?.username }
+          : {}),
+        ...(profile?.name ? { name: profile.name } : {}),
+        ...(profile?.profilePic
+          ? { profilePicUrl: profile.profilePic }
+          : {}),
+        ...(isFollow !== undefined ? { isFollow } : {}),
       },
     });
 
-    // Check & cache follow status on every inbound message
-    const isFollow = await this.lookupFollowStatus(igAccount, input.senderIgUserId);
-    if (contact.isFollow !== isFollow) {
-      await this.prisma.contact.update({
-        where: { id: contact.id },
-        data: { isFollow },
-      });
-    }
+    const contactFollowsBusiness = isFollow ?? contact.isFollow ?? false;
 
     // Post-centric follow gate: skip flow if the post requires follow
     // and the sender doesn't follow the business account.
     if (
       input.source === "comment" &&
       input.postId &&
-      !isFollow &&
+      !contactFollowsBusiness &&
       (await this.postRequiresFollow(input.postId))
     ) {
       this.logger.debug(
@@ -315,20 +324,20 @@ export class WebhookEventsProcessor extends WorkerHost {
     );
   }
 
-  /** Check whether a contact follows the business account, using the IG User Profile API. */
-  private async lookupFollowStatus(
+  /** Fetch only the engaging-user fields needed for inbox identity and follow gating. */
+  private async lookupUserProfile(
     igAccount: IgAccount,
     senderIgUserId: string,
-  ): Promise<boolean> {
+  ): Promise<IgUserProfile | null> {
     try {
       const token = this.tokenCrypto.decrypt(igAccount.tokenEncrypted);
       const profile = await this.graph.getUserProfile(senderIgUserId, token);
-      return profile.isUserFollowBusiness === true;
+      return profile;
     } catch (err) {
       this.logger.warn(
         `Follow status lookup failed for ${senderIgUserId}: ${err instanceof Error ? err.message : String(err)}`,
       );
-      return false;
+      return null;
     }
   }
 

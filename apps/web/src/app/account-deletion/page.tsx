@@ -23,13 +23,20 @@ export default function AccountDeletionPage() {
           {/* Delete Your Account */}
           <section className="bg-card rounded-lg p-6 border">
             <h2 className="text-2xl font-semibold mb-4">Delete Your Account</h2>
-            <p className="mb-4">To delete your account and all associated data:</p>
+            <p className="mb-4">
+              The account owner can delete the Gemai account directly while signed in: open
+              <strong> Dashboard → Settings → Account</strong>, select <strong>Delete My Account</strong>,
+              and type <strong>DELETE</strong> to confirm. If you cannot sign in, send a request from
+              your account email address to{" "}
+              <a href="mailto:support@gemai.in" className="text-primary hover:underline">
+                support@gemai.in
+              </a>
+              . Include your workspace name and write &quot;Account deletion request&quot; in the subject.
+            </p>
             <ol className="list-decimal list-inside space-y-3 ml-4">
-              <li>Log in to your account</li>
-              <li>Go to <strong>Settings</strong></li>
-              <li>Navigate to <strong>Account Settings</strong></li>
-              <li>Scroll to the bottom and click <strong>Delete Account</strong></li>
-              <li>Confirm your decision by following the prompts</li>
+              <li>We verify that you own the account or workspace.</li>
+              <li>We confirm the scope of the deletion with you.</li>
+              <li>We permanently delete the workspace and notify you when complete.</li>
             </ol>
           </section>
 
@@ -43,7 +50,7 @@ export default function AccountDeletionPage() {
               <li>Instagram/Facebook integration data and access tokens</li>
               <li>Message history and conversation data</li>
               <li>Analytics and usage data</li>
-              <li>Subscription and billing information</li>
+              <li>Subscription identifiers that are not required for legal or accounting records</li>
               <li>Any other personal data associated with your account</li>
             </ul>
           </section>
@@ -54,22 +61,24 @@ export default function AccountDeletionPage() {
               Removing Instagram/Facebook Connection
             </h2>
             <p className="mb-4">
-              If you connected your account through Facebook/Instagram and want to revoke access:
+              If you connected an Instagram professional account and want to revoke access:
             </p>
             <ol className="list-decimal list-inside space-y-3 ml-4">
-              <li>Go to your Facebook Settings</li>
-              <li>
-                Navigate to <strong>Apps and Websites</strong>
-              </li>
-              <li>Find our app in the list</li>
+              <li>In Gemai, open <strong>Dashboard → Connections</strong> and select <strong>Disconnect</strong></li>
+            </ol>
+            <p className="my-4">You can also revoke access directly in Instagram:</p>
+            <ol className="list-decimal list-inside space-y-3 ml-4">
+              <li>Open Instagram and go to <strong>Settings</strong></li>
+              <li>Open <strong>Website permissions</strong>, then <strong>Apps and websites</strong></li>
+              <li>Under <strong>Active</strong>, find Gemai</li>
               <li>
                 Click <strong>Remove</strong>
               </li>
             </ol>
             <p className="mt-4 text-sm">
-              When you remove the app from Facebook/Instagram, Meta will automatically notify us to
-              delete your data. This process is handled securely through Meta&apos;s data deletion
-              callback system.
+              When you remove Gemai, Meta sends us a signed deauthorization request. We delete the
+              connected account token and Instagram-derived contacts, conversations, messages,
+              leads, broadcasts, and webhook data from our active systems.
             </p>
           </section>
 
@@ -78,18 +87,17 @@ export default function AccountDeletionPage() {
             <h2 className="text-2xl font-semibold mb-4">Deletion Timeline</h2>
             <ul className="space-y-3">
               <li>
-                <strong>Immediate:</strong> Your account becomes inaccessible
+                <strong>Instagram removal:</strong> Connected Instagram data is removed from active
+                systems after we receive and verify Meta&apos;s callback
               </li>
               <li>
-                <strong>Within 24 hours:</strong> Active automations and integrations are
-                deactivated
+                <strong>Gemai workspace request:</strong> We verify your request and complete the
+                deletion within 30 days
               </li>
               <li>
-                <strong>Within 30 days:</strong> All data is permanently deleted from our systems
-              </li>
-              <li>
-                <strong>Backup systems:</strong> Data in backups will be deleted during the next
-                backup cycle (within 90 days)
+                <strong>Backup systems:</strong> Deleted data may remain in protected backups until
+                they expire under our normal rotation schedule and will not be restored except for
+                disaster recovery
               </li>
             </ul>
           </section>
@@ -122,10 +130,6 @@ export default function AccountDeletionPage() {
                 account
               </li>
               <li>
-                <strong>Download your data:</strong> Export your data before deleting (available in
-                Settings)
-              </li>
-              <li>
                 <strong>Downgrade subscription:</strong> Switch to a free plan instead of deleting
               </li>
             </ul>
@@ -140,8 +144,8 @@ export default function AccountDeletionPage() {
             <ul className="space-y-2">
               <li>
                 <strong>Email:</strong>{" "}
-                <a href="mailto:support@yourdomain.com" className="text-primary hover:underline">
-                  support@yourdomain.com
+                <a href="mailto:support@gemai.in" className="text-primary hover:underline">
+                  support@gemai.in
                 </a>
               </li>
               <li>

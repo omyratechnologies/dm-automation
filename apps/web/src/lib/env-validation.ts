@@ -20,8 +20,7 @@ const requiredEnvVars = {
     'UPSTASH_REDIS_REST_TOKEN',
     'STRIPE_CLIENT_SECRET', // deprecated: use STRIPE_SECRET_KEY
     'NEXT_PUBLIC_STRIPE_PUBLISH_KEY',
-    'INSTAGRAM_APP_ID',
-    'INSTAGRAM_APP_SECRET',
+    'INSTAGRAM_EMBEDDED_OAUTH_URL',
   ],
 };
 
@@ -65,7 +64,7 @@ export function validateEnv(route?: string) {
  * "Invalid app ID".
  */
 export function validateInstagramOAuthUrl(url: string | undefined): string | null {
-  if (!url) return null; // optional — the connect button falls back to constructing the URL
+  if (!url) return null;
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -80,6 +79,36 @@ export function validateInstagramOAuthUrl(url: string | undefined): string | nul
   }
   if (!parsed.searchParams.get('scope')) {
     return 'Instagram OAuth URL is missing the scope parameter (e.g. instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments)';
+  }
+  if (!parsed.searchParams.get('redirect_uri')) {
+    return 'Instagram OAuth URL is missing the redirect_uri parameter';
+  }
+  if (parsed.searchParams.get('response_type') !== 'code') {
+    return 'Instagram OAuth URL must use response_type=code';
+  }
+
+  const requiredScopes = new Set([
+    'instagram_business_basic',
+    'instagram_business_manage_messages',
+    'instagram_business_manage_comments',
+  ]);
+  const scopes = new Set(
+    (parsed.searchParams.get('scope') ?? '')
+      .split(/[ ,]+/)
+      .map((scope) => scope.trim())
+      .filter(Boolean),
+  );
+  const missing = Array.from(requiredScopes).filter(
+    (scope) => !scopes.has(scope),
+  );
+  const unexpected = Array.from(scopes).filter(
+    (scope) => !requiredScopes.has(scope),
+  );
+  if (missing.length) {
+    return `Instagram OAuth URL is missing required scopes: ${missing.join(', ')}`;
+  }
+  if (unexpected.length) {
+    return `Instagram OAuth URL requests scopes the product does not use: ${unexpected.join(', ')}`;
   }
   return null;
 }
@@ -108,7 +137,7 @@ if (process.env.NODE_ENV === 'development') {
     console.log('✅ All required environment variables are set');
   }
 
-  for (const key of ['NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL', 'INSTAGRAM_EMBEDDED_OAUTH_URL']) {
+  for (const key of ['INSTAGRAM_EMBEDDED_OAUTH_URL']) {
     const problem = validateInstagramOAuthUrl(process.env[key]);
     if (problem) {
       console.warn(`⚠️  ${key}: ${problem}`);

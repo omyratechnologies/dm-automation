@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Lock, Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
 export default function PrivacySettings() {
@@ -28,33 +26,10 @@ export default function PrivacySettings() {
               <Lock className="h-4 w-4" />
               Data & Privacy
             </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Control how your data is used and stored
+            <p className="text-sm text-muted-foreground">
+              Review how Gemai processes data, request an export, disconnect
+              Instagram, or permanently delete your account.
             </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="analytics">Analytics & Performance</Label>
-                <p className="text-sm text-muted-foreground">
-                  Help us improve by sharing usage data
-                </p>
-              </div>
-              <Switch id="analytics" />
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="marketing">Marketing Communications</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive updates about new features and tips
-                </p>
-              </div>
-              <Switch id="marketing" />
-            </div>
           </div>
         </div>
 
@@ -78,12 +53,16 @@ export default function PrivacySettings() {
                 Privacy Policy
               </Button>
             </Link>
-            <Button variant="outline" className="w-full justify-start">
-              Terms of Service
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
-              Data Processing Agreement
-            </Button>
+            <Link href="/terms">
+              <Button variant="outline" className="w-full justify-start">
+                Terms of Service
+              </Button>
+            </Link>
+            <Link href="/account-deletion">
+              <Button variant="outline" className="w-full justify-start">
+                Account & Data Deletion
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -99,12 +78,11 @@ export default function PrivacySettings() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Button variant="outline" className="w-full justify-start">
-              Download My Data
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
-              View Data Usage
-            </Button>
+            <a href="mailto:support@gemai.in?subject=Gemai%20data%20export%20request">
+              <Button variant="outline" className="w-full justify-start">
+                Request My Data Export
+              </Button>
+            </a>
           </div>
         </div>
       </CardContent>

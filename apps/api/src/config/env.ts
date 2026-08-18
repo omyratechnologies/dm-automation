@@ -31,6 +31,35 @@ const envSchema = z.object({
   TOKEN_MASTER_KEY: z.string().min(1),
 
   WEB_ORIGIN: z.string().default("http://localhost:3000"),
+}).superRefine((env, ctx) => {
+  if (env.NODE_ENV !== "production") return;
+
+  for (const key of [
+    "INSTAGRAM_APP_ID",
+    "INSTAGRAM_APP_SECRET",
+    "INSTAGRAM_WEBHOOK_VERIFY_TOKEN",
+    "INSTAGRAM_OAUTH_REDIRECT_URI",
+  ] as const) {
+    if (!env[key]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: "Required in production",
+      });
+    }
+  }
+
+  for (const key of ["INSTAGRAM_GRAPH_URL", "INSTAGRAM_OAUTH_REDIRECT_URI", "WEB_ORIGIN"] as const) {
+    try {
+      new URL(env[key]);
+    } catch {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: "Must be a valid absolute URL in production",
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -27,6 +27,7 @@ function makeFixture(opts: {
   usageSends?: number;
   plan?: "FREE" | "PRO";
   messageStatus?: string;
+  optedOutAt?: Date | null;
 } = {}): Fixture {
   const message = {
     id: "msg-1",
@@ -39,6 +40,7 @@ function makeFixture(opts: {
     igUserId: "ig-contact",
     lastInboundAt:
       opts.lastInboundAt === undefined ? new Date() : opts.lastInboundAt,
+    optedOutAt: opts.optedOutAt ?? null,
   };
   const igAccount = {
     id: "iga-1",
@@ -198,6 +200,26 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
     });
   });
 
+  it("rejects automated sends after a contact opts out", async () => {
+    const f = makeFixture({ optedOutAt: new Date() });
+
+    await f.processor.process(makeJob({ source: "FLOW" }));
+
+    expect(f.graph.sendDm).not.toHaveBeenCalled();
+    expect(lastMessageUpdate(f.prisma)).toMatchObject({
+      status: "REJECTED",
+      errorCode: SEND_REJECTIONS.OPTED_OUT,
+    });
+  });
+
+  it("still permits a human support reply to an opted-out contact", async () => {
+    const f = makeFixture({ optedOutAt: new Date() });
+
+    await f.processor.process(makeJob({ source: "AGENT" }));
+
+    expect(f.graph.sendDm).toHaveBeenCalled();
+  });
+
   it("increments broadcast skippedCount on rejection", async () => {
     const f = makeFixture({ lastInboundAt: null });
     await f.processor.process(makeJob({ broadcastId: "bc-1" }));
@@ -247,7 +269,7 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
   });
 
   it("uses privateReplyToComment when replyToCommentId is set", async () => {
-    const f = makeFixture();
+    const f = makeFixture({ lastInboundAt: null });
     await f.processor.process(makeJob({ replyToCommentId: "comment-9" }));
 
     expect(f.graph.privateReplyToComment).toHaveBeenCalledWith(
@@ -257,6 +279,7 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
       "plain-token",
     );
     expect(f.graph.sendDm).not.toHaveBeenCalled();
+    expect(lastMessageUpdate(f.prisma)).toMatchObject({ status: "SENT" });
   });
 });
 

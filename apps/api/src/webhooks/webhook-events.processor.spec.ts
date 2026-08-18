@@ -11,7 +11,14 @@ function makeFixture() {
     post: { findFirst: jest.fn().mockResolvedValue(null) },
   };
   const inbox = { emitToWorkspace: jest.fn() };
-  const graph = { getUserProfile: jest.fn().mockResolvedValue({ isUserFollowBusiness: true }) };
+  const graph = {
+    getUserProfile: jest.fn().mockResolvedValue({
+      name: "Instagram User",
+      username: "ig_user",
+      profilePic: "https://example.com/avatar.jpg",
+      isUserFollowBusiness: true,
+    }),
+  };
   const tokenCrypto = { decrypt: jest.fn().mockReturnValue("mock-token") };
   const flowQueue = { add: jest.fn() };
   const automationsExecutor = { trigger: jest.fn().mockResolvedValue(undefined) };
@@ -300,8 +307,17 @@ describe("WebhookEventsProcessor", () => {
 
     expect(f.prisma.contact.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: expect.objectContaining({ username: "fan1" }),
+        create: expect.objectContaining({
+          username: "fan1",
+          name: "Instagram User",
+          profilePicUrl: "https://example.com/avatar.jpg",
+          isFollow: true,
+        }),
+        update: expect.not.objectContaining({ lastInboundAt: expect.anything() }),
       }),
+    );
+    expect(f.prisma.contact.upsert.mock.calls[0][0].create).not.toHaveProperty(
+      "lastInboundAt",
     );
     expect(f.flowQueue.add).toHaveBeenCalledWith(
       "trigger",

@@ -67,15 +67,23 @@ export class SendProcessor extends WorkerHost {
       await this.finalize(message, data, "FAILED", "ACCOUNT_DISCONNECTED");
       return;
     }
+    if (contact.optedOutAt && data.source !== "AGENT") {
+      await this.finalize(message, data, "REJECTED", SEND_REJECTIONS.OPTED_OUT);
+      return;
+    }
 
     // --- Messaging window enforcement ---------------------------------
-    if (!contact.lastInboundAt) {
+    // A comment-triggered private reply is its own Meta-authorized operation.
+    // A public comment does not open the standard 24-hour DM window.
+    if (!data.replyToCommentId && !contact.lastInboundAt) {
       await this.finalize(message, data, "REJECTED", SEND_REJECTIONS.NO_CONSENT);
       return;
     }
-    const age = Date.now() - contact.lastInboundAt.getTime();
     let useHumanAgentTag = false;
-    if (age > MESSAGING_WINDOW_MS) {
+    const age = contact.lastInboundAt
+      ? Date.now() - contact.lastInboundAt.getTime()
+      : 0;
+    if (!data.replyToCommentId && age > MESSAGING_WINDOW_MS) {
       if (data.humanAgent && age <= HUMAN_AGENT_WINDOW_MS) {
         useHumanAgentTag = true;
       } else {

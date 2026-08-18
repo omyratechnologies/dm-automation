@@ -10,8 +10,12 @@ import ErrorBoundary from "@/components/global/error-boundary";
 import ImpersonationBanner from "@/components/admin/impersonation-banner";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
+const publicSiteUrl = new URL(
+  process.env.NEXT_PUBLIC_HOST_URL ?? "https://gemai.omyratech.com",
+);
 
 export const metadata: Metadata = {
+  metadataBase: publicSiteUrl,
   title: {
     default: "Gemai - AI-Powered Instagram DM Automation & Sales Assistant",
     template: "%s | Gemai"
@@ -40,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://gemai.in",
+    url: "/",
     title: "Gemai - AI-Powered Instagram DM Automation & Sales Assistant",
     description: "Transform Instagram conversations into customers instantly with Gemai's intelligent AI automation. Engage, qualify, and convert—24/7.",
     siteName: "Gemai",
@@ -63,7 +67,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://gemai.in",
+    canonical: "/",
   },
 };
 

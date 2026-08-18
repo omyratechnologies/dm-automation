@@ -10,7 +10,7 @@ test("accepts a valid Instagram Business Login authorize URL", () => {
   assert.equal(validateInstagramOAuthUrl(GOOD_URL), null);
 });
 
-test("accepts an unset URL (connect button falls back to constructing one)", () => {
+test("accepts an unset optional URL", () => {
   assert.equal(validateInstagramOAuthUrl(undefined), null);
   assert.equal(validateInstagramOAuthUrl(""), null);
 });
@@ -34,6 +34,20 @@ test("rejects a URL missing scope", () => {
     "https://www.instagram.com/oauth/authorize?client_id=123&response_type=code",
   );
   assert.match(problem ?? "", /scope/);
+});
+
+test("rejects missing required Instagram scopes", () => {
+  const problem = validateInstagramOAuthUrl(
+    "https://www.instagram.com/oauth/authorize?client_id=123&redirect_uri=https%3A%2F%2Fapp.example%2Fcallback%2Finstagram&response_type=code&scope=instagram_business_basic",
+  );
+  assert.match(problem ?? "", /missing required scopes/);
+});
+
+test("rejects permissions the product does not use", () => {
+  const problem = validateInstagramOAuthUrl(
+    `${GOOD_URL},instagram_business_content_publish`,
+  );
+  assert.match(problem ?? "", /does not use/);
 });
 
 test("rejects a non-URL value", () => {

@@ -20,7 +20,9 @@ function makeSignedRequest(
 interface Fixture {
   service: GdprService;
   prisma: {
-    igAccount: { updateMany: jest.Mock };
+    $transaction: jest.Mock;
+    igAccount: { findUnique: jest.Mock; delete: jest.Mock };
+    webhookEvent: { deleteMany: jest.Mock };
     contact: { deleteMany: jest.Mock; count: jest.Mock };
     dataDeletionRequest: { create: jest.Mock; update: jest.Mock };
     workspace: { findUnique: jest.Mock; delete: jest.Mock };
@@ -39,8 +41,14 @@ function makeFixture(): Fixture {
       return "";
     }),
   };
-  const prisma = {
-    igAccount: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+  let prisma!: Fixture["prisma"];
+  prisma = {
+    $transaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn(prisma)),
+    igAccount: {
+      findUnique: jest.fn().mockResolvedValue({ id: "iga-1" }),
+      delete: jest.fn().mockResolvedValue({ id: "iga-1" }),
+    },
+    webhookEvent: { deleteMany: jest.fn().mockResolvedValue({ count: 2 }) },
     contact: {
       deleteMany: jest.fn().mockResolvedValue({ count: 3 }),
       count: jest.fn().mockResolvedValue(4),
@@ -109,20 +117,27 @@ describe("GdprService signed_request verification", () => {
 });
 
 describe("GdprService deauthorize / data deletion", () => {
-  it("disconnects the ig account on deauthorize", async () => {
+  it("purges the connected account and Instagram webhook payloads on deauthorize", async () => {
     const f = makeFixture();
     const res = await f.service.deauthorize(
       makeSignedRequest({ user_id: "ig-123" }),
     );
 
     expect(res).toEqual({ received: true });
-    expect(f.prisma.igAccount.updateMany).toHaveBeenCalledWith({
-      where: { igUserId: "ig-123" },
-      data: { status: "DISCONNECTED" },
+    expect(f.prisma.webhookEvent.deleteMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { igAccountId: "iga-1" },
+          { payload: { path: ["id"], equals: "ig-123" } },
+        ],
+      },
+    });
+    expect(f.prisma.igAccount.delete).toHaveBeenCalledWith({
+      where: { id: "iga-1" },
     });
   });
 
-  it("purges contacts, disconnects the account and returns a status url", async () => {
+  it("atomically purges Instagram data and returns a status url", async () => {
     const f = makeFixture();
     const res = await f.service.dataDeletion(
       makeSignedRequest({ user_id: "ig-123" }),
@@ -131,17 +146,22 @@ describe("GdprService deauthorize / data deletion", () => {
     expect(f.prisma.dataDeletionRequest.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ userId: "ig-123" }),
     });
-    expect(f.prisma.contact.deleteMany).toHaveBeenCalledWith({
-      where: { igUserId: "ig-123" },
+    expect(f.prisma.webhookEvent.deleteMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { igAccountId: "iga-1" },
+          { payload: { path: ["id"], equals: "ig-123" } },
+        ],
+      },
     });
-    expect(f.prisma.igAccount.updateMany).toHaveBeenCalledWith({
-      where: { igUserId: "ig-123" },
-      data: { status: "DISCONNECTED" },
+    expect(f.prisma.igAccount.delete).toHaveBeenCalledWith({
+      where: { id: "iga-1" },
     });
     expect(f.prisma.dataDeletionRequest.update).toHaveBeenCalledWith({
       where: { id: "ddr-1" },
-      data: expect.objectContaining({ status: "completed" }),
+      data: expect.objectContaining({ status: "completed", userId: null }),
     });
+    expect(f.prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(res.confirmation_code).toMatch(/^[0-9a-f]{12}$/);
     expect(res.url).toBe(
       `${WEB_ORIGIN}/data-deletion-status/${res.confirmation_code}`,
@@ -155,7 +175,23 @@ describe("GdprService deauthorize / data deletion", () => {
         makeSignedRequest({ user_id: "ig-123" }, "wrong-secret"),
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(f.prisma.contact.deleteMany).not.toHaveBeenCalled();
+    expect(f.prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("still removes matching webhook payloads when the account is already gone", async () => {
+    const f = makeFixture();
+    f.prisma.igAccount.findUnique.mockResolvedValue(null);
+
+    await f.service.dataDeletion(
+      makeSignedRequest({ user_id: "ig-removed" }),
+    );
+
+    expect(f.prisma.webhookEvent.deleteMany).toHaveBeenCalledWith({
+      where: {
+        OR: [{ payload: { path: ["id"], equals: "ig-removed" } }],
+      },
+    });
+    expect(f.prisma.igAccount.delete).not.toHaveBeenCalled();
   });
 });
 

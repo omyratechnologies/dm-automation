@@ -1,17 +1,47 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { onCurrentUser } from "../user";
 import { invalidateUserCache } from "@/lib/cache";
 import { logger } from "@/lib/logger";
 import { serverApiFetch } from "@/lib/server-api";
 
-export const onOAuthInstagram = (strategy: "INSTAGRAM" | "CRM") => {
+const INSTAGRAM_OAUTH_STATE_COOKIE = "instagram_oauth_state";
+
+export const onOAuthInstagram = async (strategy: "INSTAGRAM" | "CRM") => {
   if (strategy === "INSTAGRAM") {
-    return redirect(process.env.INSTAGRAM_EMBEDDED_OAUTH_URL as string);
+    const configuredUrl = process.env.INSTAGRAM_EMBEDDED_OAUTH_URL;
+    if (!configuredUrl) {
+      logger.error("Instagram OAuth URL is not configured");
+      return { status: 500, error: "Instagram integration is not configured" };
+    }
+
+    const state = randomBytes(32).toString("base64url");
+    const oauthUrl = new URL(configuredUrl);
+    oauthUrl.searchParams.set("state", state);
+    cookies().set(INSTAGRAM_OAUTH_STATE_COOKIE, state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/callback/instagram",
+      maxAge: 10 * 60,
+    });
+    redirect(oauthUrl.toString());
   } else {
     logger.info("CRM Auth");
+    return { status: 400, error: "CRM integration is not available" };
   }
+};
+
+const isValidOAuthState = (received: string, expected: string): boolean => {
+  const receivedBuffer = Buffer.from(received);
+  const expectedBuffer = Buffer.from(expected);
+  return (
+    receivedBuffer.length === expectedBuffer.length &&
+    timingSafeEqual(receivedBuffer, expectedBuffer)
+  );
 };
 
 const resolveWorkspaceId = async (): Promise<string> => {
@@ -19,10 +49,16 @@ const resolveWorkspaceId = async (): Promise<string> => {
   return result.workspaceId;
 };
 
-export const onIntegrate = async (code: string) => {
-  logger.info("onIntegrate called", { codePrefix: code.substring(0, 20) + "..." });
+export const onIntegrate = async (code: string, state: string) => {
+  logger.info("Instagram integration started");
 
   try {
+    const expectedState = cookies().get(INSTAGRAM_OAUTH_STATE_COOKIE)?.value;
+    if (!expectedState || !state || !isValidOAuthState(state, expectedState)) {
+      logger.warn("Instagram OAuth state validation failed");
+      return { status: 400, error: "Invalid or expired OAuth state" };
+    }
+
     const user = await onCurrentUser();
     const workspaceId = await resolveWorkspaceId();
 
@@ -71,40 +107,6 @@ export const onDisconnect = async (integrationId: string) => {
     return {
       status: 500,
       error: error.message || "Failed to disconnect integration",
-    };
-  }
-};
-
-export const getInstagramAccountInfo = async (instagramId: string, accessToken: string) => {
-  logger.info("Fetching Instagram account info", { instagramId });
-
-  try {
-    const { default: axios } = await import("axios");
-    const response = await axios.get(
-      `${process.env.INSTAGRAM_BASE_URL}/${instagramId}`,
-      {
-        params: { fields: "username,account_type,media_count" },
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    );
-
-    return {
-      status: 200,
-      data: {
-        username: response.data.username,
-        accountType: response.data.account_type,
-        mediaCount: response.data.media_count,
-        instagramId: instagramId,
-      },
-    };
-  } catch (error: any) {
-    logger.error("Error fetching Instagram account info", {
-      message: error.message,
-      response: error.response?.data,
-    });
-    return {
-      status: 500,
-      error: error.message || "Failed to fetch Instagram account info",
     };
   }
 };

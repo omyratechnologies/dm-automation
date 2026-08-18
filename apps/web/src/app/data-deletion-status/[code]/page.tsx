@@ -27,10 +27,11 @@ export default function DataDeletionStatusPage({ params }: Props) {
         <div className="space-y-6">
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <h2 className="text-lg font-semibold text-green-800 dark:text-green-400 mb-2">
-              ✅ Request Received
+              Request completed
             </h2>
             <p className="text-green-700 dark:text-green-300">
-              Your data deletion request has been received and is being processed.
+              The Instagram data associated with this confirmation code has been removed from our
+              active systems.
             </p>
           </div>
 
@@ -40,7 +41,7 @@ export default function DataDeletionStatusPage({ params }: Props) {
               <li>Your Instagram/Facebook integration data will be permanently deleted</li>
               <li>All associated automation workflows will be removed</li>
               <li>Your messages and conversation history will be deleted</li>
-              <li>This process typically completes within 30 days</li>
+              <li>The confirmation record does not retain your Meta user ID</li>
             </ul>
           </div>
 
@@ -49,10 +50,10 @@ export default function DataDeletionStatusPage({ params }: Props) {
             <p className="text-muted-foreground">
               If you have questions about your data deletion request, please contact us at{" "}
               <a
-                href="mailto:support@yourdomain.com"
+                href="mailto:support@gemai.in"
                 className="text-primary hover:underline"
               >
-                support@yourdomain.com
+                support@gemai.in
               </a>
             </p>
           </div>

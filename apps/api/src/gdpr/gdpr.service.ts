@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import type { Prisma } from "@prisma/client";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
@@ -72,17 +73,16 @@ export class GdprService {
     }
   }
 
-  /** User removed the app: disconnect their IG account(s). */
+  /** User removed the app: purge the account token and derived Instagram data. */
   async deauthorize(signedRequest: unknown): Promise<{ received: boolean }> {
     const payload = this.parseSignedRequest(signedRequest);
     const igUserId = payload.user_id;
     if (igUserId) {
-      const res = await this.prisma.igAccount.updateMany({
-        where: { igUserId },
-        data: { status: "DISCONNECTED" },
-      });
+      const deleted = await this.prisma.$transaction((tx) =>
+        this.purgeInstagramData(tx, igUserId),
+      );
       this.logger.log(
-        `deauthorize: disconnected ${res.count} ig account(s) for ${igUserId}`,
+        `deauthorize: purged ${deleted} connected Instagram account(s)`,
       );
     }
     return { received: true };
@@ -100,21 +100,20 @@ export class GdprService {
     const igUserId = payload.user_id;
     const confirmationCode = crypto.randomBytes(6).toString("hex");
 
-    const request = await this.prisma.dataDeletionRequest.create({
-      data: { confirmationCode, userId: igUserId ?? null },
-    });
-
-    if (igUserId) {
-      await this.prisma.contact.deleteMany({ where: { igUserId } });
-      await this.prisma.igAccount.updateMany({
-        where: { igUserId },
-        data: { status: "DISCONNECTED" },
+    await this.prisma.$transaction(async (tx) => {
+      const request = await tx.dataDeletionRequest.create({
+        data: { confirmationCode, userId: igUserId ?? null },
       });
-    }
 
-    await this.prisma.dataDeletionRequest.update({
-      where: { id: request.id },
-      data: { status: "completed", completedAt: new Date() },
+      if (igUserId) {
+        await this.purgeInstagramData(tx, igUserId);
+      }
+
+      // Keep the confirmation record, but not the Meta platform identifier.
+      await tx.dataDeletionRequest.update({
+        where: { id: request.id },
+        data: { status: "completed", completedAt: new Date(), userId: null },
+      });
     });
 
     const webOrigin =
@@ -123,6 +122,32 @@ export class GdprService {
       url: `${webOrigin}/data-deletion-status/${confirmationCode}`,
       confirmation_code: confirmationCode,
     };
+  }
+
+  /**
+   * Delete webhook payloads plus the connected account. Prisma cascades the
+   * account deletion through contacts, conversations, messages, flow runs,
+   * leads and broadcasts, removing the encrypted access token as well.
+   */
+  private async purgeInstagramData(
+    tx: Prisma.TransactionClient,
+    igUserId: string,
+  ): Promise<number> {
+    const account = await tx.igAccount.findUnique({
+      where: { igUserId },
+      select: { id: true },
+    });
+
+    const webhookMatches: Prisma.WebhookEventWhereInput[] = [
+      { payload: { path: ["id"], equals: igUserId } },
+    ];
+    if (account) webhookMatches.unshift({ igAccountId: account.id });
+
+    await tx.webhookEvent.deleteMany({ where: { OR: webhookMatches } });
+    if (!account) return 0;
+
+    await tx.igAccount.delete({ where: { id: account.id } });
+    return 1;
   }
 
   // ---------------------------------------------------------------------

@@ -35,15 +35,19 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-semibold mb-2">
-              2. Use License
+              2. Service License
             </h2>
-            <p>Permission is granted to temporarily access Gemai&apos;s services for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+            <p>
+              Subject to these Terms and your subscription plan, Gemai grants you a limited,
+              non-exclusive, non-transferable right to use the service for your lawful personal or
+              internal business purposes. You may not:
+            </p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Modify or copy the materials</li>
-              <li>Use the materials for any commercial purpose or public display</li>
+              <li>Copy, modify, or create derivative works from the service except as permitted by law</li>
+              <li>Resell, sublicense, or provide unauthorized access to the service</li>
               <li>Attempt to reverse engineer any software contained in Gemai</li>
-              <li>Remove any copyright or proprietary notations from the materials</li>
-              <li>Transfer the materials to another person or &quot;mirror&quot; the materials on any other server</li>
+              <li>Remove copyright, trademark, or proprietary notices</li>
+              <li>Use the service to evade Meta policies, messaging windows, or consent requirements</li>
             </ul>
           </section>
 

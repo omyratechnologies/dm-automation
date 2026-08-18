@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -28,6 +29,8 @@ const DEFAULT_TOKEN_TTL_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
 
 @Injectable()
 export class IgAccountsService {
+  private readonly logger = new Logger(IgAccountsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly graph: IgGraphClient,
@@ -47,14 +50,12 @@ export class IgAccountsService {
   async connect(
     workspace: WorkspaceContext,
     user: AuthedRequestUser,
-    input: { code: string; redirectUri?: string },
+    input: { code: string },
   ) {
-    const redirectUri =
-      input.redirectUri ??
-      this.config.get<string>("INSTAGRAM_OAUTH_REDIRECT_URI");
+    const redirectUri = this.config.get<string>("INSTAGRAM_OAUTH_REDIRECT_URI");
     if (!redirectUri) {
       throw new BadRequestException(
-        "redirectUri is required (INSTAGRAM_OAUTH_REDIRECT_URI is not configured)",
+        "INSTAGRAM_OAUTH_REDIRECT_URI is not configured",
       );
     }
 
@@ -84,6 +85,9 @@ export class IgAccountsService {
       );
     }
 
+    // Do not persist a connection that cannot receive Meta webhooks.
+    await this.graph.subscribeToWebhooks(igUserId, longLived.accessToken);
+
     const tokenEncrypted = this.tokenCrypto.encrypt(longLived.accessToken);
     const ttlMs = longLived.expiresIn
       ? longLived.expiresIn * 1000
@@ -108,8 +112,6 @@ export class IgAccountsService {
       },
       select: IG_ACCOUNT_SELECT,
     });
-
-    await this.graph.subscribeToWebhooks(igUserId, longLived.accessToken);
 
     this.audit.log({
       organizationId: workspace.organizationId,
@@ -153,15 +155,25 @@ export class IgAccountsService {
   ) {
     const account = await this.prisma.igAccount.findFirst({
       where: { id, workspaceId: workspace.id },
-      select: { id: true },
+      select: { id: true, igUserId: true, tokenEncrypted: true },
     });
     if (!account) throw new NotFoundException("Instagram account not found");
 
-    const updated = await this.prisma.igAccount.update({
-      where: { id },
-      data: { status: "DISCONNECTED" },
-      select: IG_ACCOUNT_SELECT,
-    });
+    try {
+      const token = this.tokenCrypto.decrypt(account.tokenEncrypted);
+      await this.graph.unsubscribeFromWebhooks(account.igUserId, token);
+    } catch (err) {
+      // Privacy deletion must continue even if the token is already invalid or
+      // Meta is temporarily unavailable.
+      this.logger.warn(
+        `Could not unsubscribe Meta webhooks for ${account.igUserId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.webhookEvent.deleteMany({ where: { igAccountId: id } }),
+      this.prisma.igAccount.delete({ where: { id } }),
+    ]);
 
     this.audit.log({
       organizationId: workspace.organizationId,
@@ -172,6 +184,6 @@ export class IgAccountsService {
       targetId: id,
     });
 
-    return updated;
+    return { id, disconnected: true };
   }
 }

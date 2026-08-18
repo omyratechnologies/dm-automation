@@ -1,6 +1,6 @@
 "use server";
 
-import { currentUser } from "@clerk/nextjs/server";
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 
 import { redirect } from "next/navigation";
 import {
@@ -126,6 +126,8 @@ export const onDeleteAccount = async (): Promise<ApiResult<string>> => {
   const user = await onCurrentUser();
   try {
     await serverApiFetch("/me", { method: "DELETE" });
+    const clerk = await clerkClient();
+    await clerk.users.deleteUser(user.id);
     await invalidateUserCache(user.id);
     return success("Account deleted");
   } catch (error) {

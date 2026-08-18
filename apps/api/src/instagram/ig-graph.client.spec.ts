@@ -21,9 +21,11 @@ describe("IgGraphClient", () => {
 
   const mockHttpPost = jest.fn();
   const mockHttpGet = jest.fn();
+  const mockHttpDelete = jest.fn();
   (axios.create as jest.Mock).mockReturnValue({
     post: mockHttpPost,
     get: mockHttpGet,
+    delete: mockHttpDelete,
   });
 
   afterEach(() => {
@@ -54,7 +56,7 @@ describe("IgGraphClient", () => {
       );
     });
 
-    it("adds human agent messaging_type and tag", async () => {
+    it("adds the Instagram HUMAN_AGENT tag without Messenger-only fields", async () => {
       mockHttpPost.mockResolvedValue({ data: { message_id: "mid-2" } });
       const client = new IgGraphClient(mockConfig() as never);
 
@@ -65,10 +67,12 @@ describe("IgGraphClient", () => {
       expect(mockHttpPost).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          messaging_type: "MESSAGE_TAG",
           tag: "HUMAN_AGENT",
         }),
         expect.any(Object),
+      );
+      expect(mockHttpPost.mock.calls[0][1]).not.toHaveProperty(
+        "messaging_type",
       );
     });
 
@@ -166,6 +170,13 @@ describe("IgGraphClient", () => {
       const result = await client.getLongLivedToken("short-tok");
 
       expect(result).toEqual({ accessToken: "long-tok", expiresIn: 5_184_000 });
+      expect(mockHttpGet).toHaveBeenCalledWith(
+        "https://graph.instagram.com/v25.0/access_token",
+        expect.objectContaining({
+          headers: { Authorization: "Bearer short-tok" },
+          params: expect.not.objectContaining({ access_token: expect.anything() }),
+        }),
+      );
     });
 
     it("refreshes long-lived token", async () => {
@@ -177,6 +188,13 @@ describe("IgGraphClient", () => {
       const result = await client.refreshLongLivedToken("old-tok");
 
       expect(result.accessToken).toBe("refreshed-tok");
+      expect(mockHttpGet).toHaveBeenCalledWith(
+        "https://graph.instagram.com/v25.0/refresh_access_token",
+        expect.objectContaining({
+          headers: { Authorization: "Bearer old-tok" },
+          params: expect.not.objectContaining({ access_token: expect.anything() }),
+        }),
+      );
     });
   });
 
@@ -191,6 +209,7 @@ describe("IgGraphClient", () => {
         "https://graph.instagram.com/v25.0/me",
         expect.objectContaining({
           params: expect.objectContaining({ fields: "id" }),
+          headers: { Authorization: "Bearer ping" },
         }),
       );
     });
@@ -215,7 +234,7 @@ describe("IgGraphClient", () => {
   });
 
   describe("subscribeToWebhooks", () => {
-    it("subscribes to messages, comments, story_replies", async () => {
+    it("subscribes only to documented Instagram webhook fields", async () => {
       mockHttpPost.mockResolvedValue({ data: { success: true } });
       const client = new IgGraphClient(mockConfig() as never);
 
@@ -226,19 +245,34 @@ describe("IgGraphClient", () => {
         null,
         expect.objectContaining({
           params: expect.objectContaining({
-            subscribed_fields: "messages,comments,story_replies",
+            subscribed_fields: "messages,message_reactions,comments",
           }),
+          headers: { Authorization: "Bearer tok-1" },
         }),
       );
     });
 
-    it("does not throw on failure (logged as warning)", async () => {
+    it("fails the connection when webhook subscription fails", async () => {
       mockHttpPost.mockRejectedValue(new Error("network error"));
       const client = new IgGraphClient(mockConfig() as never);
 
       await expect(
         client.subscribeToWebhooks("ig-biz", "tok-1"),
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("unsubscribeFromWebhooks", () => {
+    it("unsubscribes with bearer authentication", async () => {
+      mockHttpDelete.mockResolvedValue({ data: { success: true } });
+      const client = new IgGraphClient(mockConfig() as never);
+
+      await client.unsubscribeFromWebhooks("ig-biz", "tok-1");
+
+      expect(mockHttpDelete).toHaveBeenCalledWith(
+        "https://graph.instagram.com/v25.0/ig-biz/subscribed_apps",
+        { headers: { Authorization: "Bearer tok-1" } },
+      );
     });
   });
 
@@ -256,6 +290,37 @@ describe("IgGraphClient", () => {
         username: "my_biz",
         accountType: "BUSINESS",
       });
+      expect(mockHttpGet).toHaveBeenCalledWith(
+        "https://graph.instagram.com/v25.0/me",
+        expect.objectContaining({
+          headers: { Authorization: "Bearer tok-1" },
+          params: expect.not.objectContaining({ access_token: expect.anything() }),
+        }),
+      );
+    });
+  });
+
+  describe("authenticated reads", () => {
+    it("uses bearer auth for media and engaging-user profile reads", async () => {
+      mockHttpGet
+        .mockResolvedValueOnce({ data: { data: [] } })
+        .mockResolvedValueOnce({ data: { username: "contact" } });
+      const client = new IgGraphClient(mockConfig() as never);
+
+      await client.getMedia("tok-1");
+      await client.getUserProfile("igsid-1", "tok-1");
+
+      for (const call of mockHttpGet.mock.calls) {
+        expect(call[1]).toEqual(
+          expect.objectContaining({
+            headers: { Authorization: "Bearer tok-1" },
+            params: expect.not.objectContaining({ access_token: expect.anything() }),
+          }),
+        );
+      }
+      expect(mockHttpGet.mock.calls[1][1].params.fields).toBe(
+        "name,username,profile_pic,is_user_follow_business",
+      );
     });
   });
 });

@@ -377,6 +377,41 @@ describe("FlowExecutor", () => {
         expect.objectContaining({ replyToCommentId: "comment-1" }),
       );
     });
+
+    it("allows only one automated private reply for a comment trigger", async () => {
+      const f = makeFixture();
+      const nodes: FlowNode[] = [
+        { id: "a", type: "trigger", data: { kind: "any_message" } as never },
+        { id: "b", type: "action", data: { kind: "send_message", text: "first", quickReplies: [] } },
+        { id: "c", type: "action", data: { kind: "send_message", text: "second", quickReplies: [] } },
+      ];
+      const edges = [
+        { id: "e1", from: "a", to: "b", branch: "default" as const },
+        { id: "e2", from: "b", to: "c", branch: "default" as const },
+      ];
+      f.prisma.contact.findUnique.mockResolvedValue({
+        id: "contact-1",
+        igAccountId: "iga-1",
+        tags: [],
+        lastInboundAt: null,
+      });
+      f.prisma.conversation.findUnique.mockResolvedValue({ id: "conv-1" });
+      f.prisma.message.create.mockResolvedValue({ id: "msg-1" });
+      f.prisma.flowRun.update.mockResolvedValue({});
+
+      await f.executor.execute(
+        makeRun({
+          context: {
+            trigger: { source: "comment", text: "nice!", commentId: "comment-1" },
+          },
+        }),
+        makeDef(nodes, edges),
+        "a",
+      );
+
+      expect(f.sendQueue.add).toHaveBeenCalledTimes(1);
+      expect(f.prisma.message.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("error handling", () => {

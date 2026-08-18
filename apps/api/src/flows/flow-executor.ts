@@ -294,6 +294,12 @@ export class FlowExecutor {
     // comment — but only for the very first send of the run.
     const trigger = run.context.trigger;
     const isFirstSend = !run.context.firstSendDone;
+    if (trigger?.source === "comment" && !isFirstSend) {
+      this.logger.warn(
+        `Skipped additional automated send for comment-triggered flow run ${run.id}`,
+      );
+      return;
+    }
     const replyToCommentId =
       isFirstSend && trigger?.source === "comment"
         ? trigger.commentId

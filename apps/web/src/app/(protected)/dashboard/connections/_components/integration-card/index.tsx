@@ -1,5 +1,5 @@
 "use client";
-import { onDisconnect } from "@/actions/integrations";
+import { onDisconnect, onOAuthInstagram } from "@/actions/integrations";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryUser } from "@/hooks/user-queries";
@@ -16,6 +16,7 @@ type Props = {
 
 const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const queryClient = useQueryClient();
 
   const { data } = useQueryUser();
@@ -34,25 +35,11 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
 
   const onConnect = async () => {
     if (strategy === "INSTAGRAM") {
-      const oauthUrl = process.env.NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL;
-
-      if (oauthUrl) {
-        window.location.href = oauthUrl;
-      } else {
-        const instagramAppId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID;
-        const redirectUri = `${window.location.origin}/callback/instagram`;
-
-        if (instagramAppId) {
-          const scope =
-            "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments";
-          const constructedUrl = `https://www.instagram.com/oauth/authorize?client_id=${instagramAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code`;
-          window.location.href = constructedUrl;
-        } else {
-          logger.error("Instagram OAuth is not configured");
-          alert(
-            "Instagram integration is not configured. Please add NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL or NEXT_PUBLIC_INSTAGRAM_APP_ID to your environment variables."
-          );
-        }
+      setIsConnecting(true);
+      const result = await onOAuthInstagram(strategy);
+      if (result?.error) {
+        setIsConnecting(false);
+        alert(result.error);
       }
     } else {
       logger.info("CRM Auth - Coming soon");
@@ -132,8 +119,15 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
             </Button>
           </>
         ) : (
-          <Button onClick={onConnect} size="sm">
-            Connect
+          <Button onClick={onConnect} size="sm" disabled={isConnecting}>
+            {isConnecting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              "Connect"
+            )}
           </Button>
         )}
       </div>

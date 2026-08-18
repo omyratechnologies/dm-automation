@@ -139,9 +139,8 @@ Existing single-app databases: baseline with `npx prisma migrate resolve --appli
 
 1. User clicks "Connect Instagram" in dashboard
 2. **OAuth Flow:**
-   - Redirects to Facebook OAuth (Instagram API requires Facebook login)
-   - User logs in with Facebook account
-   - Selects Instagram Business/Creator account to connect
+   - Redirects to Instagram Business Login
+   - User signs in with an Instagram professional account
    - Grants required permissions
 3. Platform receives authorization code
 4. **Token Exchange:**
@@ -160,7 +159,7 @@ Existing single-app databases: baseline with `npx prisma migrate resolve --appli
 
 When a user sends a DM or comments:
 
-1. **Instagram sends webhook** → `POST /api/webhook/instagram`
+1. **Instagram sends webhook** → `POST /v1/webhooks/instagram`
 2. **Security checks:**
    - Rate limiting verification
    - HMAC signature verification using `INSTAGRAM_APP_SECRET`
@@ -179,7 +178,7 @@ When a user sends a DM or comments:
    - SmartAI cooldown (per conversation)
    - Global automation cooldown
 7. **Send response:**
-   - DMs: `POST graph.instagram.com/v21.0/{user-id}/messages`
+   - DMs: `POST graph.instagram.com/v25.0/{user-id}/messages`
    - Comments: Private reply via `POST graph.instagram.com/{user-id}/messages`
 8. **Track metrics:**
    - Increment DM/comment counters
@@ -224,20 +223,22 @@ When a user sends a DM or comments:
 
 ## API Structure
 
-### Internal APIs (Next.js API Routes)
+### Public integration endpoints (NestJS API)
 
 #### Webhook Endpoints
-- **`/api/webhook/instagram`** (GET, POST)
+- **`/v1/webhooks/instagram`** (GET, POST)
   - Handles Instagram webhook verification and events
-  - Processes incoming DMs and comments
   - Signature verification with HMAC-SHA256
-  - Rate limiting and cooldown enforcement
-  - Triggers automation responses
+  - Persists and queues incoming DMs and comments for asynchronous processing
 
-- **`/api/data-deletion`** (POST, GET)
+- **`/v1/webhooks/meta/data-deletion`** (POST)
   - Meta-required endpoint for GDPR compliance
-  - Handles user data deletion requests
+  - Verifies Meta's `signed_request` and purges connected Instagram data
   - Returns confirmation code and status URL
+
+- **`/v1/webhooks/meta/deauthorize`** (POST)
+  - Handles app removal/deauthorization callbacks
+  - Purges the encrypted token and derived Instagram data
 
 #### Payment Endpoints
 - **`/api/webhook/stripe`** (POST)
@@ -261,7 +262,9 @@ When a user sends a DM or comments:
 #### Integration Actions (`/actions/integrations`)
 - `onOAuthInstagram()` - Initiate Instagram OAuth flow
 - `onIntegrate()` - Complete OAuth and store tokens
-- `refreshToken()` - Refresh expired Instagram tokens
+
+Token exchange, refresh, webhook subscription and messaging are handled only
+by the NestJS API. Access tokens are never returned to the browser.
 
 #### User Actions (`/actions/user`)
 - `onCurrentUser()` - Get current authenticated user
@@ -278,7 +281,7 @@ When a user sends a DM or comments:
 
 #### Instagram Graph API (graph.instagram.com)
 - **Send DM:**
-  - `POST /v21.0/{user-id}/messages`
+  - `POST /v25.0/{user-id}/messages`
   - Sends direct messages to Instagram users
   
 - **Reply to Comment:**
@@ -286,25 +289,20 @@ When a user sends a DM or comments:
   - Sends private replies to post comments
   
 - **Refresh Token:**
-  - `GET /refresh_access_token?grant_type=ig_refresh_token&access_token={token}`
+  - `GET /v25.0/refresh_access_token?grant_type=ig_refresh_token`
   - Refreshes long-lived access tokens
   
 - **Get User Info:**
-  - `GET /me?fields=user_id&access_token={token}`
+  - `GET /v25.0/me?fields=user_id,username,account_type`
   - Retrieves Instagram user ID
   
 - **Get Media:**
-  - `GET /me/media?fields=id,caption,media_url,media_type,timestamp&access_token={token}`
+  - `GET /v25.0/me/media?fields=id,caption,media_url,media_type,timestamp`
   - Fetches user's Instagram posts
 
-#### Facebook Graph API (graph.facebook.com)
-- **OAuth Token Exchange:**
-  - `GET /v21.0/oauth/access_token`
-  - Exchanges authorization code for access token
-  
-- **Long-Lived Token:**
-  - `GET /v21.0/oauth/access_token?grant_type=fb_exchange_token`
-  - Exchanges short-lived token for long-lived token (60 days)
+All Graph API access tokens are passed in the `Authorization: Bearer` header.
+Instagram Business Login code exchange uses
+`POST https://api.instagram.com/oauth/access_token`.
 
 #### OpenAI API
 - **Chat Completions:**
@@ -349,17 +347,11 @@ DIRECT_DATABASE_URL="postgres://YOUR_DIRECT_DATABASE_URL"
 INSTAGRAM_APP_ID=your_instagram_app_id
 INSTAGRAM_APP_SECRET=your_instagram_app_secret
 INSTAGRAM_WEBHOOK_VERIFY_TOKEN=your_custom_verify_token_generate_random_string
-INSTAGRAM_BASE_URL=https://graph.instagram.com
-INSTAGRAM_TOKEN_URL=https://graph.facebook.com/v21.0/oauth/access_token
-INSTAGRAM_CLIENT_ID=your_instagram_app_id
-INSTAGRAM_CLIENT_SECRET=your_instagram_app_secret
+INSTAGRAM_GRAPH_URL=https://graph.instagram.com/v25.0
+INSTAGRAM_OAUTH_REDIRECT_URI=https://YOUR_DOMAIN/callback/instagram
 
-# Client-side variables (accessible in browser, prefixed with NEXT_PUBLIC_)
-NEXT_PUBLIC_INSTAGRAM_APP_ID=your_instagram_app_id
-NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL=https://www.facebook.com/v21.0/dialog/oauth?client_id=YOUR_APP_ID&redirect_uri=YOUR_DOMAIN/callback/instagram&scope=instagram_basic,instagram_manage_comments,instagram_manage_messages,pages_show_list,pages_read_engagement,business_management&response_type=code&auth_type=rerequest
-
-# Server-side OAuth URL
-INSTAGRAM_EMBEDDED_OAUTH_URL=https://www.facebook.com/v21.0/dialog/oauth?client_id=YOUR_APP_ID&redirect_uri=YOUR_DOMAIN/callback/instagram&scope=instagram_basic,instagram_manage_comments,instagram_manage_messages,pages_show_list,pages_read_engagement,business_management&response_type=code&auth_type=rerequest
+# Server-side OAuth URL; the server adds and validates a per-attempt state value
+INSTAGRAM_EMBEDDED_OAUTH_URL=https://www.instagram.com/oauth/authorize?client_id=YOUR_INSTAGRAM_APP_ID&redirect_uri=YOUR_DOMAIN/callback/instagram&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments&response_type=code
 
 # ==================== AI (OpenRouter / OpenAI) ====================
 # OpenRouter is preferred. OpenAI is used as fallback if OpenRouter not set.
@@ -397,26 +389,23 @@ NEXT_PUBLIC_HOST_URL=http://localhost:3000
 2. Create a new app or use existing app
 3. Add these products:
    - ✅ **Instagram** (Instagram API for messaging)
-   - ✅ **Facebook Login**
    - ✅ **Webhooks**
 
-#### B. Configure Facebook Login
-1. Go to **Facebook Login** → **Settings**
+#### B. Configure Instagram Business Login
+1. Go to **Instagram API** → **API setup with Instagram login**
 2. Add **Valid OAuth Redirect URIs:**
    ```
    http://localhost:3000/callback/instagram
    https://yourdomain.com/callback/instagram
    ```
 3. Enable:
-   - ✅ Client OAuth Login
-   - ✅ Web OAuth Login
    - ✅ Use Strict Mode for Redirect URIs
 
 #### C. Configure Webhooks
 1. Go to **Webhooks** → **Instagram**
 2. Click **Edit Subscription**
 3. Enter:
-   - **Callback URL:** `https://yourdomain.com/api/webhook/instagram`
+   - **Callback URL:** `https://yourdomain.com/v1/webhooks/instagram`
    - **Verify Token:** (same as `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` in `.env.local`)
 4. Subscribe to:
    - ✅ `messages`
@@ -425,17 +414,16 @@ NEXT_PUBLIC_HOST_URL=http://localhost:3000
 #### D. Request Permissions
 Request these permissions for Advanced Access:
 - `instagram_business_basic`
-- `instagram_manage_comments`
 - `instagram_business_manage_messages`
-- `pages_show_list`
-- `pages_read_engagement`
-- `business_management`
+- `instagram_business_manage_comments`
+- **Business Asset User Profile Access** (for sender profile/follow-status fields)
+- **Human Agent** (only for a human teammate replying after the standard window)
 
 #### E. Data Deletion Callback (Required by Meta)
 1. Go to **Settings** → **Basic**
 2. Add **Data Deletion Request URL:**
    ```
-   https://yourdomain.com/api/data-deletion
+   https://your-api-domain.com/v1/webhooks/meta/data-deletion
    ```
 
 ### 5. Run database migrations
@@ -461,11 +449,11 @@ For local webhook testing:
 # Install ngrok
 brew install ngrok
 
-# Start ngrok
-ngrok http 3000
+# Start ngrok for the NestJS API
+ngrok http 4000
 
 # Use the ngrok URL in Meta Dashboard webhook settings
-# Example: https://abc123.ngrok.io/api/webhook/instagram
+# Example: https://abc123.ngrok.io/v1/webhooks/instagram
 ```
 
 ---
@@ -476,9 +464,9 @@ ngrok http 3000
 
 **Callback URL:**
 ```
-https://yourdomain.com/api/webhook/instagram
+https://yourdomain.com/v1/webhooks/instagram
 ```
-(For local testing: `https://your-ngrok-url.ngrok.io/api/webhook/instagram`)
+(For local testing: `https://your-ngrok-url.ngrok.io/v1/webhooks/instagram`)
 
 **Verify Token:**
 Use the value from your `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` environment variable
@@ -491,7 +479,6 @@ Use the value from your `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` environment variable
 
 **Users must have:**
 - Instagram Business Account OR Instagram Creator Account
-- Connected to a Facebook Page
 - Cannot use regular personal Instagram accounts
 
 **For Testing:**

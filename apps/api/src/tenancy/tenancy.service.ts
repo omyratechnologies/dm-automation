@@ -264,7 +264,13 @@ export class TenancyService {
     });
     if (!user) throw new NotFoundException("User not found");
 
-    await this.prisma.user.delete({ where: { id: userId } });
+    await this.prisma.$transaction([
+      // Organization ownership is intentionally restrictive in the schema;
+      // remove owned organizations first so their workspaces and Meta-derived
+      // data cascade before the user row is deleted.
+      this.prisma.organization.deleteMany({ where: { ownerId: userId } }),
+      this.prisma.user.delete({ where: { id: userId } }),
+    ]);
 
     return { ok: true };
   }

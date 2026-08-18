@@ -21,7 +21,7 @@ npx prisma generate
 4. Find **"Data Deletion Request Callback URL"**
 5. Enter your production URL:
    ```
-   https://yourdomain.com/api/data-deletion
+   https://your-api-domain.com/v1/webhooks/meta/data-deletion
    ```
 6. Save changes
 
@@ -31,31 +31,31 @@ For local testing with ngrok:
 
 ```bash
 # Start ngrok
-ngrok http 3000
+ngrok http 4000
 
 # Use the ngrok URL in Meta dashboard (temporary for testing)
-https://your-ngrok-url.ngrok.io/api/data-deletion
+https://your-ngrok-url.ngrok.io/v1/webhooks/meta/data-deletion
 ```
 
 ## 📋 What Was Created
 
-### 1. API Endpoint: `/api/data-deletion`
-- **File:** `src/app/api/data-deletion/route.ts`
+### 1. API Endpoint: `/v1/webhooks/meta/data-deletion`
+- **File:** `apps/api/src/gdpr/gdpr.controller.ts`
 - **Purpose:** Receives data deletion requests from Meta
 - **Methods:** POST (main), GET (testing)
 
 ### 2. Status Page: `/data-deletion-status/[code]`
-- **File:** `src/app/data-deletion-status/[code]/page.tsx`
+- **File:** `apps/web/src/app/data-deletion-status/[code]/page.tsx`
 - **Purpose:** Shows deletion request status to users
 - **URL Example:** `https://yourdomain.com/data-deletion-status/abc123`
 
 ### 3. Instructions Page: `/account-deletion`
-- **File:** `src/app/account-deletion/page.tsx`
+- **File:** `apps/web/src/app/account-deletion/page.tsx`
 - **Purpose:** User-facing instructions for account deletion
 - **URL:** `https://yourdomain.com/account-deletion`
 
 ### 4. Database Model: `DataDeletionRequest`
-- **File:** `prisma/schema.prisma`
+- **File:** `packages/db/prisma/schema.prisma`
 - **Purpose:** Track deletion requests for compliance
 
 ## 🔐 How It Works
@@ -65,22 +65,16 @@ https://your-ngrok-url.ngrok.io/api/data-deletion
    - Removes your app
 
 2. **Meta sends deletion request:**
-   - POST request to your `/api/data-deletion` endpoint
+   - POST request to your `/v1/webhooks/meta/data-deletion` endpoint
    - Contains signed_request with user's Instagram/Facebook ID
 
 3. **Your app processes deletion:**
    - Verifies the signed request signature
    - Finds user by Instagram ID
-   - Deletes all related data:
-     - DMs
-     - Posts
-     - Keywords
-     - Listeners
-     - Triggers
-     - Automations
-     - Integrations
-     - Subscription
-     - User account
+   - Deletes the connected Instagram account and encrypted token
+   - Cascades deletion through contacts, conversations, messages, flow runs,
+     leads and broadcasts associated with that Instagram account
+   - Deletes matching stored Instagram webhook payloads
    - Creates deletion record for compliance
 
 4. **Returns confirmation:**
@@ -96,11 +90,8 @@ https://your-ngrok-url.ngrok.io/api/data-deletion
 # Start your dev server
 npm run dev
 
-# Test GET request
-curl http://localhost:3000/api/data-deletion
-
 # Test POST request (simulate Meta request)
-curl -X POST http://localhost:3000/api/data-deletion \
+curl -X POST http://localhost:4000/v1/webhooks/meta/data-deletion \
   -H "Content-Type: application/json" \
   -d '{"signed_request": "test_signature.test_payload"}'
 ```
@@ -109,15 +100,13 @@ curl -X POST http://localhost:3000/api/data-deletion \
 
 When a deletion request is processed, the following data is removed:
 
-- ✅ User account and profile
+- ✅ Connected Instagram account and encrypted access token
 - ✅ Instagram/Facebook integration data
 - ✅ Access tokens
-- ✅ All automations and workflows
+- ✅ Flow runs associated with Instagram contacts
 - ✅ Direct messages (DMs)
-- ✅ Post data
-- ✅ Keywords and triggers
-- ✅ Listeners
-- ✅ Subscription information
+- ✅ Leads and broadcasts associated with the connection
+- ✅ Stored Instagram webhook payloads
 
 ## ⚠️ Important Notes
 
@@ -133,7 +122,7 @@ Choose ONE of these options:
 
 ### Option 1: Automated Callback (Recommended)
 ```
-https://yourdomain.com/api/data-deletion
+https://your-api-domain.com/v1/webhooks/meta/data-deletion
 ```
 **Pros:** Automatic processing, no user intervention needed
 
@@ -153,7 +142,7 @@ https://yourdomain.com/account-deletion
 ## 🐛 Troubleshooting
 
 ### Error: "Invalid signature"
-- Check that `INSTAGRAM_APP_SECRET` is set correctly in `.env.local`
+- Check that `INSTAGRAM_APP_SECRET` is set correctly in the API environment
 - Verify the secret matches your Meta app dashboard
 
 ### Error: "Database deletion error"

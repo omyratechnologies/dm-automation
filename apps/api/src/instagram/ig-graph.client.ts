@@ -40,9 +40,7 @@ export interface IgUserProfile {
   name?: string;
   username?: string;
   profilePic?: string;
-  followerCount?: number;
   isUserFollowBusiness?: boolean;
-  isBusinessFollowUser?: boolean;
 }
 
 /**
@@ -80,7 +78,6 @@ export class IgGraphClient {
       message: this.buildMessage(text, opts.quickReplies),
     };
     if (opts.humanAgent) {
-      body.messaging_type = "MESSAGE_TAG";
       body.tag = "HUMAN_AGENT";
     }
     return this.postMessages(igUserId, body, token);
@@ -141,8 +138,8 @@ export class IgGraphClient {
         params: {
           grant_type: "ig_exchange_token",
           client_secret: this.appSecret,
-          access_token: shortToken,
         },
+        headers: { Authorization: `Bearer ${shortToken}` },
       });
       return {
         accessToken: String(res.data.access_token),
@@ -161,7 +158,8 @@ export class IgGraphClient {
   async refreshLongLivedToken(token: string): Promise<LongLivedToken> {
     try {
       const res = await this.http.get(`${this.baseUrl}/refresh_access_token`, {
-        params: { grant_type: "ig_refresh_token", access_token: token },
+        params: { grant_type: "ig_refresh_token" },
+        headers: { Authorization: `Bearer ${token}` },
       });
       return {
         accessToken: String(res.data.access_token),
@@ -180,7 +178,8 @@ export class IgGraphClient {
   async ping(): Promise<void> {
     try {
       await this.http.get(`${this.baseUrl}/me`, {
-        params: { fields: "id", access_token: "ping" },
+        params: { fields: "id" },
+        headers: { Authorization: "Bearer ping" },
         timeout: 5000,
       });
     } catch (err) {
@@ -202,16 +201,30 @@ export class IgGraphClient {
         null,
         {
           params: {
-            subscribed_fields: "messages,comments,story_replies",
-            access_token: token,
+            // Story replies are delivered through the messages field.
+            subscribed_fields: "messages,message_reactions,comments",
           },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
       this.logger.log(`Subscribed to webhooks for IG user ${igUserId}`);
     } catch (err) {
-      this.logger.warn(
-        `Webhook subscription failed for ${igUserId}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw mapGraphError(err);
+    }
+  }
+
+  /** DELETE {graph}/{igUserId}/subscribed_apps — stop webhook delivery. */
+  async unsubscribeFromWebhooks(
+    igUserId: string,
+    token: string,
+  ): Promise<void> {
+    try {
+      await this.http.delete(`${this.baseUrl}/${igUserId}/subscribed_apps`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      this.logger.log(`Unsubscribed webhooks for IG user ${igUserId}`);
+    } catch (err) {
+      throw mapGraphError(err);
     }
   }
 
@@ -225,8 +238,8 @@ export class IgGraphClient {
         params: {
           fields: "id,caption,media_url,media_type,timestamp",
           limit,
-          access_token: token,
         },
+        headers: { Authorization: `Bearer ${token}` },
       });
       return res.data;
     } catch (err) {
@@ -242,17 +255,15 @@ export class IgGraphClient {
     try {
       const res = await this.http.get(`${this.baseUrl}/${igsid}`, {
         params: {
-          fields: "name,username,profile_pic,follower_count,is_user_follow_business,is_business_follow_user",
-          access_token: token,
+          fields: "name,username,profile_pic,is_user_follow_business",
         },
+        headers: { Authorization: `Bearer ${token}` },
       });
       return {
         name: res.data.name,
         username: res.data.username,
         profilePic: res.data.profile_pic,
-        followerCount: res.data.follower_count,
         isUserFollowBusiness: res.data.is_user_follow_business,
-        isBusinessFollowUser: res.data.is_business_follow_user,
       };
     } catch (err) {
       throw mapGraphError(err);
@@ -265,8 +276,8 @@ export class IgGraphClient {
       const res = await this.http.get(`${this.baseUrl}/me`, {
         params: {
           fields: "user_id,username,account_type",
-          access_token: token,
         },
+        headers: { Authorization: `Bearer ${token}` },
       });
       return {
         userId:

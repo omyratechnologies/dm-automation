@@ -32,15 +32,9 @@ COPY apps/api/package.json apps/api/package.json
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ARG NEXT_PUBLIC_HOST_URL=http://localhost:3000
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y2xlcmsuZXhhbXBsZS5jb20k
-ARG NEXT_PUBLIC_INSTAGRAM_APP_ID=placeholder
-# Instagram Business Login dialog (www.instagram.com/oauth/authorize). Empty
-# default: the connect button falls back to building the URL from the app id.
-ARG NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_HOST_URL=$NEXT_PUBLIC_HOST_URL \
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
-    NEXT_PUBLIC_INSTAGRAM_APP_ID=$NEXT_PUBLIC_INSTAGRAM_APP_ID \
-    NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL=$NEXT_PUBLIC_INSTAGRAM_EMBEDDED_OAUTH_URL \
     NEXT_TELEMETRY_DISABLED=1
 
 RUN npx prisma generate --schema packages/db/prisma/schema.prisma \

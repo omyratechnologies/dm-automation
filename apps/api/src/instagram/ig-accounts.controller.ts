@@ -9,7 +9,6 @@ import { IgAccountsService } from "./ig-accounts.service";
 
 const connectSchema = z.object({
   code: z.string().min(1),
-  redirectUri: z.string().url().optional(),
 });
 type ConnectDto = z.infer<typeof connectSchema>;
 

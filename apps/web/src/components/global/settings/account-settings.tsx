@@ -21,22 +21,32 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { logger } from "@/lib/logger";
 
 export default function AccountSettings() {
   const { signOut } = useClerk();
   const router = useRouter();
   const [confirmText, setConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = async () => {
+    setIsDeleting(true);
     try {
       const result = await deleteUserAccount();
       if (result.status === 200) {
         // Sign out from Clerk and redirect to home
         await signOut();
         router.push("/");
+        return;
       }
-    } catch (error) {
-      console.error("Error deleting account:", error);
+      alert("Account deletion could not be completed. Please contact support@gemai.in.");
+    } catch (error: unknown) {
+      logger.error("Error deleting account", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+      alert("Account deletion could not be completed. Please contact support@gemai.in.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -131,10 +141,10 @@ export default function AccountSettings() {
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDeleteAccount}
-                        disabled={confirmText !== "DELETE"}
+                        disabled={confirmText !== "DELETE" || isDeleting}
                         className="bg-red-500 hover:bg-red-600"
                       >
-                        Delete Account
+                        {isDeleting ? "Deleting..." : "Delete Account"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
