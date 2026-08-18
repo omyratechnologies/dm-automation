@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import { MagneticButton } from "./magnetic-button";
 import { Marquee } from "./marquee";
@@ -11,11 +10,6 @@ import {
   useTransform,
 } from "framer-motion";
 import { useRef } from "react";
-
-const AmbientCanvas = dynamic(() => import("./ambient-canvas"), {
-  ssr: false,
-  loading: () => null,
-});
 
 function FloatingAccent({
   children,
@@ -81,8 +75,6 @@ export function MarketingHero() {
       onMouseMove={onMove}
       className="relative min-h-[100svh] flex flex-col justify-center overflow-hidden"
     >
-      <AmbientCanvas />
-
       {/* Ambient gradients */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-20">
         <div className="absolute left-1/2 top-[-15%] h-[70vh] w-[90vw] -translate-x-1/2 rounded-full bg-[#5B6AF0]/[0.12] blur-[140px]" />
