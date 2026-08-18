@@ -237,7 +237,13 @@ export class AutomationsService {
   async savePosts(
     userId: string,
     automationId: string,
-    posts: { postid: string; caption?: string; media: string; mediaType: "IMAGE" | "VIDEO" | "CAROSEL_ALBUM"; requireFollow?: boolean }[],
+    posts: {
+      postid: string;
+      caption?: string;
+      media: string;
+      mediaType: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | "CAROSEL_ALBUM";
+      requireFollow?: boolean;
+    }[],
   ) {
     const automation = await this.prisma.automation.findUnique({
       where: { id: automationId },
@@ -247,14 +253,25 @@ export class AutomationsService {
       throw new NotFoundException("Automation not found");
     }
 
-    // Clean up old post attachments first
-    await this.prisma.post.deleteMany({ where: { automationId } });
+    const normalizedPosts = posts.map(
+      ({ requireFollow, mediaType, ...rest }) => ({
+        ...rest,
+        // MEDIATYPE was originally created with a misspelled enum value. Map
+        // Meta's canonical value at the API boundary so carousel posts attach.
+        mediaType:
+          mediaType === "CAROUSEL_ALBUM"
+            ? ("CAROSEL_ALBUM" as const)
+            : mediaType,
+        requireFollow: requireFollow ?? false,
+      }),
+    );
 
-    return this.prisma.automation.update({
-      where: { id: automationId },
-      data: {
-        posts: { createMany: { data: posts.map(({ requireFollow, ...rest }) => ({ ...rest, requireFollow: requireFollow ?? false })) } },
-      },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.post.deleteMany({ where: { automationId } });
+      return tx.automation.update({
+        where: { id: automationId },
+        data: { posts: { createMany: { data: normalizedPosts } } },
+      });
     });
   }
 }

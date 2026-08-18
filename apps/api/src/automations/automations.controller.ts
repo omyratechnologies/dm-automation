@@ -54,7 +54,14 @@ const savePostsSchema = z.object({
         postid: z.string().min(1),
         caption: z.string().optional(),
         media: z.string().min(1),
-        mediaType: z.enum(["IMAGE", "VIDEO", "CAROSEL_ALBUM"]),
+        // Meta's Graph API spells this CAROUSEL_ALBUM. Keep accepting the
+        // historical misspelling while existing database rows are migrated.
+        mediaType: z.enum([
+          "IMAGE",
+          "VIDEO",
+          "CAROUSEL_ALBUM",
+          "CAROSEL_ALBUM",
+        ]),
         requireFollow: z.boolean().optional(),
       }),
     )

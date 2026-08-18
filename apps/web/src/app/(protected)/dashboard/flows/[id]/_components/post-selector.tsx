@@ -154,7 +154,7 @@ export default function FlowPostSelector({ selectedPostIds, onChange }: Props) {
                       <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-md text-[9px] text-white flex items-center gap-1">
                         {post.media_type === "VIDEO" && <Video className="h-2.5 w-2.5" />}
                         {post.media_type === "IMAGE" && <ImageIcon className="h-2.5 w-2.5" />}
-                        {post.media_type === "CAROSEL_ALBUM" && <Layers className="h-2.5 w-2.5" />}
+                        {post.media_type === "CAROUSEL_ALBUM" && <Layers className="h-2.5 w-2.5" />}
                         {post.media_type}
                       </div>
                     </div>
