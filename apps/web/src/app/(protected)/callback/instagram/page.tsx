@@ -1,36 +1,37 @@
 import { onIntegrate } from "@/actions/integrations";
 import { logger } from "@/lib/logger";
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 type Props = {
-  searchParams: {
+  searchParams: Promise<{
     code?: string;
     error?: string;
     error_reason?: string;
     error_description?: string;
     state?: string;
-  };
+  }>;
 };
 
 const Page = async ({ searchParams }: Props) => {
+  const resolvedSearchParams = await searchParams;
   // Check for OAuth errors
-  if (searchParams.error) {
+  if (resolvedSearchParams.error) {
     logger.warn("Instagram OAuth callback returned an error", {
-      error: searchParams.error,
-      reason: searchParams.error_reason,
+      error: resolvedSearchParams.error,
+      reason: resolvedSearchParams.error_reason,
     });
-    redirect(`/dashboard/connections?error=${searchParams.error}`);
+    redirect(`/dashboard/connections?error=${resolvedSearchParams.error}`);
   }
   
   // Check for authorization code
-  const code = searchParams.code;
+  const code = resolvedSearchParams.code;
   
-  if (code && searchParams.state) {
+  if (code && resolvedSearchParams.state) {
     logger.info("Instagram OAuth callback received an authorization code");
     try {
       const cleanCode = code.split("#_")[0];
-      const result = await onIntegrate(cleanCode, searchParams.state);
+      const result = await onIntegrate(cleanCode, resolvedSearchParams.state);
 
       if (result.status === 200) {
         logger.info("Instagram integration completed successfully");

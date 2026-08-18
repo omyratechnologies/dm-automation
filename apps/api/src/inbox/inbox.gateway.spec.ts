@@ -81,6 +81,44 @@ describe("InboxGateway", () => {
       expect(socket.data.userId).toBe("user-1");
       expect(socket.disconnect).not.toHaveBeenCalled();
     });
+
+    it("clears the verification timeout after Clerk responds", async () => {
+      const { gateway, prisma } = makeFixture();
+      const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
+      (verifyToken as jest.Mock).mockResolvedValue({ sub: "clerk-1" });
+      prisma.user.findUnique.mockResolvedValue({ id: "user-1" });
+      const socket = {
+        handshake: { auth: { token: "jwt" } },
+        disconnect: jest.fn(),
+        data: {},
+      };
+
+      await gateway.handleConnection(socket as never);
+
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+      clearTimeoutSpy.mockRestore();
+    });
+
+    it("rejects a socket when Clerk verification times out", async () => {
+      jest.useFakeTimers();
+      try {
+        const { gateway } = makeFixture();
+        (verifyToken as jest.Mock).mockReturnValue(new Promise(() => undefined));
+        const socket = {
+          handshake: { auth: { token: "jwt" } },
+          disconnect: jest.fn(),
+          data: {},
+        };
+
+        const connection = gateway.handleConnection(socket as never);
+        await jest.advanceTimersByTimeAsync(10_000);
+        await connection;
+
+        expect(socket.disconnect).toHaveBeenCalledWith(true);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
   });
 
   describe("joinWorkspace", () => {

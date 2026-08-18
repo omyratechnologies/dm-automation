@@ -79,7 +79,7 @@ export class WebhookEventsProcessor extends WorkerHost {
     const event = await this.prisma.webhookEvent.findUnique({
       where: { id: job.data.webhookEventId },
     });
-    if (!event || event.status !== "RECEIVED") return;
+    if (!event || !["RECEIVED", "FAILED"].includes(event.status)) return;
 
     try {
       await this.handleEntry(event.payload as IgEntry | null);
@@ -94,6 +94,7 @@ export class WebhookEventsProcessor extends WorkerHost {
         where: { id: event.id },
         data: { status: "FAILED", processedAt: new Date(), error: message },
       });
+      throw err;
     }
   }
 
@@ -153,6 +154,8 @@ export class WebhookEventsProcessor extends WorkerHost {
       value.from?.id !== undefined ? String(value.from.id) : "";
     if (!fromId || fromId === igAccount.igUserId) return;
 
+    const commentId =
+      value.id !== undefined ? String(value.id) : undefined;
     await this.ingestInbound(igAccount, {
       senderIgUserId: fromId,
       username:
@@ -160,9 +163,10 @@ export class WebhookEventsProcessor extends WorkerHost {
           ? value.from.username
           : undefined,
       text: typeof value.text === "string" ? value.text : "",
+      mid: commentId ? `comment:${commentId}` : undefined,
       source: "comment",
       postId: value.media?.id !== undefined ? String(value.media.id) : undefined,
-      commentId: value.id !== undefined ? String(value.id) : undefined,
+      commentId,
     });
   }
 
@@ -183,12 +187,17 @@ export class WebhookEventsProcessor extends WorkerHost {
       item.sender?.id !== undefined ? String(item.sender.id) : "";
     if (!senderId || senderId === igAccount.igUserId) return;
 
+    const emoji = typeof reaction.emoji === "string" ? reaction.emoji : "👍";
+    const reactionMid =
+      typeof reaction.mid === "string"
+        ? `reaction:${reaction.mid}:${senderId}:${emoji}`
+        : undefined;
     await this.ingestInbound(
       igAccount,
       {
         senderIgUserId: senderId,
-        text: typeof reaction.emoji === "string" ? reaction.emoji : "👍",
-        mid: typeof reaction.mid === "string" ? reaction.mid : undefined,
+        text: emoji,
+        mid: reactionMid,
         source: "dm",
       },
       { runFlows: false },
@@ -202,6 +211,16 @@ export class WebhookEventsProcessor extends WorkerHost {
   ): Promise<void> {
     const { runFlows = true } = opts;
     const now = new Date();
+    if (input.mid) {
+      const existingMessage = await this.prisma.message.findUnique({
+        where: { igMessageId: input.mid },
+        select: { id: true },
+      });
+      if (existingMessage) {
+        this.logger.debug(`Duplicate igMessageId skipped: ${input.mid}`);
+        return;
+      }
+    }
     const opensMessagingWindow = input.source !== "comment";
     const profile = await this.lookupUserProfile(
       igAccount,

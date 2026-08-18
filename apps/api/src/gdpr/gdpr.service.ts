@@ -124,6 +124,21 @@ export class GdprService {
     };
   }
 
+  /** Public status lookup for Meta's deletion callback confirmation URL. */
+  async dataDeletionStatus(confirmationCode: string) {
+    const request = await this.prisma.dataDeletionRequest.findUnique({
+      where: { confirmationCode },
+      select: {
+        confirmationCode: true,
+        status: true,
+        requestedAt: true,
+        completedAt: true,
+      },
+    });
+    if (!request) throw new NotFoundException("Deletion request not found");
+    return request;
+  }
+
   /**
    * Delete webhook payloads plus the connected account. Prisma cascades the
    * account deletion through contacts, conversations, messages, flow runs,

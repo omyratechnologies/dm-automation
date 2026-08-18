@@ -128,14 +128,13 @@ unrelated customer conversations or real customer profile data in the video.
 - OAuth redirect:
   <https://gemai.omyratech.com/callback/instagram>
 - Webhook callback:
-  `https://[PRODUCTION_API_HOST]/v1/webhooks/instagram`
+  <https://gemai-api.omyratech.com/v1/webhooks/instagram>
 - Meta deauthorization callback:
-  `https://[PRODUCTION_API_HOST]/v1/webhooks/meta/deauthorize`
+  <https://gemai-api.omyratech.com/v1/webhooks/meta/deauthorize>
 - Meta data-deletion callback:
-  `https://[PRODUCTION_API_HOST]/v1/webhooks/meta/data-deletion`
+  <https://gemai-api.omyratech.com/v1/webhooks/meta/data-deletion>
 
-Confirm the production API host before submitting. Do not point callback URLs
-at a preview deployment.
+Do not point callback URLs at a preview deployment.
 
 ## Data-handling summary
 

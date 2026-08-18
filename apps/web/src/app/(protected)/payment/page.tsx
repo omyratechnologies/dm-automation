@@ -4,13 +4,14 @@ import React from "react";
 import { CancelPayment } from "@/components/payment/cancel-payment";
 
 type Props = {
-  searchParams: {
+  searchParams: Promise<{
     session_id?: string;
     cancel?: boolean;
-  };
+  }>;
 };
 
-const Page = async ({ searchParams: { cancel, session_id } }: Props) => {
+const Page = async ({ searchParams }: Props) => {
+  const { cancel, session_id } = await searchParams;
   if (session_id) {
     const customer = await onSubscribe(session_id);
 

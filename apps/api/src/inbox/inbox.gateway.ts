@@ -37,6 +37,7 @@ export class InboxGateway implements OnGatewayConnection {
   ) {}
 
   async handleConnection(socket: Socket): Promise<void> {
+    let verificationTimer: ReturnType<typeof setTimeout> | undefined;
     try {
       const token: unknown = socket.handshake?.auth?.token;
       if (typeof token !== "string" || token.length === 0) {
@@ -46,9 +47,12 @@ export class InboxGateway implements OnGatewayConnection {
         verifyToken(token, {
           secretKey: this.config.getOrThrow<string>("CLERK_SECRET_KEY"),
         }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("verifyToken timeout")), 10_000),
-        ),
+        new Promise<never>((_, reject) => {
+          verificationTimer = setTimeout(
+            () => reject(new Error("verifyToken timeout")),
+            10_000,
+          );
+        }),
       ]);
       const user = await this.prisma.user.findUnique({
         where: { clerkId: claims.sub },
@@ -61,6 +65,8 @@ export class InboxGateway implements OnGatewayConnection {
         `inbox socket rejected: ${err instanceof Error ? err.message : String(err)}`,
       );
       socket.disconnect(true);
+    } finally {
+      if (verificationTimer) clearTimeout(verificationTimer);
     }
   }
 

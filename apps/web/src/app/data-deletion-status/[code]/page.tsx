@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { API_URL } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Data Deletion Status | DM Automation",
@@ -6,13 +8,32 @@ export const metadata: Metadata = {
 };
 
 interface Props {
-  params: {
+  params: Promise<{
     code: string;
-  };
+  }>;
 }
 
-export default function DataDeletionStatusPage({ params }: Props) {
-  const { code } = params;
+interface DeletionStatus {
+  confirmationCode: string;
+  status: string;
+  requestedAt: string;
+  completedAt: string | null;
+}
+
+async function loadDeletionStatus(code: string): Promise<DeletionStatus> {
+  const response = await fetch(
+    `${API_URL}/v1/webhooks/meta/data-deletion/${encodeURIComponent(code)}`,
+    { cache: "no-store" },
+  );
+  if (response.status === 404) notFound();
+  if (!response.ok) throw new Error("Unable to load deletion request status");
+  return response.json() as Promise<DeletionStatus>;
+}
+
+export default async function DataDeletionStatusPage({ params }: Props) {
+  const { code } = await params;
+  const request = await loadDeletionStatus(code);
+  const isCompleted = request.status === "completed";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -20,18 +41,28 @@ export default function DataDeletionStatusPage({ params }: Props) {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">Data Deletion Request</h1>
           <p className="text-muted-foreground">
-            Confirmation Code: <code className="bg-muted px-2 py-1 rounded">{code}</code>
+            Confirmation Code: <code className="bg-muted px-2 py-1 rounded">{request.confirmationCode}</code>
           </p>
         </div>
 
         <div className="space-y-6">
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <h2 className="text-lg font-semibold text-green-800 dark:text-green-400 mb-2">
-              Request completed
+          <div className={isCompleted
+            ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+            : "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4"}
+          >
+            <h2 className={isCompleted
+              ? "text-lg font-semibold text-green-800 dark:text-green-400 mb-2"
+              : "text-lg font-semibold text-yellow-800 dark:text-yellow-400 mb-2"}
+            >
+              Request {request.status}
             </h2>
-            <p className="text-green-700 dark:text-green-300">
-              The Instagram data associated with this confirmation code has been removed from our
-              active systems.
+            <p className={isCompleted
+              ? "text-green-700 dark:text-green-300"
+              : "text-yellow-700 dark:text-yellow-300"}
+            >
+              {isCompleted
+                ? "The Instagram data associated with this confirmation code has been removed from our active systems."
+                : "This deletion request is still being processed. Please check again later."}
             </p>
           </div>
 

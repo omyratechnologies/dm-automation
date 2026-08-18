@@ -7,6 +7,7 @@ import { onCurrentUser } from "../user";
 import { invalidateUserCache } from "@/lib/cache";
 import { logger } from "@/lib/logger";
 import { serverApiFetch } from "@/lib/server-api";
+import { validateInstagramOAuthUrl } from "@/lib/env-validation";
 
 const INSTAGRAM_OAUTH_STATE_COOKIE = "instagram_oauth_state";
 
@@ -17,11 +18,19 @@ export const onOAuthInstagram = async (strategy: "INSTAGRAM" | "CRM") => {
       logger.error("Instagram OAuth URL is not configured");
       return { status: 500, error: "Instagram integration is not configured" };
     }
+    const configurationError = validateInstagramOAuthUrl(configuredUrl);
+    if (configurationError) {
+      logger.error("Instagram OAuth URL is invalid", {
+        message: configurationError,
+      });
+      return { status: 500, error: "Instagram integration is misconfigured" };
+    }
 
     const state = randomBytes(32).toString("base64url");
     const oauthUrl = new URL(configuredUrl);
     oauthUrl.searchParams.set("state", state);
-    cookies().set(INSTAGRAM_OAUTH_STATE_COOKIE, state, {
+    const cookieStore = await cookies();
+    cookieStore.set(INSTAGRAM_OAUTH_STATE_COOKIE, state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -53,7 +62,8 @@ export const onIntegrate = async (code: string, state: string) => {
   logger.info("Instagram integration started");
 
   try {
-    const expectedState = cookies().get(INSTAGRAM_OAUTH_STATE_COOKIE)?.value;
+    const cookieStore = await cookies();
+    const expectedState = cookieStore.get(INSTAGRAM_OAUTH_STATE_COOKIE)?.value;
     if (!expectedState || !state || !isValidOAuthState(state, expectedState)) {
       logger.warn("Instagram OAuth state validation failed");
       return { status: 400, error: "Invalid or expired OAuth state" };

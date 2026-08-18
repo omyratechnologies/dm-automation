@@ -16,33 +16,35 @@ import {
 import React from "react";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const info = await withinBudget(getAutomationInfo(params.id), SSR_METADATA_BUDGET_MS);
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const info = await withinBudget(getAutomationInfo(id), SSR_METADATA_BUDGET_MS);
   return {
     title: info?.status === 200 ? info.data.name : undefined,
   };
 }
 
 const Page = async ({ params }: Props) => {
+  const { id } = await params;
   const query = new QueryClient();
-  await withinBudget(prefetchUserAutomation(query, params.id));
+  await withinBudget(prefetchUserAutomation(query, id));
 
   return (
     <HydrationBoundary state={dehydrate(query)}>
       <div className=" flex flex-col items-center gap-y-20">
-        <AutomationsBreadCrumb id={params.id} />
+        <AutomationsBreadCrumb id={id} />
         <div className="w-full lg:w-10/12 xl:w-6/12 p-5 rounded-xl flex flex-col bg-card dark:bg-[#1D1D1D] border border-border gap-y-3">
           <div className="flex gap-x-2">
             <Warning />
             When...
           </div>
-          <Trigger id={params.id} />
+          <Trigger id={id} />
         </div>
-        <ThenNode id={params.id} />
-        <PostNode id={params.id} />
+        <ThenNode id={id} />
+        <PostNode id={id} />
       </div>
     </HydrationBoundary>
   );

@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import * as crypto from "crypto";
 import { GdprService } from "./gdpr.service";
 
@@ -24,7 +24,11 @@ interface Fixture {
     igAccount: { findUnique: jest.Mock; delete: jest.Mock };
     webhookEvent: { deleteMany: jest.Mock };
     contact: { deleteMany: jest.Mock; count: jest.Mock };
-    dataDeletionRequest: { create: jest.Mock; update: jest.Mock };
+    dataDeletionRequest: {
+      create: jest.Mock;
+      update: jest.Mock;
+      findUnique: jest.Mock;
+    };
     workspace: { findUnique: jest.Mock; delete: jest.Mock };
     message: { count: jest.Mock };
     flow: { count: jest.Mock };
@@ -56,6 +60,7 @@ function makeFixture(): Fixture {
     dataDeletionRequest: {
       create: jest.fn().mockResolvedValue({ id: "ddr-1" }),
       update: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn(),
     },
     workspace: {
       findUnique: jest.fn().mockResolvedValue({ id: "ws-1", name: "Main" }),
@@ -192,6 +197,45 @@ describe("GdprService deauthorize / data deletion", () => {
       },
     });
     expect(f.prisma.igAccount.delete).not.toHaveBeenCalled();
+  });
+
+  it("returns a deletion status without exposing the Meta user id", async () => {
+    const f = makeFixture();
+    const requestedAt = new Date("2026-08-18T10:00:00.000Z");
+    const completedAt = new Date("2026-08-18T10:00:01.000Z");
+    f.prisma.dataDeletionRequest.findUnique.mockResolvedValue({
+      confirmationCode: "a1b2c3d4e5f6",
+      status: "completed",
+      requestedAt,
+      completedAt,
+    });
+
+    await expect(
+      f.service.dataDeletionStatus("a1b2c3d4e5f6"),
+    ).resolves.toEqual({
+      confirmationCode: "a1b2c3d4e5f6",
+      status: "completed",
+      requestedAt,
+      completedAt,
+    });
+    expect(f.prisma.dataDeletionRequest.findUnique).toHaveBeenCalledWith({
+      where: { confirmationCode: "a1b2c3d4e5f6" },
+      select: {
+        confirmationCode: true,
+        status: true,
+        requestedAt: true,
+        completedAt: true,
+      },
+    });
+  });
+
+  it("rejects an unknown deletion confirmation code", async () => {
+    const f = makeFixture();
+    f.prisma.dataDeletionRequest.findUnique.mockResolvedValue(null);
+
+    await expect(
+      f.service.dataDeletionStatus("000000000000"),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 

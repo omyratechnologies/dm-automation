@@ -7,7 +7,10 @@ function makeFixture() {
     igAccount: { findUnique: jest.fn() },
     contact: { upsert: jest.fn(), update: jest.fn() },
     conversation: { upsert: jest.fn() },
-    message: { create: jest.fn() },
+    message: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      create: jest.fn(),
+    },
     post: { findFirst: jest.fn().mockResolvedValue(null) },
   };
   const inbox = { emitToWorkspace: jest.fn() };
@@ -199,7 +202,7 @@ describe("WebhookEventsProcessor", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           text: "😂",
-          igMessageId: "reaction-mid-1",
+          igMessageId: "reaction:reaction-mid-1:ig-contact:😂",
           direction: "IN",
         }),
       }),
@@ -329,6 +332,11 @@ describe("WebhookEventsProcessor", () => {
         }),
       }),
     );
+    expect(f.prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ igMessageId: "comment:cmt-1" }),
+      }),
+    );
   });
 
   it("skips comment from self (self-commenting)", async () => {
@@ -426,7 +434,61 @@ describe("WebhookEventsProcessor", () => {
     );
   });
 
-  it("marks event FAILED on unexpected error", async () => {
+  it("skips a replayed message before mutating conversation counters", async () => {
+    const f = makeFixture();
+    f.prisma.webhookEvent.findUnique.mockResolvedValue({
+      id: "evt-replay",
+      status: "RECEIVED",
+      payload: {
+        id: "ig-biz",
+        messaging: [
+          {
+            sender: { id: "ig-contact" },
+            message: { mid: "mid-existing", text: "duplicate" },
+          },
+        ],
+      },
+    });
+    f.prisma.igAccount.findUnique.mockResolvedValue({
+      id: "iga-1",
+      igUserId: "ig-biz",
+      workspaceId: "ws-1",
+      status: "ACTIVE",
+    });
+    f.prisma.message.findUnique.mockResolvedValue({ id: "msg-existing" });
+
+    await f.processor.process({ data: { webhookEventId: "evt-replay" } } as never);
+
+    expect(f.prisma.contact.upsert).not.toHaveBeenCalled();
+    expect(f.prisma.conversation.upsert).not.toHaveBeenCalled();
+    expect(f.prisma.message.create).not.toHaveBeenCalled();
+  });
+
+  it("retries a previously failed webhook event", async () => {
+    const f = makeFixture();
+    f.prisma.webhookEvent.findUnique.mockResolvedValue({
+      id: "evt-retry",
+      status: "FAILED",
+      payload: { id: "ig-biz", messaging: [] },
+    });
+    f.prisma.igAccount.findUnique.mockResolvedValue({
+      id: "iga-1",
+      igUserId: "ig-biz",
+      workspaceId: "ws-1",
+      status: "ACTIVE",
+    });
+
+    await f.processor.process({ data: { webhookEventId: "evt-retry" } } as never);
+
+    expect(f.prisma.webhookEvent.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "evt-retry" },
+        data: expect.objectContaining({ status: "PROCESSED", error: null }),
+      }),
+    );
+  });
+
+  it("marks event FAILED and rethrows so BullMQ can retry", async () => {
     const f = makeFixture();
     f.prisma.webhookEvent.findUnique.mockResolvedValue({
       id: "evt-8",
@@ -435,7 +497,9 @@ describe("WebhookEventsProcessor", () => {
     });
     f.prisma.igAccount.findUnique.mockRejectedValue(new Error("DB timeout"));
 
-    await f.processor.process({ data: { webhookEventId: "evt-8" } } as never);
+    await expect(
+      f.processor.process({ data: { webhookEventId: "evt-8" } } as never),
+    ).rejects.toThrow("DB timeout");
 
     expect(f.prisma.webhookEvent.update).toHaveBeenCalledWith(
       expect.objectContaining({
