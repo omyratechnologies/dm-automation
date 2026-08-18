@@ -16,6 +16,13 @@ export const METRICS_KEYS = {
 
 export type MetricName = keyof typeof METRICS_KEYS;
 
+const ZERO_METRICS: Record<string, number> = Object.fromEntries(
+  (Object.keys(METRICS_KEYS) as MetricName[]).map((name) => [
+    name.toLowerCase(),
+    0,
+  ]),
+);
+
 @Injectable()
 export class MetricsService {
   private readonly logger = new Logger(MetricsService.name);
@@ -26,9 +33,6 @@ export class MetricsService {
     if (process.env.NODE_ENV !== "test") {
       try {
         this.redis = new Redis(url, { maxRetriesPerRequest: 1, lazyConnect: true });
-        this.redis.connect().catch(() => {
-          this.redis = null;
-        });
       } catch {
         this.logger.warn("Metrics: Redis unavailable");
       }
@@ -58,7 +62,7 @@ export class MetricsService {
   }
 
   async getAll(): Promise<Record<string, number>> {
-    if (!this.redis) return {};
+    if (!this.redis) return { ...ZERO_METRICS };
     const entries: Array<[string, number]> = await Promise.all(
       (Object.keys(METRICS_KEYS) as MetricName[]).map(async (name) => {
         const val = await this.get(METRICS_KEYS[name]);
