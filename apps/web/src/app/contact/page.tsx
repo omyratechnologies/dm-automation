@@ -87,7 +87,7 @@ export default function ContactPage() {
         <div className="container px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center">
-              <GemaiLogo size="lg" className="h-10" />
+              <GemaiLogo size="md" />
             </Link>
             <Link href="/">
               <Button variant="ghost" className="text-slate-text-secondary hover:text-slate-primary">

@@ -1,6 +1,6 @@
 "use client";
 import { usePaths } from "@/hooks/user-nav";
-import GemaiLogo from "@/components/global/gemai-logo";
+import GemaiLogo, { GemaiMark } from "@/components/global/gemai-logo";
 import React, { useEffect, useState } from "react";
 import Items from "./items";
 import WorkspaceSwitcher from "@/components/global/workspace-switcher";
@@ -60,11 +60,9 @@ const Sidebar = () => {
             collapsed ? "justify-center px-2" : "justify-between px-3"
           )}
         >
-          {!collapsed && <GemaiLogo size="lg" className="h-6" />}
+          {!collapsed && <GemaiLogo size="sm" />}
           {collapsed && (
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary text-xs font-bold">
-              G
-            </div>
+            <GemaiMark size={32} title="Gemai" />
           )}
           {!collapsed && (
             <Button

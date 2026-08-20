@@ -1,143 +1,129 @@
-import { ImageResponse } from 'next/og'
- 
-export const alt = 'Gemai - AI-Powered Instagram DM Automation'
-export const size = {
-  width: 1200,
-  height: 630,
-}
-export const contentType = 'image/png'
- 
-export default async function Image() {
+import { ImageResponse } from "next/og";
+import { SignalMark } from "@/components/global/gemai-logo/signal-mark";
+
+export const alt = "Gemai - AI-Powered Instagram DM Automation";
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+export default function OpenGraphImage() {
   return new ImageResponse(
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'sans-serif',
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          overflow: "hidden",
+          background: "#070912",
+          color: "#F8FAFC",
+          fontFamily: "Arial, sans-serif",
         }}
       >
-        {/* Decorative elements */}
         <div
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%)',
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            background:
+              "radial-gradient(circle at 15% 15%, rgba(91,106,240,.28), transparent 38%), radial-gradient(circle at 88% 82%, rgba(139,92,246,.24), transparent 40%)",
           }}
         />
         <div
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%)',
+            position: "absolute",
+            inset: 24,
+            display: "flex",
+            border: "1px solid rgba(255,255,255,.08)",
+            borderRadius: 36,
           }}
         />
 
-        {/* Logo Icon */}
         <div
           style={{
-            fontSize: 120,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            width: 160,
-            height: 160,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: 'bold',
-            borderRadius: '32px',
-            marginBottom: '40px',
-            boxShadow: '0 20px 60px rgba(102, 126, 234, 0.4)',
+            position: "relative",
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            padding: "74px 86px",
+            gap: 72,
           }}
         >
-          G
-        </div>
-
-        {/* Title */}
-        <div
-          style={{
-            fontSize: 72,
-            fontWeight: 'bold',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            backgroundClip: 'text',
-            color: 'transparent',
-            marginBottom: '20px',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          GEMAI
-        </div>
-
-        {/* Tagline */}
-        <div
-          style={{
-            fontSize: 32,
-            color: '#94a3b8',
-            textAlign: 'center',
-            maxWidth: '900px',
-            lineHeight: 1.4,
-          }}
-        >
-          Transform Instagram DMs into Revenue with AI
-        </div>
-
-        {/* Features */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '40px',
-            marginTop: '40px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#667eea',
-              }}
-            />
-            <span style={{ color: '#cbd5e1', fontSize: 20 }}>24/7 Automation</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 210,
+              height: 210,
+              borderRadius: 48,
+              background: "rgba(255,255,255,.045)",
+              border: "1px solid rgba(255,255,255,.10)",
+            }}
+          >
+            <SignalMark size={150} idPrefix="open-graph" />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+
+          <div style={{ display: "flex", flexDirection: "column", maxWidth: 730 }}>
             <div
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#764ba2',
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                color: "#AEB6D9",
+                fontSize: 20,
+                fontWeight: 600,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                marginBottom: 24,
               }}
-            />
-            <span style={{ color: '#cbd5e1', fontSize: 20 }}>AI-Powered</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            >
+              AI conversation automation
+            </div>
             <div
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#667eea',
+                display: "flex",
+                fontSize: 76,
+                fontWeight: 800,
+                letterSpacing: -4,
+                lineHeight: 1,
+                marginBottom: 24,
               }}
-            />
-            <span style={{ color: '#cbd5e1', fontSize: 20 }}>Free Plan</span>
+            >
+              Gemai
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: 34,
+                color: "#B7BED4",
+                lineHeight: 1.35,
+                maxWidth: 690,
+              }}
+            >
+              Turn Instagram conversations into customers — automatically.
+            </div>
+            <div style={{ display: "flex", gap: 12, marginTop: 36 }}>
+              {["DMs", "Comments", "AI replies"].map((label) => (
+                <div
+                  key={label}
+                  style={{
+                    display: "flex",
+                    padding: "10px 16px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,.12)",
+                    color: "#D8DCF0",
+                    fontSize: 18,
+                  }}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     ),
-    {
-      ...size,
-    }
-  )
+    size,
+  );
 }

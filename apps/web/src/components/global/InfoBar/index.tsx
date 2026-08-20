@@ -37,7 +37,7 @@ const InfoBar = () => {
         >
           <div className="flex h-full flex-col bg-background p-4">
             <div className="flex items-center py-3 mb-2">
-              <GemaiLogo size="lg" className="h-6" />
+              <GemaiLogo size="sm" />
             </div>
             <div className="mb-3">
               <WorkspaceSwitcher />

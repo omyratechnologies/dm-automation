@@ -35,7 +35,7 @@ export function FloatingNav() {
         )}
       >
         <Link href="/" className="mr-3 flex items-center shrink-0">
-          <GemaiLogo size="lg" className="h-5" />
+          <GemaiLogo size="sm" />
         </Link>
 
         <nav className="hidden items-center gap-0.5 md:flex">

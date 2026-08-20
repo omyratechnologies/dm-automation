@@ -43,7 +43,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
             <Link href="/" className="inline-block">
-              <GemaiLogo size="lg" className="h-6" />
+              <GemaiLogo size="sm" />
             </Link>
             <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-white/40">
               Instagram automation that feels human — for creators and teams who care about every conversation.

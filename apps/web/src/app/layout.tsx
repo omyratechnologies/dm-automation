@@ -69,6 +69,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: [{ url: "/brand/gemai-mark.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon",
+  },
 };
 
 export default function RootLayout({

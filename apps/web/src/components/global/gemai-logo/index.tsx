@@ -1,136 +1,53 @@
-"use client";
+import { cn } from "@/lib/utils";
+import { useId } from "react";
+import { SignalMark } from "./signal-mark";
 
-import { useTheme } from "next-themes";
-import Image from "next/image";
-import { useState, useEffect } from "react";
+export type GemaiLogoVariant = "full" | "icon" | "text";
+export type GemaiLogoSize = "sm" | "md" | "lg" | "xl";
 
 interface GemaiLogoProps {
-  variant?: "full" | "icon" | "text";
-  size?: "sm" | "md" | "lg" | "xl";
+  variant?: GemaiLogoVariant;
+  size?: GemaiLogoSize;
   className?: string;
 }
 
-/**
- * Gemai Logo Component
- * 
- * Variants:
- * - full: Complete logo with icon and text (default)
- * - icon: Just the G icon
- * - text: Just the GEMAI text
- * 
- * Sizes:
- * - sm: Small (24px height)
- * - md: Medium (32px height) - default
- * - lg: Large (48px height)
- * - xl: Extra large (64px height)
- * 
- * Automatically adapts to light/dark theme
- */
-export default function GemaiLogo({
-  variant = "full",
-  size = "md",
-  className = "",
-}: GemaiLogoProps) {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+const SIZE_MAP: Record<GemaiLogoSize, number> = { sm: 24, md: 32, lg: 48, xl: 64 };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export function GemaiMark({ size = 32, className, title }: { size?: number; className?: string; title?: string }) {
+  const idPrefix = `gemai-${useId().replace(/:/g, "")}`;
+  return <SignalMark size={size} className={className} title={title} idPrefix={idPrefix} />;
+}
 
-  // Prevent hydration mismatch by showing placeholder during SSR
-  if (!mounted) {
-    return (
-      <div
-        className={`bg-muted rounded-lg animate-pulse ${className}`}
-        style={{
-          width: variant === "icon" ? getSizePixels(size) : getSizePixels(size) * 4,
-          height: getSizePixels(size),
-        }}
-      />
-    );
-  }
-
-  const isDark = resolvedTheme === "dark";
-  const logoSrc = isDark
-    ? "/Gemai-logo-white-transperant.png"
-    : "/Gemai-logo-transperant.png";
-
-  const dimensions = getDimensions(variant, size);
+export default function GemaiLogo({ variant = "full", size = "md", className }: GemaiLogoProps) {
+  const pixels = SIZE_MAP[size];
+  const showMark = variant !== "text";
+  const showWordmark = variant !== "icon";
 
   return (
-    <div className={`relative ${className}`}>
-      <Image
-        src={logoSrc}
-        alt="Gemai - AI-Powered Instagram Automation"
-        width={dimensions.width}
-        height={dimensions.height}
-        priority
-        className="object-contain"
-        style={{
-          width: dimensions.width,
-          height: dimensions.height,
-        }}
-      />
-    </div>
+    <span
+      className={cn("inline-flex shrink-0 items-center text-foreground", className)}
+      style={{ minHeight: pixels }}
+      aria-label="Gemai"
+    >
+      {showMark && <GemaiMark size={pixels} />}
+      {showWordmark && (
+        <span
+          className={cn("font-extrabold leading-none tracking-[-0.055em]", showMark && "ml-[0.28em]")}
+          style={{ fontSize: Math.round(pixels * 0.68) }}
+          aria-hidden="true"
+        >
+          Gemai
+        </span>
+      )}
+    </span>
   );
 }
 
-/**
- * Icon-only version of the logo (just the G)
- */
-export function GemaiIcon({
-  size = "md",
-  className = "",
-}: Omit<GemaiLogoProps, "variant">) {
+export function GemaiIcon({ size = "md", className }: Omit<GemaiLogoProps, "variant">) {
   return <GemaiLogo variant="icon" size={size} className={className} />;
 }
 
-/**
- * Simple SVG version of the G icon for better performance
- */
-export function GemaiIconSVG({
-  size = 40,
-  className = "",
-}: {
-  size?: number;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`rounded-lg bg-gradient-brand flex items-center justify-center font-bold text-white shadow-lg ${className}`}
-      style={{ width: size, height: size }}
-    >
-      <span style={{ fontSize: size * 0.6 }}>G</span>
-    </div>
-  );
-}
-
-// Helper functions
-function getSizePixels(size: string): number {
-  const sizeMap = {
-    sm: 24,
-    md: 32,
-    lg: 48,
-    xl: 64,
-  };
-  return sizeMap[size as keyof typeof sizeMap] || 32;
-}
-
-function getDimensions(
-  variant: string,
-  size: string
-): { width: number; height: number } {
-  const baseHeight = getSizePixels(size);
-
-  switch (variant) {
-    case "icon":
-      return { width: baseHeight, height: baseHeight };
-    case "text":
-      return { width: baseHeight * 3.5, height: baseHeight };
-    case "full":
-    default:
-      // Full logo aspect ratio is approximately 4:1
-      return { width: baseHeight * 4, height: baseHeight };
-  }
+/** @deprecated Use GemaiMark for the canonical icon. */
+export function GemaiIconSVG({ size = 40, className = "" }: { size?: number; className?: string }) {
+  return <GemaiMark size={size} className={className} />;
 }

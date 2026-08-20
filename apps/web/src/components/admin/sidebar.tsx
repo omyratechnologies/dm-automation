@@ -44,7 +44,7 @@ const AdminSidebar = () => {
       <div className="flex flex-col w-full h-full p-4">
         {/* Logo Section */}
         <div className="flex gap-x-3 items-center p-4 mb-2 justify-center">
-          <GemaiLogo size="lg" className="h-8" />
+          <GemaiLogo size="md" />
         </div>
 
         {/* Console Title */}
