@@ -49,6 +49,7 @@ function fixture(overrides: { lastInboundAt?: Date | null; lead?: unknown; meeti
       conversationId: CONVERSATION_ID,
       status: "QUEUED",
     }),
+    enqueueQueuedMessage: jest.fn().mockResolvedValue(undefined),
     emitMessageCreated: jest.fn(),
   };
   const outbox = { append: jest.fn().mockResolvedValue({ eventId: "0ece59e5-8495-401a-8a43-12bb0fce4d4e" }) };
@@ -85,6 +86,11 @@ describe("MeetingInvitationService", () => {
       payload: { messageId: "82609420-5db1-41f2-899d-d667fd47c8eb" },
     }));
     expect(f.audit.logInTransaction).toHaveBeenCalled();
+    expect(f.messaging.enqueueQueuedMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ humanAgent: true, source: "AGENT" }),
+      "82609420-5db1-41f2-899d-d667fd47c8eb",
+      "send-messages:0ece59e5-8495-401a-8a43-12bb0fce4d4e",
+    );
     expect(f.messaging.emitMessageCreated).toHaveBeenCalled();
     expect(result).toMatchObject({ messageId: "82609420-5db1-41f2-899d-d667fd47c8eb", meetingType: { name: "Discovery call" } });
     expect(result).not.toHaveProperty("bookingUrl");
@@ -130,5 +136,19 @@ describe("MeetingInvitationService", () => {
       meetingTypes: [{ id: MEETING_TYPE_ID }],
       messagingEligible: true,
     });
+  });
+
+  it("keeps the accepted invitation recoverable when immediate Redis delivery fails", async () => {
+    const f = fixture();
+    f.messaging.enqueueQueuedMessage.mockRejectedValueOnce(new Error("Redis unavailable"));
+
+    await expect(f.service.send(WORKSPACE_ID, ORGANIZATION_ID, USER_ID, CONVERSATION_ID, {
+      leadId: LEAD_ID,
+      meetingTypeId: MEETING_TYPE_ID,
+      expiresInDays: 7,
+    }, "correlation-4")).resolves.toMatchObject({ messageId: "82609420-5db1-41f2-899d-d667fd47c8eb" });
+
+    expect(f.outbox.append).toHaveBeenCalledWith(f.tx, expect.objectContaining({ type: "MessageQueued" }));
+    expect(f.messaging.emitMessageCreated).toHaveBeenCalled();
   });
 });

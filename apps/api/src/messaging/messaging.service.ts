@@ -52,11 +52,22 @@ export class MessagingService {
   async createAndQueueSend(params: CreateAndQueueSendParams) {
     const message = await this.createQueuedMessage(this.prisma, params);
 
+    await this.enqueueQueuedMessage(params, message.id, `send-message:${message.id}`);
+
+    this.emitMessageCreated(params.workspaceId, message);
+    return message;
+  }
+
+  async enqueueQueuedMessage(
+    params: Pick<CreateAndQueueSendParams, "workspaceId" | "igAccountId" | "contactId" | "text" | "source" | "quickReplies" | "humanAgent" | "broadcastId" | "flowRunId" | "replyToCommentId">,
+    messageId: string,
+    jobId: string,
+  ): Promise<void> {
     const job: SendMessageJob = {
       workspaceId: params.workspaceId,
       igAccountId: params.igAccountId,
       contactId: params.contactId,
-      messageId: message.id,
+      messageId,
       text: params.text,
       source: params.source,
       ...(params.quickReplies ? { quickReplies: params.quickReplies } : {}),
@@ -69,10 +80,7 @@ export class MessagingService {
         ? { replyToCommentId: params.replyToCommentId }
         : {}),
     };
-    await this.sendQueue.add("send", job, { jobId: `send-message:${message.id}` });
-
-    this.emitMessageCreated(params.workspaceId, message);
-    return message;
+    await this.sendQueue.add("send", job, { jobId });
   }
 
   createQueuedMessage(

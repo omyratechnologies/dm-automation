@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Prisma } from "@prisma/client";
 import { HUMAN_AGENT_WINDOW_MS } from "@repo/shared";
@@ -14,6 +14,8 @@ const DEFAULT_INVITATION = "I'd be happy to meet. Choose a time that works for y
 
 @Injectable()
 export class MeetingInvitationService {
+  private readonly logger = new Logger(MeetingInvitationService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly messaging: MessagingService,
@@ -110,7 +112,7 @@ export class MeetingInvitationService {
         source: "AGENT",
         sentById: actorUserId,
       });
-      await this.outbox.append(tx, {
+      const queuedEvent = await this.outbox.append(tx, {
         type: "MessageQueued",
         organizationId,
         workspaceId,
@@ -132,9 +134,25 @@ export class MeetingInvitationService {
         targetId: bookingLink.id,
         meta: { leadId: lead.id, meetingTypeId: meetingType.id, bookingLinkId: bookingLink.id },
       });
-      return { bookingLink, message, meetingType };
+      return { bookingLink, message, meetingType, conversation, queuedEvent };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
+    try {
+      await this.messaging.enqueueQueuedMessage(
+        {
+          workspaceId,
+          igAccountId: result.conversation.igAccountId,
+          contactId: result.conversation.contactId,
+          text: result.message.text!,
+          source: "AGENT",
+          humanAgent: true,
+        },
+        result.message.id,
+        `send-messages:${result.queuedEvent.eventId}`,
+      );
+    } catch (error) {
+      this.logger.warn(`Immediate meeting invitation delivery deferred to outbox: ${error instanceof Error ? error.message : String(error)}`);
+    }
     this.messaging.emitMessageCreated(workspaceId, result.message);
     return {
       bookingLinkId: result.bookingLink.id,

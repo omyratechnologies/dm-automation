@@ -31,7 +31,7 @@ Pause the destination as `MISCONFIGURED` on header drift. Public sharing blocks 
 
 Restore Redis, start the relay, and observe outbox lag return below five seconds. Deterministic job IDs and `ProcessedEvent` prevent repeated effective mutations. Replay DLQ jobs in bounded workspace batches and verify `IntegrationOperation` reconciliation.
 
-For Inbox meeting invitations, query `MessageQueued` outbox rows and their referenced `Message`. A `PENDING` event with a `QUEUED` message is safe to replay: the relay uses `send-messages:<eventId>` and the sender exits when the message is no longer queued. Never place the booking secret or message text into an outbox payload. If the message is permanently rejected, preserve the booking link for auditability and let the agent send a fresh invitation only while the Meta human-agent window remains valid.
+For Inbox meeting invitations, query `MessageQueued` outbox rows and their referenced `Message`. A `PENDING` event with a `QUEUED` message is safe to replay: both the post-commit fast path and relay use `send-messages:<eventId>`, and the sender exits when the message is no longer queued. Never place the booking secret or message text into an outbox payload. If the message is permanently rejected, preserve the booking link for auditability and let the agent send a fresh invitation only while the Meta human-agent window remains valid.
 
 ## Backup and rollback
 
