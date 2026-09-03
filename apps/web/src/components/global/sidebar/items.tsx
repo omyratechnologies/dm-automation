@@ -34,7 +34,7 @@ const Items = ({ page, collapsed = false }: Props) => {
                 href={workspace ? `/dashboard/${workspace.id}${item.href.replace(/^\/dashboard/, "")}` : item.href}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "flex items-center gap-x-2.5 rounded-md text-sm font-medium transition-all duration-quiet ease-quiet",
+                  "flex min-h-11 items-center gap-x-2.5 rounded-md text-sm font-medium transition-all duration-quiet ease-quiet",
                   collapsed ? "justify-center px-2 py-2" : "px-2.5 py-2",
                   isActive
                     ? "bg-primary/10 text-primary"
