@@ -21,6 +21,10 @@ mkdirSync(join(runtimeApp, ".next"), { recursive: true });
 cpSync(join(appRoot, ".next", "static"), join(runtimeApp, ".next", "static"), { recursive: true, force: true });
 cpSync(join(appRoot, "public"), join(runtimeApp, "public"), { recursive: true, force: true });
 
-process.env.HOSTNAME ??= "0.0.0.0";
+// Render injects HOSTNAME with the instance's internal DNS name. Next's
+// standalone server must listen on every interface so Render's proxy can
+// reach it; preserving Render's value here leaves the deployment returning
+// 502 even though the process is running and the port is detected.
+process.env.HOSTNAME = "0.0.0.0";
 process.chdir(standaloneRoot);
 await import(pathToFileURL(serverPath).href);
