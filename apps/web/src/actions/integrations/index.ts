@@ -7,12 +7,15 @@ import { onCurrentUser } from "../user";
 import { invalidateUserCache } from "@/lib/cache";
 import { logger } from "@/lib/logger";
 import { serverApiFetch } from "@/lib/server-api";
-import { validateInstagramOAuthUrl } from "@/lib/env-validation";
+import {
+  resolveInstagramOAuthUrl,
+  validateInstagramOAuthUrl,
+} from "@/lib/env-validation";
 
 const INSTAGRAM_OAUTH_STATE_COOKIE = "instagram_oauth_state";
 
 export const onOAuthInstagram = async () => {
-  const configuredUrl = process.env.INSTAGRAM_EMBEDDED_OAUTH_URL;
+  const configuredUrl = resolveInstagramOAuthUrl();
   if (!configuredUrl) {
     logger.error("Instagram OAuth URL is not configured");
     return { status: 500, error: "Instagram integration is not configured" };

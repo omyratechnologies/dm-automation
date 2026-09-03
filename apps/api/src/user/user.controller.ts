@@ -51,7 +51,6 @@ export class UserController {
   ) {
     return this.user.ensure(
       authUser.clerkId,
-      authUser.id,
       body.firstname ?? "",
       body.lastname ?? "",
       body.email ?? authUser.email,

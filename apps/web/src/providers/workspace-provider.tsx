@@ -80,12 +80,13 @@ export const WorkspaceProvider = ({
       const token = await getToken();
       let me = await apiFetch<Me>("/me", { token });
 
-      // First login for this org — bootstrap an organization + default workspace.
-      // /me returns null until onBoardUser has provisioned the user row.
+      // Repair first-login or interrupted provisioning through the canonical,
+      // idempotent identity bootstrap command. Never create an organization
+      // against an unprovisioned synthetic user id.
       if (!me?.memberships || me.memberships.length === 0) {
-        await apiFetch("/orgs", {
+        await apiFetch("/me/ensure", {
           method: "POST",
-          body: { name: "My organization" },
+          body: {},
           token: await getToken(),
         });
         me = await apiFetch<Me>("/me", { token: await getToken() });

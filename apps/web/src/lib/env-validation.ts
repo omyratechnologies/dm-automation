@@ -113,6 +113,48 @@ export function validateInstagramOAuthUrl(url: string | undefined): string | nul
   return null;
 }
 
+type InstagramOAuthEnvironment = Readonly<Record<string, string | undefined>>;
+
+/**
+ * Resolve the server-controlled Instagram Business Login URL. Production can
+ * provide the complete URL, but deriving it from the already-required app ID
+ * and public host avoids a fragile duplicate environment variable.
+ */
+export function resolveInstagramOAuthUrl(
+  environment: InstagramOAuthEnvironment = process.env,
+): string | undefined {
+  const configured = environment.INSTAGRAM_EMBEDDED_OAUTH_URL?.trim();
+  if (configured) return configured;
+
+  const clientId = (
+    environment.INSTAGRAM_CLIENT_ID ??
+    environment.NEXT_PUBLIC_INSTAGRAM_APP_ID
+  )?.trim();
+  const publicHost = environment.NEXT_PUBLIC_HOST_URL?.trim();
+  if (!clientId || !publicHost) return undefined;
+
+  let redirectUri: URL;
+  try {
+    redirectUri = new URL('/callback/instagram', publicHost);
+  } catch {
+    return undefined;
+  }
+
+  const oauthUrl = new URL('https://www.instagram.com/oauth/authorize');
+  oauthUrl.searchParams.set('client_id', clientId);
+  oauthUrl.searchParams.set('redirect_uri', redirectUri.toString());
+  oauthUrl.searchParams.set('response_type', 'code');
+  oauthUrl.searchParams.set(
+    'scope',
+    [
+      'instagram_business_basic',
+      'instagram_business_manage_messages',
+      'instagram_business_manage_comments',
+    ].join(','),
+  );
+  return oauthUrl.toString();
+}
+
 export function getEnvVar(key: string, fallback?: string): string {
   const value = process.env[key];
   
