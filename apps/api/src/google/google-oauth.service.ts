@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 import { createHash, randomBytes } from "crypto";
 import type { GOOGLE_BINDING_OWNERSHIP, GOOGLE_CAPABILITY } from "@prisma/client";
+import type { GoogleIntegrationReadiness } from "@repo/shared";
 import { TokenCrypto } from "../common/crypto/kms";
 import { ProblemException } from "../common/problem-details";
 import { PrismaService } from "../prisma/prisma.service";
@@ -30,6 +31,33 @@ export class GoogleOAuthService {
     private readonly config: ConfigService,
     private readonly crypto: TokenCrypto,
   ) {}
+
+  readiness(): GoogleIntegrationReadiness {
+    const oauthEnabled = this.config.get<boolean>("FEATURE_GOOGLE_OAUTH") === true;
+    const oauthConfigured = Boolean(
+      this.config.get("GOOGLE_CLIENT_ID")
+      && this.config.get("GOOGLE_CLIENT_SECRET")
+      && this.config.get("GOOGLE_OAUTH_REDIRECT_URI"),
+    );
+    const oauth = !oauthEnabled
+      ? { available: false, status: "FEATURE_DISABLED" as const }
+      : !oauthConfigured
+        ? { available: false, status: "ADMIN_SETUP_REQUIRED" as const }
+        : { available: true, status: "AVAILABLE" as const };
+
+    const capability = (flag: "FEATURE_GOOGLE_CALENDAR" | "FEATURE_GOOGLE_SHEETS") => {
+      if (this.config.get<boolean>(flag) !== true) {
+        return { available: false, status: "FEATURE_DISABLED" as const };
+      }
+      return oauth;
+    };
+
+    return {
+      oauth,
+      calendar: capability("FEATURE_GOOGLE_CALENDAR"),
+      sheets: capability("FEATURE_GOOGLE_SHEETS"),
+    };
+  }
 
   async start(input: {
     userId: string;
@@ -156,7 +184,7 @@ export class GoogleOAuthService {
   }
 
   private assertConfigured(): void {
-    if (!this.config.get("FEATURE_GOOGLE_OAUTH") || !this.config.get("GOOGLE_CLIENT_ID") || !this.config.get("GOOGLE_CLIENT_SECRET") || !this.config.get("GOOGLE_OAUTH_REDIRECT_URI")) {
+    if (!this.readiness().oauth.available) {
       throw new ProblemException(HttpStatus.SERVICE_UNAVAILABLE, "GOOGLE_UNAVAILABLE", "Google integration unavailable", "Google OAuth is not configured or enabled");
     }
   }

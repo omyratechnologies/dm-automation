@@ -71,6 +71,20 @@ const envSchema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["TOKEN_MASTER_KEYS"], message: "Production must receive a versioned keyring from the managed secret manager" });
   }
 
+  if ((env.FEATURE_GOOGLE_CALENDAR || env.FEATURE_GOOGLE_SHEETS) && !env.FEATURE_GOOGLE_OAUTH) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["FEATURE_GOOGLE_OAUTH"], message: "Must be enabled when a Google capability is enabled" });
+  }
+
+  if (env.FEATURE_GOOGLE_OAUTH) {
+    for (const key of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_REDIRECT_URI"] as const) {
+      if (!env[key]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "Required when Google OAuth is enabled" });
+    }
+  }
+
+  if ((env.FEATURE_GOOGLE_CALENDAR || env.FEATURE_GOOGLE_SHEETS) && !env.GOOGLE_WEBHOOK_BASE_URL) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["GOOGLE_WEBHOOK_BASE_URL"], message: "Required when Calendar or Sheets is enabled" });
+  }
+
   for (const key of ["INSTAGRAM_GRAPH_URL", "INSTAGRAM_OAUTH_REDIRECT_URI", "WEB_ORIGIN"] as const) {
     try {
       new URL(env[key]);
@@ -80,6 +94,15 @@ const envSchema = z.object({
         path: [key],
         message: "Must be a valid absolute URL in production",
       });
+    }
+  }
+
+  for (const key of ["GOOGLE_OAUTH_REDIRECT_URI", "GOOGLE_WEBHOOK_BASE_URL"] as const) {
+    if (!env[key]) continue;
+    try {
+      new URL(env[key]);
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "Must be a valid absolute URL in production" });
     }
   }
 });

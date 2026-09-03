@@ -22,11 +22,17 @@ const startSchema = z.object({
 
 @Controller("workspaces/:workspaceId/google")
 @WorkspaceScoped()
-@FeatureFlag("FEATURE_GOOGLE_OAUTH")
 export class GoogleController {
   constructor(private readonly oauth: GoogleOAuthService, private readonly prisma: PrismaService, private readonly api: GoogleApiClient) {}
 
+  @Get("readiness")
+  @RequireCapabilities("integrations.read")
+  readiness() {
+    return this.oauth.readiness();
+  }
+
   @Post("oauth-sessions")
+  @FeatureFlag("FEATURE_GOOGLE_OAUTH")
   @RequireCapabilities("integrations.manage")
   @IdempotentCommand()
   start(@CurrentUser() user: AuthedRequestUser, @CurrentWorkspace() workspace: WorkspaceContext, @Body(new ZodValidationPipe(startSchema)) input: z.infer<typeof startSchema>) {
@@ -34,13 +40,14 @@ export class GoogleController {
   }
 
   @Get("bindings")
-  @RequireCapabilities("integrations.manage")
+  @RequireCapabilities("integrations.read")
   list(@CurrentWorkspace() workspace: WorkspaceContext) {
     return this.prisma.googleBinding.findMany({ where: { workspaceId: workspace.id }, select: { id: true, grantId: true, ownership: true, capabilities: true, status: true, version: true, lastHealthAt: true, lastErrorCode: true, grant: { select: { email: true, scopes: true } } } });
   }
 
   @Get("bindings/:bindingId/calendars")
-  @RequireCapabilities("integrations.manage")
+  @FeatureFlag("FEATURE_GOOGLE_CALENDAR")
+  @RequireCapabilities("integrations.read")
   calendars(@CurrentWorkspace() workspace: WorkspaceContext, @Param("bindingId") bindingId: string) {
     return this.api.listCalendars(workspace.id, bindingId);
   }

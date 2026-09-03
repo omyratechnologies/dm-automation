@@ -152,6 +152,18 @@ export const googleBindingSchema = z.object({
 }).strict();
 export type GoogleBinding = z.infer<typeof googleBindingSchema>;
 
+export const googleIntegrationAvailabilitySchema = z.object({
+  available: z.boolean(),
+  status: z.enum(["AVAILABLE", "FEATURE_DISABLED", "ADMIN_SETUP_REQUIRED"]),
+}).strict();
+
+export const googleIntegrationReadinessSchema = z.object({
+  oauth: googleIntegrationAvailabilitySchema,
+  calendar: googleIntegrationAvailabilitySchema,
+  sheets: googleIntegrationAvailabilitySchema,
+}).strict();
+export type GoogleIntegrationReadiness = z.infer<typeof googleIntegrationReadinessSchema>;
+
 export const decisionCommandSchema = z.object({
   kind: z.enum(["SET_FIELD", "SET_SCORE", "MOVE_STAGE", "ASSIGN_OWNER", "ASK_CLARIFICATION", "NOOP"]),
   fieldId: z.string().uuid().optional(),

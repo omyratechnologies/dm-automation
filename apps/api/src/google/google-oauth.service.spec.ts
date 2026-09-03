@@ -11,13 +11,15 @@ function fixture() {
   };
   const values: Record<string, unknown> = {
     FEATURE_GOOGLE_OAUTH: true,
+    FEATURE_GOOGLE_CALENDAR: true,
+    FEATURE_GOOGLE_SHEETS: true,
     GOOGLE_CLIENT_ID: "client-id",
     GOOGLE_CLIENT_SECRET: "client-secret",
     GOOGLE_OAUTH_REDIRECT_URI: "https://app.example.invalid/v1/google/oauth/callback",
   };
   const config = { get: jest.fn((key: string) => values[key]), getOrThrow: jest.fn((key: string) => values[key]) };
   const crypto = { encrypt: jest.fn((value: string) => `encrypted:${value}`), decrypt: jest.fn() };
-  return { service: new GoogleOAuthService(prisma as never, config as never, crypto as never), prisma };
+  return { service: new GoogleOAuthService(prisma as never, config as never, crypto as never), prisma, values };
 }
 
 describe("GoogleOAuthService", () => {
@@ -40,5 +42,32 @@ describe("GoogleOAuthService", () => {
     f.prisma.googleOAuthSession.findUnique.mockResolvedValue({ consumedAt: new Date(), expiresAt: new Date(Date.now() + 60_000) });
     await expect(f.service.callback("state", "code")).rejects.toBeInstanceOf(ProblemException);
     expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it("reports safe provider readiness without exposing configuration values", () => {
+    const f = fixture();
+    expect(f.service.readiness()).toEqual({
+      oauth: { available: true, status: "AVAILABLE" },
+      calendar: { available: true, status: "AVAILABLE" },
+      sheets: { available: true, status: "AVAILABLE" },
+    });
+
+    f.values.GOOGLE_CLIENT_SECRET = "";
+    expect(f.service.readiness()).toEqual({
+      oauth: { available: false, status: "ADMIN_SETUP_REQUIRED" },
+      calendar: { available: false, status: "ADMIN_SETUP_REQUIRED" },
+      sheets: { available: false, status: "ADMIN_SETUP_REQUIRED" },
+    });
+  });
+
+  it("reports independently disabled Calendar and Sheets capabilities", () => {
+    const f = fixture();
+    f.values.FEATURE_GOOGLE_CALENDAR = false;
+    f.values.FEATURE_GOOGLE_SHEETS = false;
+    expect(f.service.readiness()).toEqual({
+      oauth: { available: true, status: "AVAILABLE" },
+      calendar: { available: false, status: "FEATURE_DISABLED" },
+      sheets: { available: false, status: "FEATURE_DISABLED" },
+    });
   });
 });
