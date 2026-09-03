@@ -1,1 +1,2 @@
-export { default } from "../../../flows/[id]/page";
+export { default } from "../../../automations/[id]/page";
+export { generateMetadata } from "../../../automations/[id]/page";
