@@ -14,6 +14,8 @@ import { CurrentUser, CurrentWorkspace } from "../auth/decorators";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { AutomationsService } from "./automations.service";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
+import { IdempotentCommand } from "../common/idempotency";
 
 const createAutomationSchema = z.object({
   id: z.string().uuid().optional(),
@@ -70,11 +72,14 @@ const savePostsSchema = z.object({
 });
 type SavePostsDto = z.infer<typeof savePostsSchema>;
 
-@Controller("workspaces/:workspaceId/automations")
+/** @deprecated One-release adapter for pre-Flow automation records. */
+@Controller("workspaces/:workspaceId/legacy-automations")
+@WorkspaceScoped()
 export class AutomationsController {
   constructor(private readonly automations: AutomationsService) {}
 
   @Get()
+  @RequireCapabilities("automations.read")
   list(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() workspace: WorkspaceContext,
@@ -83,6 +88,8 @@ export class AutomationsController {
   }
 
   @Post()
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   create(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() workspace: WorkspaceContext,
@@ -92,6 +99,7 @@ export class AutomationsController {
   }
 
   @Get(":id")
+  @RequireCapabilities("automations.read")
   get(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,
@@ -100,6 +108,8 @@ export class AutomationsController {
   }
 
   @Patch(":id")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   update(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,
@@ -109,6 +119,8 @@ export class AutomationsController {
   }
 
   @Delete(":id")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   remove(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,
@@ -117,6 +129,8 @@ export class AutomationsController {
   }
 
   @Post(":id/listener")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   saveListener(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,
@@ -126,6 +140,8 @@ export class AutomationsController {
   }
 
   @Post(":id/triggers")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   saveTriggers(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,
@@ -135,6 +151,8 @@ export class AutomationsController {
   }
 
   @Post(":id/keywords")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   addKeyword(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,
@@ -144,6 +162,8 @@ export class AutomationsController {
   }
 
   @Delete("keywords/:keywordId")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   removeKeyword(
     @CurrentUser() user: AuthedRequestUser,
     @Param("keywordId") keywordId: string,
@@ -152,6 +172,8 @@ export class AutomationsController {
   }
 
   @Post(":id/posts")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   savePosts(
     @CurrentUser() user: AuthedRequestUser,
     @Param("id") id: string,

@@ -24,12 +24,11 @@ export const onCurrentUser = async () => {
 
 export const onBoardUser = async () => {
   const user = await onCurrentUser();
-  logger.info("onBoardUser called", { userId: user.id, email: user.emailAddresses[0].emailAddress });
+  logger.info("onBoardUser called");
   try {
     const profile = await serverApiFetch<UserProfile>("/me/ensure", {
       method: "POST",
       body: {
-        clerkId: user.id,
         firstname: user.firstName ?? "",
         lastname: user.lastName ?? "",
         email: user.emailAddresses[0].emailAddress,
@@ -40,7 +39,7 @@ export const onBoardUser = async () => {
       return { status: 500 };
     }
 
-    logger.info("User onboarded", { profileId: profile.id });
+    logger.info("User onboarded");
     return {
       status: 201,
       data: {
@@ -68,10 +67,7 @@ export const onUserInfo = async (): Promise<ApiResult<UserProfile>> => {
     );
 
     if (profile) {
-      logger.info("onUserInfo", {
-        userId,
-        hasProfile: true,
-      });
+      logger.info("onUserInfo", { hasProfile: true });
       return success(profile);
     }
 

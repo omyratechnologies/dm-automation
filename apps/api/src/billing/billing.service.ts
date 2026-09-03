@@ -200,7 +200,7 @@ export class BillingService {
       data: { plan, ...extra },
     });
     if (org.plan !== plan) {
-      this.audit.log({
+      await this.audit.log({
         organizationId: org.id,
         actorType: "SYSTEM",
         action: "billing.plan_changed",

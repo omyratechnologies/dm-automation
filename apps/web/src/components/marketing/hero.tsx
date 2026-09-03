@@ -94,7 +94,7 @@ export function MarketingHero() {
             className="mb-8 flex items-center gap-3"
           >
             <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#5B6AF0]" />
-            <span className="text-[12px] font-medium uppercase tracking-[0.32em] text-[#8B9AFF]">
+            <span className="text-[12px] font-medium uppercase tracking-[0.32em] text-[#A5AFFF]">
               AI Instagram automation
             </span>
           </motion.div>
@@ -113,7 +113,7 @@ export function MarketingHero() {
             >
               Every DM.
               <br />
-              <span className="text-white/35">Answered.</span>
+              <span className="text-white/60">Answered.</span>
             </motion.h1>
 
             <motion.h1
@@ -129,7 +129,7 @@ export function MarketingHero() {
               Every lead.
               <br />
               <span className="relative inline-block">
-                <span className="text-white/35">Qualified.</span>
+                <span className="text-white/60">Qualified.</span>
                 {/* Accent underline glow */}
                 <motion.span
                   initial={{ scaleX: 0 }}
@@ -168,7 +168,7 @@ export function MarketingHero() {
                   <div className="h-2 w-full rounded-full bg-white/10" />
                   <div className="h-2 w-3/4 rounded-full bg-white/10" />
                 </div>
-                <div className="mt-3 rounded-lg bg-[#5B6AF0] px-2.5 py-1.5 text-[10px] font-medium text-white">
+                <div className="mt-3 rounded-lg bg-[#4F5DE0] px-2.5 py-1.5 text-[10px] font-medium text-white">
                   AI replied · 2s
                 </div>
               </motion.div>
@@ -220,7 +220,7 @@ export function MarketingHero() {
             }}
             className="mt-10 max-w-lg"
           >
-            <p className="text-lg leading-relaxed text-white/45 sm:text-xl">
+            <p className="text-lg leading-relaxed text-white/60 sm:text-xl">
               Gemai turns Instagram messages and comments into calm, converting
               conversations — in your voice, around the clock.
             </p>
@@ -235,7 +235,7 @@ export function MarketingHero() {
               </MagneticButton>
             </div>
 
-            <p className="mt-5 text-[13px] text-white/25">
+            <p className="mt-5 text-[13px] text-white/60">
               Free plan · No card · Cancel anytime
             </p>
           </motion.div>
@@ -247,7 +247,7 @@ export function MarketingHero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 0.8 }}
-        className="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/25"
+        className="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/60"
       >
         <span className="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
         <div className="h-8 w-px bg-gradient-to-b from-white/30 to-transparent" />

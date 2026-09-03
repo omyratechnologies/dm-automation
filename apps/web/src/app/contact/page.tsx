@@ -48,22 +48,25 @@ export default function ContactPage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Here you would typically send the data to your backend
-    console.log("Form submitted:", formData);
-
+    const subject = formData.subject || "Gemai enquiry";
+    const message = [
+      formData.message,
+      "",
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      formData.phone ? `Phone: ${formData.phone}` : "",
+      formData.company ? `Company: ${formData.company}` : "",
+    ].filter(Boolean).join("\n");
+    window.location.assign(`mailto:support@gemai.in?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`);
     setIsSubmitting(false);
     setIsSuccess(true);
 
     toast({
-      title: "Message sent successfully!",
-      description: "We'll get back to you within 24 hours.",
+      title: "Email draft opened",
+      description: "Send the prepared email from your mail app to contact Gemai support.",
     });
 
     // Reset form after 3 seconds
@@ -138,10 +141,10 @@ export default function ContactPage() {
                         <CheckCircle2 className="h-10 w-10 text-green-500" />
                       </div>
                       <h3 className="text-2xl font-bold text-slate-text-primary mb-2">
-                        Message Sent Successfully!
+                        Email Draft Ready
                       </h3>
                       <p className="text-slate-text-secondary">
-                        Thank you for contacting us. We&apos;ll get back to you within 24 hours.
+                        Send the prepared email from your mail app. We&apos;ll reply within 24 hours.
                       </p>
                     </div>
                   ) : (

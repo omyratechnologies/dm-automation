@@ -89,7 +89,7 @@ export class ContactsService {
       include: { conversation: { select: { id: true } } },
     });
 
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,

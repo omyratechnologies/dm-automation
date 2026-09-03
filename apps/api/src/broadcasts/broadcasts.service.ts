@@ -76,7 +76,7 @@ export class BroadcastsService {
         createdById: actorUserId,
       },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,
@@ -115,7 +115,7 @@ export class BroadcastsService {
           : {}),
       },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,
@@ -163,7 +163,7 @@ export class BroadcastsService {
       { jobId: broadcastId },
     );
 
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,
@@ -190,7 +190,7 @@ export class BroadcastsService {
         "Only QUEUED or SENDING broadcasts can be canceled",
       );
     }
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,

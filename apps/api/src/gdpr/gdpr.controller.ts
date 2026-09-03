@@ -7,7 +7,6 @@ import {
   HttpStatus,
   Param,
   Post,
-  Query,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -25,7 +24,6 @@ import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { GdprService } from "./gdpr.service";
 
-const daysSchema = z.coerce.number().int().min(1).max(365).default(30);
 const confirmationCodeSchema = z.string().regex(/^[0-9a-f]{12}$/);
 
 @ApiTags("gdpr")
@@ -81,12 +79,4 @@ export class GdprController {
     return this.gdpr.deleteWorkspace(ws, user);
   }
 
-  @ApiBearerAuth()
-  @Get("workspaces/:workspaceId/analytics/overview")
-  analyticsOverview(
-    @CurrentWorkspace() ws: WorkspaceContext,
-    @Query("days", new ZodValidationPipe(daysSchema)) days: number,
-  ) {
-    return this.gdpr.analyticsOverview(ws.id, days);
-  }
 }

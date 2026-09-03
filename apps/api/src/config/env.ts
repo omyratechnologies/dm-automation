@@ -29,6 +29,21 @@ const envSchema = z.object({
 
   // 32-byte base64 master key for envelope encryption (LocalAesKms)
   TOKEN_MASTER_KEY: z.string().min(1),
+  TOKEN_MASTER_KEY_VERSION: z.string().min(1).default("legacy"),
+  TOKEN_MASTER_KEYS: z.string().default(""),
+  API_KEY_PEPPER: z.string().default(""),
+
+  APP_ROLE: z.enum(["api", "worker", "relay"]).default("api"),
+  FEATURE_LEAD_V2: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  FEATURE_FLOW_CUTOVER: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  FEATURE_GOOGLE_OAUTH: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  FEATURE_GOOGLE_CALENDAR: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  FEATURE_GOOGLE_SHEETS: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  FEATURE_AUTONOMOUS_AI: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GOOGLE_OAUTH_REDIRECT_URI: z.string().default(""),
+  GOOGLE_WEBHOOK_BASE_URL: z.string().default(""),
 
   WEB_ORIGIN: z.string().default("http://localhost:3000"),
 }).superRefine((env, ctx) => {
@@ -47,6 +62,13 @@ const envSchema = z.object({
         message: "Required in production",
       });
     }
+  }
+
+  if (!env.API_KEY_PEPPER || env.API_KEY_PEPPER.length < 32) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["API_KEY_PEPPER"], message: "Must be at least 32 characters in production" });
+  }
+  if (!env.TOKEN_MASTER_KEYS) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["TOKEN_MASTER_KEYS"], message: "Production must receive a versioned keyring from the managed secret manager" });
   }
 
   for (const key of ["INSTAGRAM_GRAPH_URL", "INSTAGRAM_OAUTH_REDIRECT_URI", "WEB_ORIGIN"] as const) {

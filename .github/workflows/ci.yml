@@ -31,14 +31,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 20
+      - name: Setup Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Dependency vulnerability gate
+        run: npm audit --audit-level=high
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate Prisma client
         run: npm run db:generate
@@ -51,15 +59,60 @@ jobs:
 
       - name: API unit tests (jest)
         working-directory: apps/api
-        run: npx jest --ci
+        run: npm test -- --ci
 
       - name: Web typecheck (tsc --noEmit)
         working-directory: apps/web
         run: npx tsc --noEmit
 
-      - name: Lint web (non-blocking)
-        continue-on-error: true
+      - name: Web unit and component tests
+        run: npm test --workspace @repo/web
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser reflow and axe accessibility tests
+        run: npm run test:e2e --workspace @repo/web
+
+      - name: Lint web
         run: npm run lint --workspace @repo/web
 
       - name: Lint api
         run: npm run lint --workspace @repo/api --if-present
+
+      - name: Generate OpenAPI contracts
+        run: npm run docs:generate --workspace @repo/api
+
+      - name: Require committed generated contracts
+        run: git diff --exit-code -- docs/contracts/openapi
+
+      - name: Spectral contract lint
+        run: npx --yes @stoplight/spectral-cli@6.16.3 lint docs/contracts/openapi/*.json --ruleset .spectral.yaml --fail-severity error
+
+      - name: AsyncAPI validation
+        run: node apps/api/dist/scripts/check-asyncapi.js docs/contracts/asyncapi.yaml
+
+      - name: Fetch pull-request base contracts
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin "${{ github.base_ref }}"
+
+      - name: OpenAPI breaking-change gate
+        if: github.event_name == 'pull_request'
+        uses: oasdiff/oasdiff-action/breaking@v0
+        with:
+          base: origin/${{ github.base_ref }}:docs/contracts/openapi/internal.json
+          revision: HEAD:docs/contracts/openapi/internal.json
+          fail-on: WARN
+
+      - name: AsyncAPI breaking-change gate
+        if: github.event_name == 'pull_request'
+        run: |
+          git show "origin/${{ github.base_ref }}:docs/contracts/asyncapi.yaml" > /tmp/asyncapi-base.yaml
+          node apps/api/dist/scripts/check-asyncapi.js /tmp/asyncapi-base.yaml docs/contracts/asyncapi.yaml
+
+      - name: Generate SPDX software bill of materials
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          artifact-name: gemai-sbom.spdx.json

@@ -12,7 +12,6 @@ interface Notification {
 }
 
 export const Notifications = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -47,34 +46,25 @@ export const Notifications = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div
-        className="flex overflow-hidden gap-x-2 border border-border bg-muted backdrop-blur-sm rounded-xl px-4 py-2 items-center transition-all duration-300 hover:border-primary/40 focus-within:border-primary/60 focus-within:shadow-lg focus-within:shadow-primary/10 cursor-pointer"
-        style={{ width: isExpanded ? "300px" : "44px", height: "40px" }}
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
+      <button
+        type="button"
+        aria-label={`Notifications${notifications.length ? `, ${notifications.length} unread` : ""}`}
+        aria-expanded={showDropdown}
+        aria-haspopup="dialog"
+        className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-muted transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setShowDropdown(!showDropdown)}
       >
         <div className="relative">
           <Bell className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-pink-500" />
           )}
         </div>
-        <div
-          className={`flex items-center justify-between transition-all duration-300 ${
-            isExpanded ? "w-full opacity-100" : "w-0 opacity-0"
-          }`}
-        >
-          <span className="text-sm font-medium text-foreground whitespace-nowrap">Notifications</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium ml-2">
-            {notifications.length}
-          </span>
-        </div>
-      </div>
+      </button>
 
       {/* Notification Dropdown */}
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-card backdrop-blur-xl border border-border rounded-2xl shadow-2xl shadow-primary/10 z-50 overflow-hidden">
+        <div role="dialog" aria-label="Notifications" className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-border bg-card shadow-xl">
           {/* Header */}
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">

@@ -11,12 +11,15 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, HelpCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useWorkspace } from "@/providers/workspace-provider";
 
 const STORAGE_KEY = "gemai-sidebar-collapsed";
 
 const Sidebar = () => {
   const { page } = usePaths();
   const [collapsed, setCollapsed] = useState(false);
+  const { workspace } = useWorkspace();
+  const workspaceBase = workspace ? `/dashboard/${workspace.id}` : "/dashboard";
 
   useEffect(() => {
     try {
@@ -104,7 +107,7 @@ const Sidebar = () => {
           )}
 
           <Link
-            href="/dashboard/settings"
+            href={`${workspaceBase}/settings`}
             title={collapsed ? "Profile" : undefined}
             className={cn(
               "flex items-center rounded-md text-sm text-muted-foreground",
@@ -117,7 +120,7 @@ const Sidebar = () => {
           </Link>
 
           <Link
-            href="/dashboard/help"
+            href={`${workspaceBase}/help`}
             title={collapsed ? "Help" : undefined}
             className={cn(
               "flex items-center rounded-md text-sm text-muted-foreground",

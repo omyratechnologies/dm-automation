@@ -30,6 +30,12 @@ function makeFixture() {
   const sendQueue = { add: jest.fn() };
   const flowRunsQueue = { add: jest.fn() };
   const metrics = { increment: jest.fn().mockResolvedValue(undefined) };
+  const leadCommands = {
+    updateContactTags: jest.fn().mockResolvedValue(undefined),
+    applyAiCommands: jest.fn(),
+    ensureLeadForContact: jest.fn(),
+    update: jest.fn(),
+  };
 
   const executor = new FlowExecutor(
     prisma as never,
@@ -37,9 +43,10 @@ function makeFixture() {
     sendQueue as never,
     flowRunsQueue as never,
     metrics as never,
+    leadCommands as never,
   );
 
-  return { executor, prisma, config, sendQueue, flowRunsQueue, metrics };
+  return { executor, prisma, config, sendQueue, flowRunsQueue, metrics, leadCommands };
 }
 
 describe("FlowExecutor", () => {
@@ -145,9 +152,7 @@ describe("FlowExecutor", () => {
         "a",
       );
 
-      expect(f.prisma.contact.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { tags: ["vip", "vip-processed"] } }),
-      );
+      expect(f.leadCommands.updateContactTags).toHaveBeenCalledWith("ws-1", "contact-1", ["vip", "vip-processed"]);
     });
 
     it("evaluates within_window condition", async () => {
@@ -253,9 +258,7 @@ describe("FlowExecutor", () => {
         "a",
       );
 
-      expect(f.prisma.contact.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { tags: ["lead"] } }),
-      );
+      expect(f.leadCommands.updateContactTags).toHaveBeenCalledWith("ws-1", "contact-1", ["lead"]);
       expect(f.sendQueue.add).toHaveBeenCalledWith(
         "send",
         expect.objectContaining({ text: "welcome" }),
@@ -283,9 +286,7 @@ describe("FlowExecutor", () => {
         "a",
       );
 
-      expect(f.prisma.contact.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { tags: [] } }),
-      );
+      expect(f.leadCommands.updateContactTags).toHaveBeenCalledWith("ws-1", "contact-1", []);
     });
 
     it("handles handoff_human action", async () => {
@@ -570,7 +571,7 @@ describe("FlowExecutor", () => {
         "a",
       );
 
-      expect(f.prisma.contact.update).not.toHaveBeenCalled();
+      expect(f.leadCommands.updateContactTags).not.toHaveBeenCalled();
     });
 
     it("skips tag update when tag not present (remove_tag no-op)", async () => {
@@ -597,7 +598,7 @@ describe("FlowExecutor", () => {
         "a",
       );
 
-      expect(f.prisma.contact.update).not.toHaveBeenCalled();
+      expect(f.leadCommands.updateContactTags).not.toHaveBeenCalled();
     });
   });
 });

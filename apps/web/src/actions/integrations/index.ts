@@ -11,37 +11,32 @@ import { validateInstagramOAuthUrl } from "@/lib/env-validation";
 
 const INSTAGRAM_OAUTH_STATE_COOKIE = "instagram_oauth_state";
 
-export const onOAuthInstagram = async (strategy: "INSTAGRAM" | "CRM") => {
-  if (strategy === "INSTAGRAM") {
-    const configuredUrl = process.env.INSTAGRAM_EMBEDDED_OAUTH_URL;
-    if (!configuredUrl) {
-      logger.error("Instagram OAuth URL is not configured");
-      return { status: 500, error: "Instagram integration is not configured" };
-    }
-    const configurationError = validateInstagramOAuthUrl(configuredUrl);
-    if (configurationError) {
-      logger.error("Instagram OAuth URL is invalid", {
-        message: configurationError,
-      });
-      return { status: 500, error: "Instagram integration is misconfigured" };
-    }
-
-    const state = randomBytes(32).toString("base64url");
-    const oauthUrl = new URL(configuredUrl);
-    oauthUrl.searchParams.set("state", state);
-    const cookieStore = await cookies();
-    cookieStore.set(INSTAGRAM_OAUTH_STATE_COOKIE, state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/callback/instagram",
-      maxAge: 10 * 60,
-    });
-    redirect(oauthUrl.toString());
-  } else {
-    logger.info("CRM Auth");
-    return { status: 400, error: "CRM integration is not available" };
+export const onOAuthInstagram = async () => {
+  const configuredUrl = process.env.INSTAGRAM_EMBEDDED_OAUTH_URL;
+  if (!configuredUrl) {
+    logger.error("Instagram OAuth URL is not configured");
+    return { status: 500, error: "Instagram integration is not configured" };
   }
+  const configurationError = validateInstagramOAuthUrl(configuredUrl);
+  if (configurationError) {
+    logger.error("Instagram OAuth URL is invalid", {
+      message: configurationError,
+    });
+    return { status: 500, error: "Instagram integration is misconfigured" };
+  }
+
+  const state = randomBytes(32).toString("base64url");
+  const oauthUrl = new URL(configuredUrl);
+  oauthUrl.searchParams.set("state", state);
+  const cookieStore = await cookies();
+  cookieStore.set(INSTAGRAM_OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/callback/instagram",
+    maxAge: 10 * 60,
+  });
+  redirect(oauthUrl.toString());
 };
 
 const isValidOAuthState = (received: string, expected: string): boolean => {

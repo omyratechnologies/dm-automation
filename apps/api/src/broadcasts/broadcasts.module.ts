@@ -6,6 +6,8 @@ import { BroadcastsController } from "./broadcasts.controller";
 import { BroadcastsService } from "./broadcasts.service";
 import { BroadcastsProcessor } from "./broadcasts.processor";
 
+const workerProviders = (process.env.APP_ROLE ?? "api") === "worker" ? [BroadcastsProcessor] : [];
+
 @Module({
   imports: [
     SegmentsModule,
@@ -15,6 +17,6 @@ import { BroadcastsProcessor } from "./broadcasts.processor";
     ),
   ],
   controllers: [BroadcastsController],
-  providers: [BroadcastsService, BroadcastsProcessor],
+  providers: [BroadcastsService, ...workerProviders],
 })
 export class BroadcastsModule {}

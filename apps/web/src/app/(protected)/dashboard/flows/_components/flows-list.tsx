@@ -28,6 +28,7 @@ export const FLOW_STATUS_STYLES: Record<FlowStatus, string> = {
   DRAFT: "bg-muted text-muted-foreground",
   ACTIVE: "bg-success/10 text-success",
   PAUSED: "bg-warning/10 text-warning",
+  ARCHIVED: "bg-muted text-muted-foreground",
 };
 
 export const FlowStatusChip = ({ status }: { status: FlowStatus }) => (
@@ -60,13 +61,13 @@ const FlowsList = () => {
 
   const flowsQuery = useQuery({
     queryKey: ["flows", workspaceId],
-    queryFn: () => api<FlowSummary[]>(wsPath("/flows")),
+    queryFn: () => api<FlowSummary[]>(wsPath("/automations")),
     enabled: !!workspaceId,
   });
 
   const createMutation = useMutation({
     mutationFn: (flowName: string) =>
-      api<FlowSummary>(wsPath("/flows"), {
+      api<FlowSummary>(wsPath("/automations"), {
         method: "POST",
         body: { name: flowName },
       }),
@@ -75,7 +76,7 @@ const FlowsList = () => {
       toast.success("Flow created");
       setOpen(false);
       setName("");
-      router.push(`/dashboard/flows/${flow.id}`);
+      router.push(`/dashboard/${workspaceId}/automations/${flow.id}`);
     },
     onError: (error) =>
       toast.error(
@@ -158,7 +159,7 @@ const FlowsList = () => {
           {(flowsQuery.data ?? []).map((flow) => (
             <Link
               key={flow.id}
-              href={`/dashboard/flows/${flow.id}`}
+              href={`/dashboard/${workspaceId}/automations/${flow.id}`}
               className="group flex flex-col gap-y-3 p-4 rounded-xl border border-border bg-card
                 transition-all duration-quiet ease-quiet
                 hover:border-hairline-strong hover:bg-accent"

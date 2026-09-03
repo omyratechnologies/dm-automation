@@ -28,6 +28,7 @@ export class TenancyService {
         createdAt: true,
         subscription: true,
         memberships: {
+          where: { status: "ACTIVE" },
           select: {
             role: true,
             workspace: {
@@ -121,7 +122,7 @@ export class TenancyService {
       },
       include: { workspaces: true },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId: org.id,
       actorUserId: userId,
       action: "org.created",
@@ -146,7 +147,7 @@ export class TenancyService {
         memberships: { create: { userId, role: "OWNER" } },
       },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId,
       workspaceId: ws.id,
       actorUserId: userId,
@@ -159,7 +160,7 @@ export class TenancyService {
 
   async listMembers(workspaceId: string) {
     return this.prisma.membership.findMany({
-      where: { workspaceId },
+      where: { workspaceId, status: "ACTIVE" },
       select: {
         id: true,
         role: true,
@@ -188,9 +189,9 @@ export class TenancyService {
     const membership = await this.prisma.membership.upsert({
       where: { userId_workspaceId: { userId: user.id, workspaceId } },
       create: { userId: user.id, workspaceId, role },
-      update: { role },
+      update: { role, status: "ACTIVE", removedAt: null },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId,
       workspaceId,
       actorUserId: actorId,
@@ -217,7 +218,7 @@ export class TenancyService {
       where: { id: membershipId },
       data: { role },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId,
       workspaceId,
       actorUserId: actorId,
@@ -288,8 +289,14 @@ export class TenancyService {
     if (membership.role === "OWNER") {
       throw new ForbiddenException("Cannot remove the workspace owner");
     }
-    await this.prisma.membership.delete({ where: { id: membershipId } });
-    this.audit.log({
+    await this.prisma.$transaction([
+      this.prisma.calendarPoolMember.updateMany({ where: { workspaceId, membershipId }, data: { enabled: false } }),
+      this.prisma.googleBinding.updateMany({ where: { workspaceId, authorizedMembershipId: membershipId, ownership: "MEMBER" }, data: { status: "DISCONNECTED", version: { increment: 1 }, lastErrorCode: "MEMBER_REMOVED" } }),
+      this.prisma.googleBinding.updateMany({ where: { workspaceId, authorizedMembershipId: membershipId, ownership: "WORKSPACE" }, data: { status: "TRANSFER_REQUIRED", version: { increment: 1 }, lastErrorCode: "CONNECTION_OWNER_REMOVED" } }),
+      this.prisma.googleWatchChannel.updateMany({ where: { workspaceId, binding: { authorizedMembershipId: membershipId } }, data: { status: "STOPPED" } }),
+      this.prisma.membership.update({ where: { id: membershipId }, data: { status: "REMOVED", removedAt: new Date() } }),
+    ]);
+    await this.audit.log({
       organizationId,
       workspaceId,
       actorUserId: actorId,

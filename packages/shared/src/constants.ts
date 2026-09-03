@@ -6,7 +6,35 @@ export const QUEUES = {
   BROADCASTS: "broadcasts",
   TOKEN_REFRESH: "token-refresh",
   WEBHOOK_EVENT_CLEANUP: "webhook-event-cleanup",
+  GOOGLE_CALENDAR: "google-calendar",
+  GOOGLE_SHEETS: "google-sheets",
 } as const;
+
+export const CAPABILITIES = [
+  "leads.read",
+  "leads.write",
+  "leads.assign",
+  "leads.merge",
+  "pipelines.manage",
+  "automations.read",
+  "automations.manage",
+  "calendar.read",
+  "calendar.manage",
+  "sheets.read",
+  "sheets.manage",
+  "integrations.read",
+  "integrations.manage",
+  "analytics.read",
+  "audit.read",
+  "workspace.manage",
+] as const;
+export type Capability = (typeof CAPABILITIES)[number];
+
+export const ROLE_CAPABILITIES: Record<Role, readonly Capability[]> = {
+  OWNER: CAPABILITIES,
+  ADMIN: CAPABILITIES.filter((capability) => capability !== "workspace.manage"),
+  AGENT: ["leads.read", "leads.write", "leads.assign", "automations.read", "calendar.read", "integrations.read", "analytics.read"],
+};
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
 

@@ -1,503 +1,122 @@
 "use client";
 
 import { useApi } from "@/hooks/use-api";
-import type { AnalyticsOverview } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Inbox,
-  Megaphone,
-  Send,
-  UserPlus,
-  Workflow,
-  TrendingUp,
-  Activity,
-  CheckCircle,
-} from "lucide-react";
-import React, { useState } from "react";
+import type { AnalyticsMetric, AnalyticsOverview } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowRight, Bot, CalendarCheck, Clock3, Database, RefreshCw, Target, Users } from "lucide-react";
+import Link from "next/link";
+import { useState, type ReactNode } from "react";
 
 type TimeRange = 7 | 30 | 90;
+const funnelOrder = ["created", "qualified", "booked", "won", "lost"] as const;
 
-const AnalyticsDashboard = () => {
+export default function AnalyticsDashboard() {
   const { api, wsPath, workspaceId } = useApi();
   const [days, setDays] = useState<TimeRange>(30);
-
-  const overviewQuery = useQuery({
+  const query = useQuery({
     queryKey: ["analytics", workspaceId, days],
-    queryFn: () =>
-      api<AnalyticsOverview>(wsPath(`/analytics/overview?days=${days}`)),
-    enabled: !!workspaceId,
+    queryFn: () => api<AnalyticsOverview>(wsPath(`/analytics/overview?days=${days}`)),
+    enabled: Boolean(workspaceId),
   });
 
-  const data = overviewQuery.data;
-
-  // Loading State
-  if (overviewQuery.isLoading || !workspaceId) {
+  if (query.isLoading || !workspaceId) return <AnalyticsSkeleton />;
+  if (query.isError || !query.data) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="p-6 rounded-3xl bg-card/40 border border-border/50 animate-pulse backdrop-blur-xl h-[180px]"
-            >
-              <div className="h-4 bg-muted-foreground/10 rounded w-24 mb-3" />
-              <div className="h-8 bg-muted-foreground/10 rounded w-16" />
-              <div className="h-10 bg-muted-foreground/5 rounded w-full mt-4" />
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="p-6 rounded-3xl bg-card/40 border border-border/50 animate-pulse backdrop-blur-xl h-[320px]">
-              <div className="h-6 bg-muted-foreground/10 rounded w-32 mb-6" />
-              <div className="space-y-4">
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-12 bg-muted-foreground/10 rounded" />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Error State
-  if (overviewQuery.isError || !data) {
-    return (
-      <div className="p-8 rounded-3xl bg-card/60 backdrop-blur-xl border border-red-500/20 text-center shadow-2xl">
-        <h3 className="text-lg font-bold text-foreground mb-2">
-          Failed to Load Analytics
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Unable to fetch your analytics data
-        </p>
-        <button
-          onClick={() => overviewQuery.refetch()}
-          className="px-6 py-2.5 rounded-xl bg-gradient-brand text-white text-sm font-semibold hover:opacity-90 transition-all shadow-lg"
-        >
-          Retry
+      <section className="rounded-xl border border-destructive/30 bg-card p-6" aria-live="polite">
+        <h2 className="font-semibold">Analytics could not be loaded</h2>
+        <p className="mt-1 text-sm text-muted-foreground">The data is unchanged. Retry the workspace query.</p>
+        <button className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => query.refetch()}>
+          <RefreshCw className="h-4 w-4" aria-hidden="true" /> Retry
         </button>
-      </div>
+      </section>
     );
   }
 
-  const undelivered = data.failed + data.rejected;
-  const deliveryRate =
-    data.sends > 0 ? (data.delivered / data.sends) * 100 : 0;
+  const data = query.data;
+  const created = Math.max(data.funnel.created.value, 1);
 
   return (
     <div className="space-y-6">
-      {/* Time Range Selector */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-card/50 border border-border/40 backdrop-blur-xl w-fit">
-        {([7, 30, 90] as TimeRange[]).map((range) => (
-          <button
-            key={range}
-            onClick={() => setDays(range)}
-            className={cn(
-              "px-5 py-2 rounded-xl text-xs font-bold tracking-wide transition-all uppercase duration-300",
-              days === range
-                ? "bg-gradient-brand text-white shadow-xl shadow-primary/20 scale-105"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-            )}
-          >
-            {range} Days
-          </button>
-        ))}
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Messages Sent"
-          value={data.sends}
-          icon={<Send className="w-5 h-5" />}
-          colorClass="text-indigo-400"
-          radialColor="rgba(99, 102, 241, 0.15)"
-          sparklinePoints={[8, 12, 7, 18, 10, 22, 14, 25, data.sends > 0 ? 30 : 5]}
-        />
-        <StatCard
-          title="Delivered"
-          value={data.delivered}
-          subtitle={`${deliveryRate.toFixed(0)}% delivery rate`}
-          icon={<CheckCircle className="w-5 h-5" />}
-          colorClass="text-emerald-400"
-          radialColor="rgba(16, 185, 129, 0.15)"
-          sparklinePoints={[5, 10, 6, 15, 9, 19, 12, 22, data.delivered > 0 ? 28 : 3]}
-        />
-        <StatCard
-          title="Inbound Messages"
-          value={data.inbound}
-          icon={<Inbox className="w-5 h-5" />}
-          colorClass="text-purple-400"
-          radialColor="rgba(168, 85, 247, 0.15)"
-          sparklinePoints={[12, 18, 10, 25, 16, 32, 22, 38, data.inbound > 0 ? 42 : 8]}
-        />
-        <StatCard
-          title="New Contacts"
-          value={data.newContacts}
-          icon={<UserPlus className="w-5 h-5" />}
-          colorClass="text-pink-400"
-          radialColor="rgba(236, 72, 153, 0.15)"
-          sparklinePoints={[2, 4, 3, 6, 4, 8, 5, 10, data.newContacts > 0 ? 12 : 2]}
-        />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Delivery Breakdown */}
-        <div className="rounded-3xl bg-card/65 border border-border/40 p-6 hover:border-primary/20 backdrop-blur-2xl transition-all duration-300 group shadow-lg">
-          <div className="flex items-center justify-between mb-6 border-b border-border/20 pb-4">
-            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-x-2">
-              <Activity className="h-5 w-5 text-primary" />
-              Delivery Breakdown
-            </h3>
-            <div className="px-3.5 py-1 rounded-full bg-muted/40 border border-border text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Last {days} days
-            </div>
-          </div>
-          <div className="space-y-6">
-            <ProgressBar
-              label="Delivered"
-              value={data.delivered}
-              color="from-emerald-500 to-teal-400"
-              percentage={data.sends > 0 ? (data.delivered / data.sends) * 100 : 0}
-            />
-            <ProgressBar
-              label="Failed"
-              value={data.failed}
-              color="from-rose-500 to-red-600"
-              percentage={data.sends > 0 ? (data.failed / data.sends) * 100 : 0}
-            />
-            <ProgressBar
-              label="Rejected"
-              value={data.rejected}
-              color="from-amber-500 to-orange-400"
-              percentage={data.sends > 0 ? (data.rejected / data.sends) * 100 : 0}
-            />
-          </div>
-        </div>
-
-        {/* Delivery Rate Pie */}
-        <div className="rounded-3xl bg-card/65 border border-border/40 p-6 hover:border-primary/20 backdrop-blur-2xl transition-all duration-300 group shadow-lg">
-          <div className="flex items-center justify-between mb-4 border-b border-border/20 pb-4">
-            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-x-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Delivery Efficiency
-            </h3>
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-          </div>
-          <div className="flex items-center justify-center h-52 pb-4">
-            <PieChart
-              positive={data.delivered}
-              negative={undelivered}
-              positiveLabel="Delivered"
-              negativeLabel="Failed/Rejected"
-              centerLabel="Success Rate"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-6 rounded-2xl bg-card/60 backdrop-blur-xl border border-border/40 hover:border-primary/20 transition-all group flex items-center justify-between shadow-md">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Workflow className="w-4 h-4 text-indigo-400" />
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                Active Flows
-              </p>
-            </div>
-            <p className="text-3xl font-extrabold text-foreground tracking-tight">
-              {data.activeFlows}
-            </p>
-          </div>
-          <div className="h-10 w-10 bg-indigo-500/10 rounded-xl flex items-center justify-center opacity-80 group-hover:scale-110 transition-transform">
-            <Workflow className="w-5 h-5 text-indigo-400" />
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-card/60 backdrop-blur-xl border border-border/40 hover:border-primary/20 transition-all group flex items-center justify-between shadow-md">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Megaphone className="w-4 h-4 text-pink-400" />
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                Broadcasts Sent
-              </p>
-            </div>
-            <p className="text-3xl font-extrabold text-foreground tracking-tight">
-              {data.broadcasts}
-            </p>
-          </div>
-          <div className="h-10 w-10 bg-pink-500/10 rounded-xl flex items-center justify-center opacity-80 group-hover:scale-110 transition-transform">
-            <Megaphone className="w-5 h-5 text-pink-400" />
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-card/60 backdrop-blur-xl border border-border/40 hover:border-primary/20 transition-all group flex items-center justify-between shadow-md">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <Send className="w-4 h-4 text-emerald-400" />
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                Overall Rate
-              </p>
-            </div>
-            <p className="text-3xl font-extrabold text-foreground tracking-tight">
-              {deliveryRate.toFixed(0)}%
-            </p>
-          </div>
-          <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center opacity-80 group-hover:scale-110 transition-transform">
-            <Send className="w-5 h-5 text-emerald-400" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Stat Card Component
-interface StatCardProps {
-  title: string;
-  value: number;
-  subtitle?: string;
-  icon: React.ReactNode;
-  colorClass: string;
-  radialColor: string;
-  sparklinePoints: number[];
-}
-
-const StatCard = ({
-  title,
-  value,
-  subtitle,
-  icon,
-  colorClass,
-  radialColor,
-  sparklinePoints,
-}: StatCardProps) => {
-  // Build SVG path for Sparkline
-  const maxPoint = Math.max(...sparklinePoints, 10);
-  const minPoint = Math.min(...sparklinePoints, 0);
-  const range = maxPoint - minPoint || 10;
-  
-  const width = 220;
-  const height = 40;
-  const pathData = sparklinePoints
-    .map((val, index) => {
-      const x = (index / (sparklinePoints.length - 1)) * width;
-      const y = height - 4 - ((val - minPoint) / range) * (height - 8);
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(" ");
-
-  const fillPathData = `${pathData} L ${width} ${height} L 0 ${height} Z`;
-
-  return (
-    <div className="relative overflow-hidden p-6 rounded-3xl bg-card/65 border border-border/40 hover:border-primary/20 backdrop-blur-2xl transition-all duration-300 group shadow-md flex flex-col justify-between min-h-[175px]">
-      {/* Glow Backdrop */}
-      <div
-        className="absolute -top-12 -right-12 w-28 h-28 rounded-full blur-3xl opacity-80 group-hover:scale-125 transition-transform duration-500"
-        style={{ backgroundColor: radialColor }}
-      />
-      
-      <div className="relative z-10 flex-1">
-        <div className="flex items-center justify-between mb-3.5">
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-            {title}
+      <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium">Reporting window</p>
+          <p className="text-xs text-muted-foreground">
+            {data.meta.timezone} · refreshed {new Date(data.meta.generatedAt).toLocaleString()} · {data.meta.freshness}
           </p>
-          <div className={cn("p-2 rounded-xl bg-muted/65 border border-border/30 group-hover:scale-105 transition-transform", colorClass)}>
-            {icon}
+        </div>
+        <div className="inline-flex w-fit rounded-lg border bg-muted/40 p-1" aria-label="Analytics reporting period">
+          {([7, 30, 90] as TimeRange[]).map((range) => (
+            <button key={range} type="button" aria-pressed={days === range} onClick={() => setDays(range)} className={cn("min-h-11 rounded-md px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", days === range ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>{range} days</button>
+          ))}
+        </div>
+      </div>
+
+      <section aria-labelledby="funnel-heading">
+        <div className="mb-3 flex items-end justify-between">
+          <div><h2 id="funnel-heading" className="text-lg font-semibold">Lead funnel</h2><p className="text-sm text-muted-foreground">Milestones use explicit, inspectable database timestamps and states.</p></div>
+          <span className="hidden text-xs text-muted-foreground sm:inline">Denominators appear below each value</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {funnelOrder.map((key) => <FunnelCard key={key} metric={data.funnel[key]} width={(data.funnel[key].value / created) * 100} />)}
+        </div>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <DetailCard icon={<Clock3 className="h-5 w-5" />} title="Response SLA" href={data.responseSla.drillThrough} definition={data.responseSla.definition}>
+          <p className="text-3xl font-semibold tabular-nums">{formatPercent(data.responseSla.attainmentPercent)}</p>
+          <p className="text-sm text-muted-foreground">within {data.responseSla.targetMinutes} minutes · {data.responseSla.withinTarget}/{data.responseSla.sample} responses</p>
+          <dl className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 text-sm"><MetricDatum label="Median" value={formatDuration(data.responseSla.medianMinutes, "min")} /><MetricDatum label="Average" value={formatDuration(data.responseSla.averageMinutes, "min")} /></dl>
+        </DetailCard>
+
+        <DetailCard icon={<Target className="h-5 w-5" />} title="Sales velocity" href={data.velocity.drillThrough} definition={data.velocity.definition}>
+          <dl className="grid grid-cols-2 gap-4"><MetricDatum label="To qualify" value={formatDuration(data.velocity.averageHoursToQualify, "hr")} detail={`${data.velocity.qualifiedSample} leads`} /><MetricDatum label="To win" value={formatDuration(data.velocity.averageDaysToWin, "days")} detail={`${data.velocity.wonSample} leads`} /></dl>
+        </DetailCard>
+
+        <DetailCard icon={<Bot className="h-5 w-5" />} title="Automation reliability" href={data.automation.drillThrough} definition={data.automation.definition}>
+          <p className="text-3xl font-semibold tabular-nums">{formatPercent(data.automation.failureRatePercent)}</p><p className="text-sm text-muted-foreground">failure rate · {data.automation.failures}/{data.automation.runs} runs</p>
+        </DetailCard>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-xl border bg-card p-5" aria-labelledby="attribution-heading">
+          <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" aria-hidden="true" /><h2 id="attribution-heading" className="font-semibold">First-touch attribution</h2></div>
+          <p className="mt-1 text-sm text-muted-foreground">Share of leads created in this reporting window.</p>
+          <div className="mt-5 space-y-4">
+            {data.firstTouchAttribution.length ? data.firstTouchAttribution.map((item) => <div key={item.source}><div className="mb-1 flex justify-between text-sm"><span>{sourceLabel(item.source)}</span><span className="tabular-nums">{item.leads} · {item.sharePercent}%</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(item.sharePercent, 100)}%` }} /></div></div>) : <EmptyState label="No leads were created in this window." />}
           </div>
-        </div>
+        </section>
 
-        <div className="flex items-baseline gap-x-2">
-          <p className="text-3xl font-extrabold text-foreground tracking-tight">
-            {value.toLocaleString()}
-          </p>
-          {subtitle && (
-            <p className="text-[10px] text-muted-foreground font-semibold">
-              ({subtitle})
-            </p>
-          )}
-        </div>
+        <section className="rounded-xl border bg-card p-5" aria-labelledby="health-heading">
+          <div className="flex items-center gap-2"><Database className="h-5 w-5 text-primary" aria-hidden="true" /><h2 id="health-heading" className="font-semibold">Integration health</h2></div>
+          <p className="mt-1 text-sm text-muted-foreground">{data.integrationHealth.definition}</p>
+          <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4"><MetricDatum label="Google active" value={`${data.integrationHealth.googleBindings.active}/${data.integrationHealth.googleBindings.total}`} /><MetricDatum label="Needs attention" value={String(data.integrationHealth.googleBindings.attention)} warning={data.integrationHealth.googleBindings.attention > 0} /><MetricDatum label="Sheet conflicts" value={String(data.integrationHealth.openSheetConflicts)} warning={data.integrationHealth.openSheetConflicts > 0} /><MetricDatum label="Failed operations" value={String(data.integrationHealth.failedOperations)} warning={data.integrationHealth.failedOperations > 0} /></dl>
+          <Link className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={data.integrationHealth.drillThrough}>Inspect integrations <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+        </section>
       </div>
 
-      {/* Sparkline Trendline */}
-      <div className="relative h-10 w-full mt-3 overflow-hidden">
-        <svg className="w-full h-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-          <defs>
-            <linearGradient id={`gradient-${title.replace(/\s+/g, "")}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={radialColor.replace("0.15", "0.25")} />
-              <stop offset="100%" stopColor="transparent" />
-            </linearGradient>
-          </defs>
-          <path
-            d={fillPathData}
-            fill={`url(#gradient-${title.replace(/\s+/g, "")})`}
-            className="transition-all duration-700"
-          />
-          <path
-            d={pathData}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            className={cn("transition-all duration-700", colorClass)}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
+      <aside className="flex items-start gap-3 rounded-xl border bg-muted/30 p-4 text-sm text-muted-foreground"><CalendarCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" /><p><span className="font-medium text-foreground">Metric contract:</span> dates are evaluated in {data.meta.timezone}; ratios disclose their denominator; currency is {data.meta.baseCurrency}. Open pipeline ({data.openPipeline.leads}) is a current-state metric and is intentionally independent of the selected window.</p></aside>
     </div>
   );
-};
-
-// Progress Bar Component
-interface ProgressBarProps {
-  label: string;
-  value: number;
-  color: string;
-  percentage: number;
 }
 
-const ProgressBar = ({ label, value, color, percentage }: ProgressBarProps) => {
-  return (
-    <div className="group">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-bold text-foreground/80 group-hover:text-primary transition-colors">
-          {label}
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-extrabold text-foreground">
-            {value.toLocaleString()}
-          </span>
-          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-muted border border-border/40 text-muted-foreground">
-            {percentage.toFixed(0)}%
-          </span>
-        </div>
-      </div>
-      <div className="relative h-2.5 bg-muted/60 border border-border/20 rounded-full overflow-hidden">
-        <div
-          className={cn(`absolute top-0 left-0 h-full bg-gradient-to-r ${color} rounded-full transition-all duration-1000 ease-out group-hover:opacity-90`)}
-          style={{ width: `${Math.min(100, percentage)}%` }}
-        />
-      </div>
-    </div>
-  );
-};
-
-// Pie Chart Component
-interface PieChartProps {
-  positive: number;
-  negative: number;
-  positiveLabel: string;
-  negativeLabel: string;
-  centerLabel: string;
+function FunnelCard({ metric, width }: { metric: AnalyticsMetric; width: number }) {
+  return <Link href={metric.drillThrough} title={metric.definition} className="group rounded-xl border bg-card p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><div className="flex items-start justify-between gap-2"><p className="text-sm font-medium text-muted-foreground">{metric.label}</p><ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" aria-hidden="true" /></div><p className="mt-2 text-3xl font-semibold tabular-nums">{metric.value.toLocaleString()}</p><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(metric.value ? 4 : 0, Math.min(width, 100))}%` }} /></div><p className="mt-2 min-h-8 text-xs text-muted-foreground">{metric.denominator ? `of ${metric.denominator.value.toLocaleString()} ${metric.denominator.label}` : "All leads created in window"}</p></Link>;
 }
 
-const PieChart = ({
-  positive,
-  negative,
-  positiveLabel,
-  negativeLabel,
-  centerLabel,
-}: PieChartProps) => {
-  const total = positive + negative;
-  const positivePercentage = total > 0 ? (positive / total) * 100 : 0;
+function DetailCard({ icon, title, href, definition, children }: { icon: ReactNode; title: string; href: string; definition: string; children: ReactNode }) {
+  return <section className="rounded-xl border bg-card p-5"><div className="flex items-center gap-2 text-primary">{icon}<h2 className="font-semibold text-foreground">{title}</h2></div><div className="mt-5">{children}</div><p className="mt-4 border-t pt-4 text-xs leading-5 text-muted-foreground">{definition}</p><Link className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={href}>View records <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></section>;
+}
 
-  const positiveAngle = (positivePercentage / 100) * 360;
-  const radius = 70;
-  const circumference = 2 * Math.PI * radius;
-  const positiveDashArray = (positiveAngle / 360) * circumference;
-  const negativeDashArray = circumference - positiveDashArray;
+function MetricDatum({ label, value, detail, warning }: { label: string; value: string; detail?: string; warning?: boolean }) {
+  return <div className="rounded-lg border bg-background p-3"><dt className="flex items-center gap-1 text-xs text-muted-foreground">{warning && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />}{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{value}</dd>{detail && <p className="text-xs text-muted-foreground">{detail}</p>}</div>;
+}
 
-  return (
-    <div className="relative w-48 h-48 group">
-      {/* Center typography */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-        <p className="text-3xl font-extrabold bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
-          {positivePercentage.toFixed(0)}%
-        </p>
-        <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider mt-1">
-          {centerLabel}
-        </p>
-      </div>
+function EmptyState({ label }: { label: string }) { return <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">{label}</p>; }
+function formatPercent(value: number | null) { return value === null ? "—" : `${value}%`; }
+function formatDuration(value: number | null, unit: string) { return value === null ? "—" : `${value} ${unit}`; }
+function sourceLabel(source: string) { return source.toLowerCase().replaceAll("_", " ").replace(/^./, (value) => value.toUpperCase()); }
 
-      <svg className="w-full h-full transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(16,185,129,0.1)]" viewBox="0 0 200 200">
-        <defs>
-          <linearGradient id="piePositive" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#10b981" />
-            <stop offset="100%" stopColor="#06b6d4" />
-          </linearGradient>
-          <linearGradient id="pieNegative" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#475569" />
-            <stop offset="100%" stopColor="#64748b" />
-          </linearGradient>
-          <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
-        
-        {/* Background empty ring */}
-        <circle
-          cx="100"
-          cy="100"
-          r={radius}
-          fill="none"
-          stroke="rgba(148, 163, 184, 0.05)"
-          strokeWidth="16"
-        />
-
-        {/* Positive progression segment */}
-        <circle
-          cx="100"
-          cy="100"
-          r={radius}
-          fill="none"
-          stroke="url(#piePositive)"
-          strokeWidth="16"
-          strokeDasharray={`${positiveDashArray} ${circumference}`}
-          strokeLinecap="round"
-          filter="url(#neonGlow)"
-          className="transition-all duration-1000 ease-out"
-        />
-
-        {/* Negative progression segment */}
-        {negative > 0 && (
-          <circle
-            cx="100"
-            cy="100"
-            r={radius}
-            fill="none"
-            stroke="url(#pieNegative)"
-            strokeWidth="16"
-            strokeDasharray={`${negativeDashArray} ${circumference}`}
-            strokeDashoffset={-positiveDashArray}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out opacity-40"
-          />
-        )}
-      </svg>
-
-      {/* Legends */}
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400" />
-          <span className="text-[10px] font-semibold text-muted-foreground">
-            {positiveLabel} ({positive})
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-slate-500 to-slate-400" />
-          <span className="text-[10px] font-semibold text-muted-foreground">
-            {negativeLabel} ({negative})
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default AnalyticsDashboard;
+function AnalyticsSkeleton() {
+  return <div className="space-y-4" aria-label="Loading analytics" aria-busy="true"><div className="h-20 rounded-xl bg-muted"/><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 5 }, (_, index) => <div key={index} className="h-36 rounded-xl bg-muted" />)}</div><div className="grid gap-4 lg:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <div key={index} className="h-64 rounded-xl bg-muted" />)}</div></div>;
+}

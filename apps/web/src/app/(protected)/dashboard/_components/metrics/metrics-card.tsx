@@ -27,7 +27,7 @@ const MetricsCard = () => {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-3.5 animate-pulse"
+            className="min-w-[180px] rounded-lg border border-border bg-card px-4 py-3.5"
           >
             <div className="space-y-2.5">
               <div className="h-3 w-16 rounded bg-muted" />

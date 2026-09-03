@@ -4,14 +4,17 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CurrentWorkspace } from "../auth/decorators";
 import { Roles } from "../auth/roles.decorator";
 import type { WorkspaceContext } from "../auth/workspace.guard";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
 
 @ApiTags("audit")
 @Controller("workspaces/:workspaceId/audit-logs")
+@WorkspaceScoped()
 export class AuditController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
   @Roles("ADMIN")
+  @RequireCapabilities("audit.read")
   async list(
     @CurrentWorkspace() ws: WorkspaceContext,
     @Query("cursor") cursor?: string,

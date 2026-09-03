@@ -11,10 +11,9 @@ type Props = {
   title: string;
   description: string;
   icon: React.ReactNode;
-  strategy: "INSTAGRAM" | "CRM";
 };
 
-const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
+const IntegrationCard = ({ description, icon, title }: Props) => {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const queryClient = useQueryClient();
@@ -30,20 +29,15 @@ const IntegrationCard = ({ description, icon, strategy, title }: Props) => {
         createdAt?: Date;
       }
     | undefined = (data?.integrations ?? []).find(
-    (integration: any) => integration.name === strategy
+    (integration: any) => integration.name === "INSTAGRAM"
   );
 
   const onConnect = async () => {
-    if (strategy === "INSTAGRAM") {
-      setIsConnecting(true);
-      const result = await onOAuthInstagram(strategy);
-      if (result?.error) {
-        setIsConnecting(false);
-        alert(result.error);
-      }
-    } else {
-      logger.info("CRM Auth - Coming soon");
-      alert("CRM integration coming soon!");
+    setIsConnecting(true);
+    const result = await onOAuthInstagram();
+    if (result?.error) {
+      setIsConnecting(false);
+      alert(result.error);
     }
   };
 

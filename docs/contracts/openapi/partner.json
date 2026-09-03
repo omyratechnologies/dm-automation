@@ -1,0 +1,923 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/workspaces/{workspaceId}/lead-ingestions": {
+      "post": {
+        "operationId": "LeadIngestionsController_capture",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Unique retry key for this command (maximum 200 characters).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "example": "01J8Y3Q9M3F6X7R2K4P8N1C5VA"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "LeadIngestions"
+        ],
+        "summary": "Lead Ingestionscapture",
+        "description": "Lead Ingestionscapture in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "public"
+      }
+    },
+    "/v1/public/booking-links/{publicId}/availability": {
+      "get": {
+        "operationId": "PublicBookingController_availability",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "PublicBooking"
+        ],
+        "summary": "Public Bookingavailability",
+        "description": "Public Bookingavailability in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "public"
+      }
+    },
+    "/v1/public/booking-links/{publicId}/book": {
+      "post": {
+        "operationId": "PublicBookingController_book",
+        "parameters": [
+          {
+            "name": "publicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Unique retry key for this command (maximum 200 characters).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "example": "01J8Y3Q9M3F6X7R2K4P8N1C5VA"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "PublicBooking"
+        ],
+        "summary": "Public Bookingbook",
+        "description": "Public Bookingbook in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "public"
+      }
+    },
+    "/v1/public/booking-links/{publicId}/reschedule": {
+      "post": {
+        "operationId": "PublicBookingController_reschedule",
+        "parameters": [
+          {
+            "name": "publicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Unique retry key for this command (maximum 200 characters).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "example": "01J8Y3Q9M3F6X7R2K4P8N1C5VA"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "PublicBooking"
+        ],
+        "summary": "Public Bookingreschedule",
+        "description": "Public Bookingreschedule in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "public"
+      }
+    },
+    "/v1/public/booking-links/{publicId}/cancel": {
+      "post": {
+        "operationId": "PublicBookingController_cancel",
+        "parameters": [
+          {
+            "name": "publicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Unique retry key for this command (maximum 200 characters).",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "example": "01J8Y3Q9M3F6X7R2K4P8N1C5VA"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "PublicBooking"
+        ],
+        "summary": "Public Bookingcancel",
+        "description": "Public Bookingcancel in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "public"
+      }
+    }
+  },
+  "info": {
+    "title": "Gemai Enterprise API",
+    "description": "Workspace-scoped lead CRM, automation, Calendar and Sheets API",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current Gemai deployment"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      },
+      "workspaceApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    },
+    "schemas": {
+      "ProblemDetails": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "detail",
+          "correlationId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "https://docs.gemai.app/problems/version-conflict"
+          },
+          "title": {
+            "type": "string",
+            "example": "Version conflict"
+          },
+          "status": {
+            "type": "integer",
+            "example": 412
+          },
+          "code": {
+            "type": "string",
+            "example": "VERSION_CONFLICT"
+          },
+          "detail": {
+            "type": "string",
+            "example": "The resource changed after it was loaded"
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    }
+  }
+}

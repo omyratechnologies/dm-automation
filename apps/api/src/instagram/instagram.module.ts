@@ -7,10 +7,12 @@ import { IgGraphClient } from "./ig-graph.client";
 import { TokenRefreshService } from "./token-refresh.service";
 import { TokenRefreshProcessor } from "./token-refresh.processor";
 
+const workerProviders = (process.env.APP_ROLE ?? "api") === "worker" ? [TokenRefreshProcessor] : [];
+
 @Module({
   imports: [BullModule.registerQueue({ name: QUEUES.TOKEN_REFRESH })],
   controllers: [IgAccountsController],
-  providers: [IgGraphClient, IgAccountsService, TokenRefreshService, TokenRefreshProcessor],
+  providers: [IgGraphClient, IgAccountsService, TokenRefreshService, ...workerProviders],
   exports: [IgGraphClient],
 })
 export class InstagramModule {}

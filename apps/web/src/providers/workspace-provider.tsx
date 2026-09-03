@@ -12,6 +12,7 @@ import React, {
   useState,
 } from "react";
 import type { Role } from "@repo/shared";
+import { useParams, usePathname, useRouter } from "next/navigation";
 
 export type CurrentWorkspace = {
   id: string;
@@ -60,6 +61,9 @@ export const WorkspaceProvider = ({
   children: React.ReactNode;
 }) => {
   const { getToken, isLoaded, isSignedIn } = useAuth();
+  const params = useParams<{ workspaceId?: string }>();
+  const pathname = usePathname();
+  const router = useRouter();
   const [workspaces, setWorkspaces] = useState<CurrentWorkspace[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,6 +104,7 @@ export const WorkspaceProvider = ({
         }
       })();
       const preferred =
+        list.find((w) => w.id === params.workspaceId) ??
         list.find((w) => w.id === stored) ?? list[0] ?? null;
       setCurrentId(preferred?.id ?? null);
       if (preferred) {
@@ -115,7 +120,7 @@ export const WorkspaceProvider = ({
       loadingRef.current = false;
       setIsLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, params.workspaceId]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -126,6 +131,13 @@ export const WorkspaceProvider = ({
     load();
   }, [isLoaded, isSignedIn, load]);
 
+  useEffect(() => {
+    const current = workspaces.find((item) => item.id === currentId);
+    if (!current || params.workspaceId || !pathname.startsWith("/dashboard")) return;
+    const suffix = pathname.slice("/dashboard".length);
+    router.replace(`/dashboard/${current.id}${suffix}`);
+  }, [currentId, params.workspaceId, pathname, router, workspaces]);
+
   const switchWorkspace = useCallback((id: string) => {
     setIsSwitching(true);
     setCurrentId(id);
@@ -133,7 +145,10 @@ export const WorkspaceProvider = ({
       window.localStorage.setItem(STORAGE_KEY, id);
     } catch { /* private browsing or quota exceeded */ }
     requestAnimationFrame(() => setIsSwitching(false));
-  }, []);
+    const match = pathname.match(/^\/dashboard\/[^/]+(\/.*)?$/);
+    const suffix = match?.[1] ?? "";
+    router.push(`/dashboard/${id}${suffix}`);
+  }, [pathname, router]);
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({

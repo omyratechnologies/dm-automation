@@ -6,6 +6,8 @@ import { CurrentUser, CurrentWorkspace } from "../auth/decorators";
 import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { ContactsService } from "./contacts.service";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
+import { IdempotentCommand } from "../common/idempotency";
 
 const listQuerySchema = z.object({
   search: z.string().min(1).max(100).optional(),
@@ -25,10 +27,12 @@ const updateContactSchema = z
 @ApiTags("contacts")
 @ApiBearerAuth()
 @Controller("workspaces/:workspaceId/contacts")
+@WorkspaceScoped()
 export class ContactsController {
   constructor(private readonly contacts: ContactsService) {}
 
   @Get()
+  @RequireCapabilities("leads.read")
   list(
     @CurrentWorkspace() ws: WorkspaceContext,
     @Query(new ZodValidationPipe(listQuerySchema))
@@ -39,17 +43,21 @@ export class ContactsController {
 
   // Declared before ":id" so "tags" isn't captured as a contact id.
   @Get("tags")
+  @RequireCapabilities("leads.read")
   async tags(@CurrentWorkspace() ws: WorkspaceContext) {
     const result = await this.contacts.distinctTags(ws.id);
     return result.tags;
   }
 
   @Get(":id")
+  @RequireCapabilities("leads.read")
   get(@CurrentWorkspace() ws: WorkspaceContext, @Param("id") id: string) {
     return this.contacts.get(ws.id, id);
   }
 
   @Patch(":id")
+  @RequireCapabilities("leads.write")
+  @IdempotentCommand()
   update(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,

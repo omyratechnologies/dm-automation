@@ -28,7 +28,11 @@ const InfoBar = () => {
       <div className="lg:hidden">
         <Sheet
           trigger={
-            <button className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card hover:bg-accent transition-colors duration-quiet">
+            <button
+              type="button"
+              aria-label="Open workspace navigation"
+              className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-card hover:bg-accent transition-colors duration-quiet"
+            >
               <Menu className="h-4 w-4" />
             </button>
           }

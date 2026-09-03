@@ -5,6 +5,7 @@ type ServerApiOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   workspaceId?: string;
+  headers?: Record<string, string>;
 };
 
 export async function serverApiFetch<T>(
@@ -15,10 +16,14 @@ export async function serverApiFetch<T>(
   const token = await getToken();
   const { method = "GET", body, workspaceId } = options;
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options.headers };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (workspaceId) headers["x-workspace-id"] = workspaceId;
+  const hasIdempotencyKey = Object.keys(headers).some((name) => name.toLowerCase() === "idempotency-key");
+  if (["POST", "PATCH", "PUT", "DELETE"].includes(method) && !hasIdempotencyKey) {
+    headers["Idempotency-Key"] = crypto.randomUUID();
+  }
 
   // Transparently forward impersonation header/cookie if present in client request context
   try {
@@ -68,7 +73,9 @@ export async function serverApiFetch<T>(
     let message = `Request failed (${res.status})`;
     if (data && typeof data === "object") {
       const m = (data as { message?: string | string[] }).message;
-      if (Array.isArray(m)) message = m.join(", ");
+      const detail = (data as { detail?: string }).detail;
+      if (typeof detail === "string") message = detail;
+      else if (Array.isArray(m)) message = m.join(", ");
       else if (typeof m === "string") message = m;
     } else if (typeof data === "string" && data) {
       message = data;

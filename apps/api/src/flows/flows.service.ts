@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -9,6 +10,7 @@ import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { AuditService } from "../audit/audit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { ProblemException } from "../common/problem-details";
 
 const EMPTY_DEFINITION = { nodes: [], edges: [] };
 const RUNS_PAGE_SIZE = 20;
@@ -44,6 +46,7 @@ export class FlowsService {
       id: f.id,
       name: f.name,
       status: f.status,
+      version: f.version,
       updatedAt: f.updatedAt,
       activeVersion: f.activeVersion
         ? { version: f.activeVersion.version }
@@ -64,7 +67,7 @@ export class FlowsService {
         versions: { create: { version: 1, definition: EMPTY_DEFINITION } },
       },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId: workspace.organizationId,
       workspaceId: workspace.id,
       actorUserId: user.id,
@@ -76,6 +79,7 @@ export class FlowsService {
       id: flow.id,
       name: flow.name,
       status: flow.status,
+      version: flow.version,
       updatedAt: flow.updatedAt,
     };
   }
@@ -98,6 +102,7 @@ export class FlowsService {
       id: flow.id,
       name: flow.name,
       status: flow.status,
+      version: flow.version,
       draftDefinition: flow.versions[0]?.definition ?? null,
       activeDefinition: flow.activeVersion?.definition ?? null,
     };
@@ -106,43 +111,50 @@ export class FlowsService {
   async update(
     workspaceId: string,
     id: string,
-    dto: { name?: string; status?: "ACTIVE" | "PAUSED" },
+    expectedVersion: number,
+    dto: { name?: string; status?: "ACTIVE" | "PAUSED" | "ARCHIVED" },
   ) {
     const flow = await this.findOwned(workspaceId, id);
+    if (flow.version !== expectedVersion) throw this.versionConflict();
+    if (flow.status === "ARCHIVED") throw new ProblemException(HttpStatus.CONFLICT, "INVALID_AUTOMATION_TRANSITION", "Automation is archived", "Archived automations are immutable");
     if (dto.status === "ACTIVE" && !flow.activeVersionId) {
       throw new BadRequestException(
         "Flow has no published version; publish before activating",
       );
     }
-    const updated = await this.prisma.flow.update({
-      where: { id: flow.id },
-      data: { name: dto.name, status: dto.status },
-    });
+    if (dto.status && !this.allowedTransition(flow.status, dto.status)) throw new ProblemException(HttpStatus.CONFLICT, "INVALID_AUTOMATION_TRANSITION", "Invalid automation transition", `Automation cannot transition from ${flow.status} to ${dto.status}`);
+    const claimed = await this.prisma.flow.updateMany({ where: { id: flow.id, workspaceId, version: expectedVersion }, data: { name: dto.name, status: dto.status, version: { increment: 1 } } });
+    if (claimed.count !== 1) throw this.versionConflict();
+    const updated = await this.findOwned(workspaceId, id);
     return {
       id: updated.id,
       name: updated.name,
       status: updated.status,
       updatedAt: updated.updatedAt,
+      version: updated.version,
     };
   }
 
-  async remove(
+  async archive(
     workspace: WorkspaceContext,
     user: AuthedRequestUser,
     id: string,
+    expectedVersion: number,
   ) {
     const flow = await this.findOwned(workspace.id, id);
-    await this.prisma.flow.delete({ where: { id: flow.id } });
-    this.audit.log({
+    if (flow.version !== expectedVersion) throw this.versionConflict();
+    const changed = await this.prisma.flow.updateMany({ where: { id: flow.id, workspaceId: workspace.id, version: expectedVersion, status: { not: "ARCHIVED" } }, data: { status: "ARCHIVED", version: { increment: 1 } } });
+    if (changed.count !== 1) throw this.versionConflict();
+    await this.audit.log({
       organizationId: workspace.organizationId,
       workspaceId: workspace.id,
       actorUserId: user.id,
-      action: "flow.deleted",
+      action: "flow.archived",
       targetType: "Flow",
       targetId: flow.id,
       meta: { name: flow.name },
     });
-    return { deleted: true };
+    return { archived: true, version: expectedVersion + 1 };
   }
 
   /**
@@ -153,33 +165,19 @@ export class FlowsService {
   async saveDraft(
     workspaceId: string,
     id: string,
+    expectedVersion: number,
     definition: DraftDefinitionInput,
   ) {
-    await this.findOwned(workspaceId, id);
-    const latest = await this.prisma.flowVersion.findFirst({
-      where: { flowId: id },
-      orderBy: { version: "desc" },
+    return this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.flow.updateMany({ where: { id, workspaceId, version: expectedVersion, status: { not: "ARCHIVED" } }, data: { version: { increment: 1 }, updatedAt: new Date() } });
+      if (claimed.count !== 1) throw this.versionConflict();
+      const latest = await tx.flowVersion.findFirst({ where: { flowId: id }, orderBy: { version: "desc" } });
+      const data = definition as unknown as Prisma.InputJsonValue;
+      const saved = latest && !latest.publishedAt
+        ? await tx.flowVersion.update({ where: { id: latest.id }, data: { definition: data } })
+        : await tx.flowVersion.create({ data: { flowId: id, version: (latest?.version ?? 0) + 1, definition: data } });
+      return { draftVersion: saved.version, version: expectedVersion + 1 };
     });
-    const data = definition as unknown as Prisma.InputJsonValue;
-    const saved =
-      latest && !latest.publishedAt
-        ? await this.prisma.flowVersion.update({
-            where: { id: latest.id },
-            data: { definition: data },
-          })
-        : await this.prisma.flowVersion.create({
-            data: {
-              flowId: id,
-              version: (latest?.version ?? 0) + 1,
-              definition: data,
-            },
-          });
-    // Touch the flow so list ordering reflects builder activity.
-    await this.prisma.flow.update({
-      where: { id },
-      data: { updatedAt: new Date() },
-    });
-    return { version: saved.version };
   }
 
   /**
@@ -191,8 +189,11 @@ export class FlowsService {
     workspace: WorkspaceContext,
     user: AuthedRequestUser,
     id: string,
+    expectedVersion: number,
   ) {
-    await this.findOwned(workspace.id, id);
+    const flow = await this.findOwned(workspace.id, id);
+    if (flow.version !== expectedVersion) throw this.versionConflict();
+    if (flow.status === "ARCHIVED") throw new ProblemException(HttpStatus.CONFLICT, "INVALID_AUTOMATION_TRANSITION", "Automation is archived", "Archived automations cannot be published");
     const draft = await this.prisma.flowVersion.findFirst({
       where: { flowId: id, publishedAt: null },
       orderBy: { version: "desc" },
@@ -212,20 +213,18 @@ export class FlowsService {
     }
     // Store the parsed form so zod defaults (matchType, branch, ...) are baked in.
     const definition = parsed.data as unknown as Prisma.InputJsonValue;
-    await this.prisma.$transaction([
-      this.prisma.flowVersion.update({
+    await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.flow.updateMany({ where: { id, workspaceId: workspace.id, version: expectedVersion, status: { not: "ARCHIVED" } }, data: { activeVersionId: draft.id, status: "ACTIVE", version: { increment: 1 } } });
+      if (claimed.count !== 1) throw this.versionConflict();
+      await tx.flowVersion.update({
         where: { id: draft.id },
         data: { definition, publishedAt: new Date() },
-      }),
-      this.prisma.flow.update({
-        where: { id },
-        data: { activeVersionId: draft.id, status: "ACTIVE" },
-      }),
-      this.prisma.flowVersion.create({
+      });
+      await tx.flowVersion.create({
         data: { flowId: id, version: draft.version + 1, definition },
-      }),
-    ]);
-    this.audit.log({
+      });
+    });
+    await this.audit.log({
       organizationId: workspace.organizationId,
       workspaceId: workspace.id,
       actorUserId: user.id,
@@ -234,7 +233,17 @@ export class FlowsService {
       targetId: id,
       meta: { version: draft.version },
     });
-    return { publishedVersion: draft.version, status: "ACTIVE" as const };
+    return { publishedVersion: draft.version, status: "ACTIVE" as const, version: expectedVersion + 1 };
+  }
+
+  async simulate(workspaceId: string, id: string) {
+    await this.findOwned(workspaceId, id);
+    const draft = await this.prisma.flowVersion.findFirst({ where: { flowId: id, publishedAt: null }, orderBy: { version: "desc" } });
+    if (!draft) throw new ProblemException(HttpStatus.NOT_FOUND, "AUTOMATION_DRAFT_NOT_FOUND", "Draft not found", "The automation has no draft to simulate");
+    const parsed = flowDefinitionSchema.safeParse(draft.definition);
+    return parsed.success
+      ? { valid: true, draftVersion: draft.version, nodeCount: parsed.data.nodes.length, edgeCount: parsed.data.edges.length }
+      : { valid: false, draftVersion: draft.version, issues: parsed.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })) };
   }
 
   async runs(workspaceId: string, id: string, cursor?: string) {
@@ -265,11 +274,29 @@ export class FlowsService {
     return { items: runs, nextCursor };
   }
 
+  async run(workspaceId: string, id: string, runId: string) {
+    await this.findOwned(workspaceId, id);
+    const run = await this.prisma.flowRun.findFirst({ where: { id: runId, flowId: id, workspaceId }, include: { flowVersion: { select: { id: true, version: true, definition: true } }, contact: { select: { id: true, name: true, username: true } } } });
+    if (!run) throw new ProblemException(HttpStatus.NOT_FOUND, "AUTOMATION_RUN_NOT_FOUND", "Run not found", "The automation run does not exist in this workspace");
+    return run;
+  }
+
   private async findOwned(workspaceId: string, id: string) {
     const flow = await this.prisma.flow.findFirst({
       where: { id, workspaceId },
     });
     if (!flow) throw new NotFoundException("Flow not found");
     return flow;
+  }
+
+  private allowedTransition(from: string, to: string): boolean {
+    if (from === to) return true;
+    return (from === "ACTIVE" && ["PAUSED", "ARCHIVED"].includes(to))
+      || (from === "PAUSED" && ["ACTIVE", "ARCHIVED"].includes(to))
+      || (from === "DRAFT" && to === "ARCHIVED");
+  }
+
+  private versionConflict(): ProblemException {
+    return new ProblemException(HttpStatus.PRECONDITION_FAILED, "VERSION_CONFLICT", "Version conflict", "The automation changed after it was loaded; refresh and retry");
   }
 }

@@ -1,8 +1,8 @@
-import { Module } from "@nestjs/common";
+import { Module, RequestMethod } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
 import { validateEnv } from "./config/env";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -26,18 +26,40 @@ import { UserModule } from "./user/user.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { AdminModule } from "./admin/admin.module";
 import { LeadsModule } from "./leads/leads.module";
+import { IdempotencyInterceptor } from "./common/idempotency";
+import { DeliveryModule } from "./delivery/delivery.module";
+import { GoogleModule } from "./google/google.module";
+import { CalendarModule } from "./calendar/calendar.module";
+import { SheetsModule } from "./sheets/sheets.module";
+import { AnalyticsModule } from "./analytics/analytics.module";
+import { FeatureFlagGuard } from "./common/feature-flag";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv, envFilePath: ".env" }),
     LoggerModule.forRoot({
+      forRoutes: [{ path: "{*path}", method: RequestMethod.ALL }],
       pinoHttp: {
         level: process.env.NODE_ENV === "production" ? "info" : "debug",
         transport:
           process.env.NODE_ENV === "production"
             ? undefined
             : { target: "pino-pretty", options: { singleLine: true } },
-        redact: ["req.headers.authorization", "req.headers.cookie"],
+        redact: {
+          paths: [
+            "req.headers.authorization",
+            "req.headers.cookie",
+            "req.headers.x-api-key",
+            "req.headers['x-api-key']",
+            "req.query.access_token",
+            "req.query.id_token",
+            "req.body.access_token",
+            "req.body.refresh_token",
+            "req.body.id_token",
+            "res.headers['set-cookie']",
+          ],
+          censor: "[REDACTED]",
+        },
         autoLogging: { ignore: (req) => req.url === "/health" },
       },
     }),
@@ -85,12 +107,19 @@ import { LeadsModule } from "./leads/leads.module";
     MetricsModule,
     AdminModule,
     LeadsModule,
+    DeliveryModule,
+    GoogleModule,
+    CalendarModule,
+    SheetsModule,
+    AnalyticsModule,
   ],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
+    { provide: APP_GUARD, useClass: FeatureFlagGuard },
   ],
 })
 export class AppModule {}

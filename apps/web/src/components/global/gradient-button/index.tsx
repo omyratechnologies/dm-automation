@@ -12,7 +12,7 @@ type Props = {
 
 const GradientButton = ({ children, type, className, href }: Props) => {
   const gradients =
-    "bg-gradient-brand rounded-xl p-[2px] hover:shadow-glow transition-all";
+    "rounded-xl bg-gradient-brand p-[2px] transition-colors";
 
   switch (type) {
     case "BUTTON":

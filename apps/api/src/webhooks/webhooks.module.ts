@@ -8,6 +8,11 @@ import { WebhookCleanupProcessor } from "./webhook-cleanup.processor";
 import { WebhookCleanupService } from "./webhook-cleanup.service";
 import { WebhookEventsProcessor } from "./webhook-events.processor";
 import { WebhooksController } from "./webhooks.controller";
+import { LeadsModule } from "../leads/leads.module";
+
+const workerProviders = (process.env.APP_ROLE ?? "api") === "worker"
+  ? [WebhookEventsProcessor, WebhookCleanupProcessor]
+  : [];
 
 @Module({
   imports: [
@@ -17,12 +22,12 @@ import { WebhooksController } from "./webhooks.controller";
     InboxModule,
     InstagramModule,
     AutomationsModule,
+    LeadsModule,
   ],
   controllers: [WebhooksController],
   providers: [
-    WebhookEventsProcessor,
     WebhookCleanupService,
-    WebhookCleanupProcessor,
+    ...workerProviders,
   ],
 })
 export class WebhooksModule {}

@@ -26,6 +26,8 @@ describe("validateEnv Meta production requirements", () => {
         INSTAGRAM_OAUTH_REDIRECT_URI:
           "https://gemai.example/callback/instagram",
         WEB_ORIGIN: "https://gemai.example",
+        API_KEY_PEPPER: "ci-api-key-pepper-at-least-32-characters",
+        TOKEN_MASTER_KEYS: JSON.stringify({ legacy: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" }),
       }),
     ).toMatchObject({ NODE_ENV: "production", INSTAGRAM_APP_ID: "app-id" });
   });

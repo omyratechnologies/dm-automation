@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useId } from "react";
-import { SignalMark } from "./signal-mark";
+import Image from "next/image";
 
 export type GemaiLogoVariant = "full" | "icon" | "text";
 export type GemaiLogoSize = "sm" | "md" | "lg" | "xl";
@@ -14,8 +13,20 @@ interface GemaiLogoProps {
 const SIZE_MAP: Record<GemaiLogoSize, number> = { sm: 24, md: 32, lg: 48, xl: 64 };
 
 export function GemaiMark({ size = 32, className, title }: { size?: number; className?: string; title?: string }) {
-  const idPrefix = `gemai-${useId().replace(/:/g, "")}`;
-  return <SignalMark size={size} className={className} title={title} idPrefix={idPrefix} />;
+  return (
+    <Image
+      src="/brand/gemai-mark.svg"
+      width={size}
+      height={size}
+      alt={title ?? ""}
+      aria-hidden={title ? undefined : true}
+      unoptimized
+      className={cn(
+        "shrink-0 transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:rotate-[3deg] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 motion-reduce:group-hover:rotate-0",
+        className,
+      )}
+    />
+  );
 }
 
 export default function GemaiLogo({ variant = "full", size = "md", className }: GemaiLogoProps) {
@@ -25,18 +36,22 @@ export default function GemaiLogo({ variant = "full", size = "md", className }: 
 
   return (
     <span
-      className={cn("inline-flex shrink-0 items-center text-foreground", className)}
+      className={cn("group inline-flex shrink-0 items-center text-foreground", className)}
       style={{ minHeight: pixels }}
+      role="img"
       aria-label="Gemai"
     >
       {showMark && <GemaiMark size={pixels} />}
       {showWordmark && (
         <span
-          className={cn("font-extrabold leading-none tracking-[-0.055em]", showMark && "ml-[0.28em]")}
+          className={cn("inline-flex items-end font-extrabold leading-none tracking-[-0.055em]", showMark && "ml-[0.3em]")}
           style={{ fontSize: Math.round(pixels * 0.68) }}
           aria-hidden="true"
         >
-          Gemai
+          <span>Gema</span>
+          <span className="relative ml-[0.06em] inline-block h-[0.74em] w-[0.17em] rounded-full bg-current">
+            <span className="absolute -top-[0.29em] left-1/2 size-[0.22em] -translate-x-1/2 rotate-45 rounded-[0.04em] bg-gradient-to-br from-[#6374ff] to-[#a855f7] transition-transform duration-200 ease-out group-hover:rotate-[135deg] motion-reduce:transition-none motion-reduce:group-hover:rotate-45" />
+          </span>
         </span>
       )}
     </span>

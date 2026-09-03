@@ -6,7 +6,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-primary/10", className)}
+      className={cn("rounded-md bg-primary/10", className)}
       {...props}
     />
   )
@@ -15,7 +15,7 @@ function Skeleton({
 // Skeleton Card for Dashboard
 function SkeletonCard() {
   return (
-    <div className="p-6 rounded-xl bg-muted border border-border animate-pulse">
+    <div className="rounded-xl border border-border bg-muted p-6">
       <div className="h-4 bg-muted-foreground/20 rounded w-24 mb-3" />
       <div className="h-8 bg-muted-foreground/20 rounded w-16 mb-2" />
       <div className="h-3 bg-muted-foreground/20 rounded w-32" />
@@ -41,7 +41,7 @@ function SkeletonTableRow() {
 // Skeleton Automation Card
 function SkeletonAutomationCard() {
   return (
-    <div className="p-6 rounded-2xl bg-card border border-border animate-pulse">
+    <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex gap-6">
         <Skeleton className="h-12 w-12 rounded-xl" />
         <div className="flex-1 space-y-3">

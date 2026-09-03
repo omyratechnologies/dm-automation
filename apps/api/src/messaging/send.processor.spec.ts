@@ -195,16 +195,12 @@ describe("SendProcessor messaging-window / plan enforcement", () => {
     });
   });
 
-  it("rejects when the plan send limit is reached", async () => {
-    // FREE plan: 500 monthly sends.
+  it("does not gate delivery by billing plan usage", async () => {
     const f = makeFixture({ usageSends: 500, plan: "FREE" });
     await f.processor.process(makeJob());
 
-    expect(f.graph.sendDm).not.toHaveBeenCalled();
-    expect(lastMessageUpdate(f.prisma)).toMatchObject({
-      status: "REJECTED",
-      errorCode: SEND_REJECTIONS.PLAN_LIMIT,
-    });
+    expect(f.graph.sendDm).toHaveBeenCalled();
+    expect(lastMessageUpdate(f.prisma)).toMatchObject({ status: "SENT" });
   });
 
   it("rejects automated sends after a contact opts out", async () => {

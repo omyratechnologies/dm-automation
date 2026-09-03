@@ -113,7 +113,7 @@ export class IgAccountsService {
       select: IG_ACCOUNT_SELECT,
     });
 
-    this.audit.log({
+    await this.audit.log({
       organizationId: workspace.organizationId,
       workspaceId: workspace.id,
       actorUserId: user.id,
@@ -175,7 +175,7 @@ export class IgAccountsService {
       this.prisma.igAccount.delete({ where: { id } }),
     ]);
 
-    this.audit.log({
+    await this.audit.log({
       organizationId: workspace.organizationId,
       workspaceId: workspace.id,
       actorUserId: user.id,

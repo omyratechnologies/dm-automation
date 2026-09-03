@@ -35,7 +35,7 @@ export function FloatingNav() {
         )}
       >
         <Link href="/" className="mr-3 flex items-center shrink-0">
-          <GemaiLogo size="sm" />
+          <GemaiLogo size="sm" className="text-white" />
         </Link>
 
         <nav className="hidden items-center gap-0.5 md:flex">
@@ -43,7 +43,7 @@ export function FloatingNav() {
             <a
               key={link.href}
               href={link.href}
-              className="rounded-full px-3.5 py-1.5 text-[13px] text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white"
+              className="rounded-full px-3.5 py-1.5 text-[13px] text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white"
             >
               {link.label}
             </a>
@@ -53,7 +53,7 @@ export function FloatingNav() {
         <div className="ml-2 flex items-center gap-1.5">
           <Link
             href="/sign-in"
-            className="hidden rounded-full px-3.5 py-1.5 text-[13px] text-white/55 transition-colors hover:text-white sm:block"
+            className="hidden rounded-full px-3.5 py-1.5 text-[13px] text-white/65 transition-colors hover:text-white sm:block"
           >
             Sign in
           </Link>

@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { inspect } from "util";
+import { randomUUID } from "crypto";
 
 /**
  * Catches every unhandled exception that isn't already an HttpException.
@@ -25,7 +26,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
-      response.status(status).json(exception.getResponse());
+      const correlationId = this.correlationId(request);
+      const body = exception.getResponse();
+      const source = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+      const detail = typeof body === "string"
+        ? body
+        : typeof source.detail === "string"
+          ? source.detail
+          : Array.isArray(source.message)
+            ? "Request validation failed"
+            : typeof source.message === "string" ? source.message : exception.message;
+      response
+        .status(status)
+        .type("application/problem+json")
+        .json({
+          type: source.type ?? "about:blank",
+          title: source.title ?? this.statusTitle(status),
+          status,
+          code: source.code ?? this.defaultCode(status),
+          detail,
+          correlationId,
+          ...(source.errors && typeof source.errors === "object" ? { errors: source.errors } : Array.isArray(source.message) ? { errors: { body: source.message } } : {}),
+        });
       return;
     }
 
@@ -46,9 +68,29 @@ export class AllExceptionsFilter implements ExceptionFilter {
       "Unhandled exception",
     );
 
-    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: "Internal server error",
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).type("application/problem+json").json({
+      type: "about:blank",
+      title: "Internal Server Error",
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      code: "INTERNAL_ERROR",
+      detail: "An unexpected error occurred",
+      correlationId: this.correlationId(request),
     });
+  }
+
+  private correlationId(request: Request): string {
+    const existing = request.headers["x-correlation-id"];
+    return typeof existing === "string" && existing.length <= 128 ? existing : randomUUID();
+  }
+
+  private statusTitle(status: number): string {
+    return HttpStatus[status]?.replaceAll("_", " ") ?? "Request Failed";
+  }
+
+  private defaultCode(status: number): string {
+    if (status === 403) return "WORKSPACE_FORBIDDEN";
+    if (status === 412) return "VERSION_CONFLICT";
+    if (status === 428) return "PRECONDITION_REQUIRED";
+    return `HTTP_${status}`;
   }
 }

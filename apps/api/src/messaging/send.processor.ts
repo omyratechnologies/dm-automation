@@ -4,12 +4,11 @@ import { Job, UnrecoverableError } from "bullmq";
 import {
   HUMAN_AGENT_WINDOW_MS,
   MESSAGING_WINDOW_MS,
-  PLANS,
   QUEUES,
   SEND_REJECTIONS,
   WS_EVENTS,
 } from "@repo/shared";
-import type { PlanKey, SendMessageJob } from "@repo/shared";
+import type { SendMessageJob } from "@repo/shared";
 import type { Message } from "@prisma/client";
 import { TokenCrypto } from "../common/crypto/kms";
 import { InboxGateway } from "../inbox/inbox.gateway";
@@ -28,7 +27,7 @@ export function currentPeriod(now: Date = new Date()): string {
 
 /**
  * Single enforcement point for compliant Instagram sending: the 24h messaging
- * window, the 7-day HUMAN_AGENT window and plan send limits are all checked
+ * window and the 7-day HUMAN_AGENT window are checked
  * here — regardless of whether the send came from an agent, flow or broadcast.
  */
 @Processor(QUEUES.SEND_MESSAGES, { concurrency: 5 })
@@ -101,19 +100,8 @@ export class SendProcessor extends WorkerHost {
       }
     }
 
-    // --- Plan limit enforcement ----------------------------------------
     const organization = igAccount.workspace.organization;
     const period = currentPeriod();
-    const usage = await this.prisma.usageCounter.findUnique({
-      where: {
-        organizationId_period: { organizationId: organization.id, period },
-      },
-    });
-    const monthlySends = PLANS[organization.plan as PlanKey].monthlySends;
-    if ((usage?.sends ?? 0) >= monthlySends) {
-      await this.finalize(message, data, "REJECTED", SEND_REJECTIONS.PLAN_LIMIT);
-      return;
-    }
 
     // --- Local rate limit check (200/hr per IG account) ------------------
     if (!(await this.rateLimiter.canSend(data.igAccountId))) {
@@ -130,6 +118,10 @@ export class SendProcessor extends WorkerHost {
     }
     let result: SendResult;
     try {
+      if (!contact.igUserId) {
+        await this.finalize(message, data, "FAILED", "CONTACT_HAS_NO_INSTAGRAM_IDENTITY");
+        return;
+      }
       result = data.replyToCommentId
         ? await this.graph.privateReplyToComment(
             igAccount.igUserId,

@@ -1,0 +1,30 @@
+extends:
+  - spectral:oas
+rules:
+  operation-description: error
+  operation-operationId: error
+  operation-tags: off
+  operation-tag-defined: off
+  enterprise-workspace-permission:
+    description: Every operation must declare its capability or explicitly identify as public.
+    message: Operations require x-required-permission.
+    severity: error
+    given: $.paths.*.*
+    then:
+      field: x-required-permission
+      function: truthy
+  problem-json-response:
+    description: Error responses must use RFC 9457-style problem details.
+    message: Error responses must advertise application/problem+json.
+    severity: error
+    given: $.paths.*.*.responses[400,401,403,404,409,412,428,429,500]
+    then:
+      field: content
+      function: truthy
+  enterprise-operation-summary:
+    description: Every operation needs a concise generated summary.
+    severity: error
+    given: $.paths.*.*
+    then:
+      field: summary
+      function: truthy

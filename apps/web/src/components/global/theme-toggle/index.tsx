@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9">
+      <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Theme options" disabled>
         <Sun className="h-[1.2rem] w-[1.2rem]" />
       </Button>
     );
@@ -34,7 +34,8 @@ export function ThemeToggle() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-9 w-9 rounded-lg transition-colors hover:bg-accent"
+          className="h-11 w-11 rounded-lg transition-colors hover:bg-accent"
+          aria-label="Theme options"
         >
           <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -66,7 +67,7 @@ export function ThemeToggle() {
           onClick={() => setTheme("system")}
           className="cursor-pointer"
         >
-          <span className="mr-2">💻</span>
+          <Monitor className="mr-2 h-4 w-4" />
           <span>System</span>
           {theme === "system" && (
             <span className="ml-auto text-primary">✓</span>

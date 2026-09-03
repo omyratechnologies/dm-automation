@@ -81,7 +81,7 @@ export class ClerkAuthGuard implements CanActivate {
       if (targetUser) {
         const orgId = targetUser.memberships[0]?.workspace.organizationId;
         if (orgId && user) {
-          this.audit.log({
+          await this.audit.log({
             organizationId: orgId,
             actorUserId: user.id,
             action: "admin.impersonate",

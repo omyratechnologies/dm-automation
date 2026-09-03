@@ -8,15 +8,15 @@ import { Reflector } from "@nestjs/core";
 import { PrismaService } from "../prisma/prisma.service";
 import { IS_PUBLIC_KEY } from "./public.decorator";
 import { ROLES_KEY } from "./roles.decorator";
-import type { Role } from "@repo/shared";
+import { ROLE_CAPABILITIES, type Capability, type Role } from "@repo/shared";
+import { CAPABILITIES_KEY, WORKSPACE_SCOPED_KEY } from "./capabilities.decorator";
 
 export interface WorkspaceContext {
   id: string;
   organizationId: string;
   role: Role;
+  membershipId?: string;
 }
-
-const ROLE_RANK: Record<Role, number> = { OWNER: 3, ADMIN: 2, AGENT: 1 };
 
 /**
  * Tenant boundary. Resolves the workspace from the x-workspace-id header (or
@@ -42,8 +42,17 @@ export class WorkspaceGuard implements CanActivate {
 
     const workspaceId: string | undefined =
       req.params?.workspaceId ?? req.headers["x-workspace-id"];
+    const workspaceScoped = this.reflector.getAllAndOverride<boolean>(WORKSPACE_SCOPED_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (!workspaceId) {
-      // Routes outside a workspace scope (e.g. org bootstrap) skip tenancy.
+      if (workspaceScoped) {
+        throw new ForbiddenException({
+          code: "WORKSPACE_FORBIDDEN",
+          detail: "Workspace context is required",
+        });
+      }
       return true;
     }
 
@@ -53,8 +62,11 @@ export class WorkspaceGuard implements CanActivate {
       },
       include: { workspace: { select: { organizationId: true } } },
     });
-    if (!membership) {
-      throw new ForbiddenException("Not a member of this workspace");
+    if (!membership || membership.status !== "ACTIVE") {
+      throw new ForbiddenException({
+        code: "WORKSPACE_FORBIDDEN",
+        detail: "You do not have access to this workspace",
+      });
     }
 
     const required = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
@@ -62,9 +74,22 @@ export class WorkspaceGuard implements CanActivate {
       context.getClass(),
     ]);
     if (required?.length) {
-      const min = Math.min(...required.map((r) => ROLE_RANK[r]));
-      if (ROLE_RANK[membership.role as Role] < min) {
-        throw new ForbiddenException("Insufficient role");
+      if (!required.includes(membership.role as Role)) {
+        throw new ForbiddenException({ code: "WORKSPACE_FORBIDDEN", detail: "Insufficient role" });
+      }
+    }
+
+    const requiredCapabilities = this.reflector.getAllAndOverride<Capability[]>(CAPABILITIES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (requiredCapabilities?.length) {
+      const granted = new Set(ROLE_CAPABILITIES[membership.role as Role]);
+      if (!requiredCapabilities.every((capability) => granted.has(capability))) {
+        throw new ForbiddenException({
+          code: "WORKSPACE_FORBIDDEN",
+          detail: "A required workspace capability is missing",
+        });
       }
     }
 
@@ -72,6 +97,7 @@ export class WorkspaceGuard implements CanActivate {
       id: workspaceId,
       organizationId: membership.workspace.organizationId,
       role: membership.role,
+      membershipId: membership.id,
     } satisfies WorkspaceContext;
     return true;
   }

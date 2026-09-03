@@ -58,7 +58,7 @@ export function BrandFilm() {
             </motion.div>
           </div>
         </div>
-        <p className="mt-6 text-center text-[13px] tracking-wide text-white/30">
+        <p className="mt-6 text-center text-[13px] tracking-wide text-white/60">
           Built for the conversations that grow your brand
         </p>
       </motion.div>

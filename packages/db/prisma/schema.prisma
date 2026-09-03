@@ -25,6 +25,8 @@ model User {
   automations  Automation[]
   memberships  Membership[]
   ownedOrgs    Organization[] @relation("OrgOwner")
+  googleGrants GoogleGrant[]
+  googleOAuthSessions GoogleOAuthSession[]
 }
 
 model Subscription {
@@ -154,6 +156,11 @@ enum ROLE {
   AGENT
 }
 
+enum MEMBERSHIP_STATUS {
+  ACTIVE
+  REMOVED
+}
+
 enum IG_ACCOUNT_STATUS {
   ACTIVE
   TOKEN_EXPIRED
@@ -194,13 +201,20 @@ enum FLOW_STATUS {
   DRAFT
   ACTIVE
   PAUSED
+  ARCHIVED
 }
 
 enum RUN_STATUS {
   RUNNING
   WAITING
+  WAITING_INPUT
   COMPLETED
   FAILED
+}
+
+enum AUTOMATION_ENGINE {
+  LEGACY
+  FLOW
 }
 
 enum BROADCAST_STATUS {
@@ -215,6 +229,8 @@ enum BROADCAST_STATUS {
 enum WEBHOOK_PROVIDER {
   INSTAGRAM
   STRIPE
+  GOOGLE_DRIVE
+  GOOGLE_CALENDAR
 }
 
 enum WEBHOOK_EVENT_STATUS {
@@ -245,6 +261,12 @@ model Workspace {
   organizationId String        @db.Uuid
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
+  timezone       String        @default("UTC")
+  baseCurrency   String        @default("USD") @db.Char(3)
+  automationEngine AUTOMATION_ENGINE @default(FLOW)
+  automationPausedAt DateTime?
+  aiPolicyVersion Int @default(1)
+  aiPolicy        Json @default("{\"factConfidence\":0.85,\"decisionConfidence\":0.9,\"terminalConfidence\":0.95}")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @default(now()) @updatedAt
   memberships    Membership[]
@@ -258,6 +280,28 @@ model Workspace {
   broadcasts     Broadcast[]
   auditLogs      AuditLog[]
   leadFields     LeadField[]
+  contactIdentities ContactIdentity[]
+  leads          Lead[]
+  leadPipelines  LeadPipeline[]
+  leadActivities LeadActivity[]
+  leadTasks      LeadTask[]
+  leadSavedViews LeadSavedView[]
+  consentRecords ConsentRecord[]
+  decisionLogs   DecisionLog[]
+  qualificationSessions QualificationSession[]
+  googleBindings GoogleBinding[]
+  googleOAuthSessions GoogleOAuthSession[]
+  calendarPools  CalendarPool[]
+  meetingTypes   MeetingType[]
+  leadMeetings   LeadMeeting[]
+  bookingLinks   BookingLink[]
+  slotReservations SlotReservation[]
+  sheetDestinations SheetDestination[]
+  sheetConflicts SheetSyncConflict[]
+  integrationOperations IntegrationOperation[]
+  outboxEvents   OutboxEvent[]
+  idempotencyRecords IdempotencyRecord[]
+  apiKeys        WorkspaceApiKey[]
 
   @@index([organizationId])
 }
@@ -269,9 +313,21 @@ model Membership {
   workspaceId String    @db.Uuid
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   role        ROLE      @default(AGENT)
+  status      MEMBERSHIP_STATUS @default(ACTIVE)
+  removedAt   DateTime?
   createdAt   DateTime  @default(now())
+  ownedLeads  Lead[]    @relation("LeadOwner")
+  assignedLeadTasks LeadTask[] @relation("LeadTaskAssignee")
+  updatedLeadAttributes LeadAttributeValue[] @relation("LeadAttributeUpdater")
+  resolvedSheetConflicts SheetSyncConflict[] @relation("SheetConflictResolver")
+  createdApiKeys WorkspaceApiKey[]
+  googleOAuthSessions GoogleOAuthSession[]
+  googleBindings GoogleBinding[] @relation("AuthorizedGoogleBinding")
+  calendarPoolMemberships CalendarPoolMember[]
+  hostedMeetings LeadMeeting[] @relation("MeetingHost")
 
   @@unique([userId, workspaceId])
+  @@unique([id, workspaceId])
   @@index([workspaceId])
 }
 
@@ -298,9 +354,9 @@ model Contact {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   workspaceId   String         @db.Uuid
   workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  igAccountId   String         @db.Uuid
-  igAccount     IgAccount      @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
-  igUserId      String
+  igAccountId   String?        @db.Uuid
+  igAccount     IgAccount?     @relation(fields: [igAccountId], references: [id], onDelete: Cascade)
+  igUserId      String?
   username      String?
   name          String?
   profilePicUrl String?
@@ -313,10 +369,13 @@ model Contact {
   updatedAt     DateTime       @default(now()) @updatedAt
   conversation  Conversation?
   flowRuns      FlowRun[]
-  lead          Lead?
+  leads         Lead[]
+  identities    ContactIdentity[]
+  consentRecords ConsentRecord[]
   fieldValues   LeadFieldValue[]
 
   @@unique([igAccountId, igUserId])
+  @@unique([id, workspaceId])
   @@index([workspaceId])
   @@index([workspaceId, lastInboundAt])
 }
@@ -374,6 +433,7 @@ model Flow {
   activeVersion   FlowVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) @updatedAt
+  version         Int           @default(1)
   versions        FlowVersion[]
   runs            FlowRun[]
 
@@ -487,9 +547,11 @@ model AuditLog {
   workspace      Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   actorUserId    String?       @db.Uuid
   actorType      String        @default("USER")
+  source         String        @default("APPLICATION")
   action         String
   targetType     String?
   targetId       String?
+  correlationId  String?
   meta           Json?
   createdAt      DateTime      @default(now())
 
@@ -501,6 +563,14 @@ enum LEAD_FIELD_TYPE {
   TEXT
   NUMBER
   BOOLEAN
+  DATE
+  DATETIME
+  EMAIL
+  PHONE
+  URL
+  SELECT
+  MULTI_SELECT
+  CURRENCY
 }
 
 enum LEAD_STATUS {
@@ -510,6 +580,103 @@ enum LEAD_STATUS {
   DISQUALIFIED
 }
 
+enum LEAD_RECORD_STATE {
+  ACTIVE
+  ARCHIVED
+  MERGED
+}
+
+enum LEAD_OUTCOME {
+  OPEN
+  WON
+  LOST
+}
+
+enum LEAD_PRIORITY {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum LEAD_SOURCE {
+  INSTAGRAM
+  MANUAL
+  API
+  GOOGLE_SHEET
+  AUTOMATION
+}
+
+enum LEAD_PIPELINE_STATUS {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum LEAD_FUNNEL_CATEGORY {
+  NEW
+  ENGAGING
+  QUALIFIED
+  MEETING_BOOKED
+  PROPOSAL
+  WON
+  LOST
+  CUSTOM
+}
+
+enum CONTACT_IDENTITY_TYPE {
+  INSTAGRAM
+  EMAIL
+  PHONE
+  EXTERNAL
+}
+
+enum DATA_CLASSIFICATION {
+  INTERNAL
+  CONFIDENTIAL
+  SENSITIVE
+}
+
+enum SHEET_EXPORT_POLICY {
+  DENY
+  ADMIN_OPT_IN
+  ALLOW
+}
+
+enum LEAD_VALUE_SOURCE {
+  HUMAN
+  API
+  SHEET
+  AI
+  SYSTEM
+}
+
+enum LEAD_TASK_STATUS {
+  OPEN
+  COMPLETED
+  CANCELED
+}
+
+enum CONSENT_STATUS {
+  GRANTED
+  REVOKED
+}
+
+enum ACTOR_TYPE {
+  USER
+  AI
+  SYSTEM
+  GOOGLE_SHEET
+  GOOGLE_CALENDAR
+}
+
+enum DECISION_TYPE {
+  QUALIFICATION
+  SCORING
+  ASSIGNMENT
+  STAGE_TRANSITION
+}
+
 model LeadField {
   id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   workspaceId String           @db.Uuid
@@ -517,10 +684,21 @@ model LeadField {
   key         String
   label       String
   type        LEAD_FIELD_TYPE  @default(TEXT)
+  required    Boolean          @default(false)
+  position    Int              @default(0)
+  options     Json?
+  validation  Json?
+  classification DATA_CLASSIFICATION @default(INTERNAL)
+  sheetExportPolicy SHEET_EXPORT_POLICY @default(DENY)
+  aiWritable  Boolean          @default(false)
+  archivedAt  DateTime?
   createdAt   DateTime         @default(now())
   values      LeadFieldValue[]
+  attributeValues LeadAttributeValue[]
 
   @@unique([workspaceId, key])
+  @@unique([id, workspaceId])
+  @@index([workspaceId, archivedAt, position])
 }
 
 model LeadFieldValue {
@@ -537,13 +715,834 @@ model LeadFieldValue {
 
 model Lead {
   id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contactId       String      @unique @db.Uuid
-  contact         Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  workspaceId     String      @db.Uuid
+  workspace       Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contactId       String      @db.Uuid
+  contact         Contact     @relation(fields: [contactId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  pipelineId      String      @db.Uuid
+  pipeline        LeadPipeline @relation(fields: [pipelineId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  stageId         String      @db.Uuid
+  stage           LeadStage   @relation(fields: [stageId, pipelineId, workspaceId], references: [id, pipelineId, workspaceId], onDelete: Restrict)
+  ownerMembershipId String?   @db.Uuid
+  owner           Membership? @relation("LeadOwner", fields: [ownerMembershipId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
   status          LEAD_STATUS @default(NEW)
+  recordState     LEAD_RECORD_STATE @default(ACTIVE)
+  outcome         LEAD_OUTCOME @default(OPEN)
+  priority        LEAD_PRIORITY @default(MEDIUM)
+  source          LEAD_SOURCE @default(INSTAGRAM)
+  sourceDetail    Json?
   score           Int         @default(0)
   notes           String?
+  expectedValueMinor BigInt?
+  currency        String?     @db.Char(3)
+  expectedCloseAt DateTime?
+  nextActionAt    DateTime?
+  version         Int         @default(1)
   qualifiedAt     DateTime?
   disqualifiedAt  DateTime?
+  wonAt           DateTime?
+  lostAt          DateTime?
+  archivedAt      DateTime?
+  canonicalLeadId String?     @db.Uuid
+  canonicalLead   Lead?       @relation("LeadMerge", fields: [canonicalLeadId], references: [id], onDelete: SetNull)
+  mergedLeads     Lead[]      @relation("LeadMerge")
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @default(now()) @updatedAt
+  attributes      LeadAttributeValue[]
+  activities      LeadActivity[]
+  tasks           LeadTask[]
+  decisions       DecisionLog[]
+  qualificationSessions QualificationSession[]
+  meetings        LeadMeeting[]
+  bookingLinks    BookingLink[]
+  sheetRows       SheetRowProjection[]
+  sheetConflicts  SheetSyncConflict[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, pipelineId, stageId, updatedAt(sort: Desc)])
+  @@index([workspaceId, ownerMembershipId, nextActionAt])
+  @@index([workspaceId, recordState, outcome, score])
+}
+
+model ContactIdentity {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String @db.Uuid
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contactId       String @db.Uuid
+  contact         Contact @relation(fields: [contactId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  type            CONTACT_IDENTITY_TYPE
+  scopeKey        String @default("")
+  normalizedValue String
+  displayValue    String?
+  isPrimary       Boolean @default(false)
+  verifiedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@unique([workspaceId, type, scopeKey, normalizedValue])
+  @@index([contactId])
+}
+
+model LeadPipeline {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  status      LEAD_PIPELINE_STATUS @default(DRAFT)
+  isDefault   Boolean @default(false)
+  version     Int @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  stages      LeadStage[]
+  leads       Lead[]
+  sheetDestinations SheetDestination[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, name])
+  @@index([workspaceId, status])
+}
+
+model LeadStage {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String @db.Uuid
+  pipelineId     String @db.Uuid
+  pipeline       LeadPipeline @relation(fields: [pipelineId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  name           String
+  funnelCategory LEAD_FUNNEL_CATEGORY
+  position       Int
+  probability    Int @default(0)
+  color          String @default("slate")
+  slaMinutes     Int?
+  requiredFieldKeys String[] @default([])
+  lostReasonRequired Boolean @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+  leads          Lead[]
+  meetingTypes   MeetingType[] @relation("MeetingTypeStageOnBook")
+
+  @@unique([id, pipelineId, workspaceId])
+  @@unique([id, workspaceId])
+  @@unique([pipelineId, position])
+  @@index([workspaceId, funnelCategory])
+}
+
+model LeadAttributeValue {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String @db.Uuid
+  leadId      String @db.Uuid
+  lead        Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  fieldId     String @db.Uuid
+  field       LeadField @relation(fields: [fieldId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  value       Json
+  source      LEAD_VALUE_SOURCE
+  confidence  Float?
+  evidenceMessageId String? @db.Uuid
+  updatedByMembershipId String? @db.Uuid
+  updatedByMembership Membership? @relation("LeadAttributeUpdater", fields: [updatedByMembershipId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  version     Int @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([leadId, fieldId])
+  @@index([workspaceId, fieldId])
+}
+
+model LeadActivity {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leadId      String @db.Uuid
+  lead        Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  type        String
+  actorType   ACTOR_TYPE
+  actorId     String? @db.Uuid
+  correlationId String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([leadId, createdAt(sort: Desc)])
+  @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model LeadTask {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leadId      String @db.Uuid
+  lead        Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  title       String
+  description String?
+  dueAt       DateTime?
+  assigneeMembershipId String? @db.Uuid
+  assigneeMembership Membership? @relation("LeadTaskAssignee", fields: [assigneeMembershipId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  status      LEAD_TASK_STATUS @default(OPEN)
+  version     Int @default(1)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, status, dueAt])
+  @@index([leadId, status])
+}
+
+model LeadSavedView {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  ownerUserId String @db.Uuid
+  name        String
+  isShared    Boolean @default(false)
+  filters     Json
+  sort        Json?
+  columns     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([workspaceId, ownerUserId, name])
+  @@index([workspaceId, isShared])
+}
+
+model ConsentRecord {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId String @db.Uuid
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contactId   String @db.Uuid
+  contact     Contact @relation(fields: [contactId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  purpose     String
+  status      CONSENT_STATUS
+  source      String
+  evidence    Json?
+  recordedAt  DateTime @default(now())
+  revokedAt   DateTime?
+
+  @@index([workspaceId, contactId, purpose])
+}
+
+model DecisionLog {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leadId         String @db.Uuid
+  lead           Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  type           DECISION_TYPE
+  strategy       String
+  model          String?
+  promptVersion  String?
+  policyVersion  Int?
+  confidence     Float?
+  evidenceIds    String[] @default([])
+  proposed       Json
+  applied        Json?
+  outcome        Json?
+  correlationId  String
+  createdAt      DateTime @default(now())
+
+  @@index([workspaceId, type, createdAt(sort: Desc)])
+  @@index([leadId, createdAt(sort: Desc)])
+}
+
+enum QUALIFICATION_SESSION_STATUS {
+  ACTIVE
+  WAITING_INPUT
+  COMPLETED
+  PAUSED
+  EXPIRED
+  FAILED
+}
+
+model QualificationSession {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId   String @db.Uuid
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leadId        String @db.Uuid
+  lead          Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  status        QUALIFICATION_SESSION_STATUS @default(ACTIVE)
+  policyVersion Int
+  version       Int @default(1)
+  expiresAt     DateTime
+  completedAt   DateTime?
+  pausedAt      DateTime?
+  failureCode   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, status, expiresAt])
+  @@index([leadId, createdAt(sort: Desc)])
+}
+
+enum GOOGLE_GRANT_STATUS {
+  ACTIVE
+  REAUTH_REQUIRED
+  REVOKED
+  ERROR
+}
+
+enum GOOGLE_BINDING_STATUS {
+  PENDING_AUTH
+  ACTIVE
+  REAUTH_REQUIRED
+  TRANSFER_REQUIRED
+  ERROR
+  DISCONNECTED
+}
+
+enum GOOGLE_BINDING_OWNERSHIP {
+  MEMBER
+  WORKSPACE
+}
+
+enum GOOGLE_CAPABILITY {
+  CALENDAR
+  SHEETS
+}
+
+enum GOOGLE_WATCH_TYPE {
+  CALENDAR_EVENTS
+  DRIVE_CHANGES
+}
+
+enum GOOGLE_WATCH_STATUS {
+  ACTIVE
+  RENEWING
+  EXPIRED
+  STOPPED
+  ERROR
+}
+
+enum CALENDAR_POOL_STATUS {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum MEETING_STATUS {
+  PENDING
+  CONFIRMED
+  CONFLICTED
+  FAILED
+  CANCELED
+  COMPLETED
+  NO_SHOW
+}
+
+enum BOOKING_LINK_STATUS {
+  ACTIVE
+  BOOKED
+  EXPIRED
+  REVOKED
+}
+
+enum SLOT_RESERVATION_STATUS {
+  HELD
+  CONFIRMED
+  RELEASED
+  EXPIRED
+}
+
+enum SHEET_DESTINATION_STATUS {
+  DRAFT
+  ACTIVE
+  PAUSED
+  MISCONFIGURED
+  DISCONNECTED
+}
+
+enum SHEET_INITIAL_AUTHORITY {
+  IMPORT
+  EXPORT
+  REVIEWED_MERGE
+}
+
+enum SHEET_MAPPING_DIRECTION {
+  APP_OWNED
+  SHEET_OWNED
+  TWO_WAY
+}
+
+enum SHEET_ROW_STATUS {
+  SYNCED
+  PENDING
+  CONFLICT
+  ROW_MISSING
+  ERROR
+  EXCLUDED
+}
+
+enum SHEET_CONFLICT_STATUS {
+  OPEN
+  RESOLVED_APP
+  RESOLVED_SHEET
+  RESOLVED_MERGE
+  DISMISSED
+}
+
+enum INTEGRATION_OPERATION_STATUS {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  REAUTH_REQUIRED
+  CANCELED
+}
+
+enum OUTBOX_STATUS {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+enum IDEMPOTENCY_STATUS {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model GoogleGrant {
+  id                    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String @db.Uuid
+  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  googleSub             String
+  email                 String?
+  oauthClientId         String
+  encryptedRefreshToken String?
+  scopes                String[] @default([])
+  status                GOOGLE_GRANT_STATUS @default(ACTIVE)
+  tokenVersion          Int @default(1)
+  lastRefreshAt         DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now()) @updatedAt
+  bindings              GoogleBinding[]
+
+  @@unique([userId, googleSub, oauthClientId])
+  @@index([status, updatedAt])
+}
+
+model GoogleOAuthSession {
+  id                    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String @db.Uuid
+  user                  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId           String @db.Uuid
+  workspace             Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  authorizedMembershipId String @db.Uuid
+  authorizedMembership   Membership @relation(fields: [authorizedMembershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  stateHash             String @unique
+  codeVerifierEncrypted String
+  ownership             GOOGLE_BINDING_OWNERSHIP
+  capabilities          GOOGLE_CAPABILITY[] @default([])
+  requestedScopes       String[] @default([])
+  returnPath            String
+  expiresAt             DateTime
+  consumedAt            DateTime?
+  createdAt             DateTime @default(now())
+
+  @@index([workspaceId, expiresAt])
+}
+
+model GoogleBinding {
+  id                     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId            String @db.Uuid
+  workspace              Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  grantId                 String @db.Uuid
+  grant                   GoogleGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  authorizedMembershipId String @db.Uuid
+  authorizedMembership   Membership @relation("AuthorizedGoogleBinding", fields: [authorizedMembershipId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  ownership               GOOGLE_BINDING_OWNERSHIP
+  capabilities            GOOGLE_CAPABILITY[] @default([])
+  status                  GOOGLE_BINDING_STATUS @default(PENDING_AUTH)
+  version                 Int @default(1)
+  lastHealthAt            DateTime?
+  lastErrorCode           String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @default(now()) @updatedAt
+  watchChannels           GoogleWatchChannel[]
+  calendarPoolMembers     CalendarPoolMember[]
+  slotReservations        SlotReservation[]
+  sheetDestinations       SheetDestination[]
+  operations              IntegrationOperation[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, grantId, ownership, authorizedMembershipId])
+  @@index([workspaceId, status])
+}
+
+model GoogleWatchChannel {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bindingId         String @db.Uuid
+  workspaceId       String @db.Uuid
+  binding           GoogleBinding @relation(fields: [bindingId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  type              GOOGLE_WATCH_TYPE
+  channelId         String @unique
+  resourceId        String
+  resourceUri       String?
+  secretHash        String
+  calendarId        String?
+  syncToken         String?
+  pageToken         String?
+  messageNumber     BigInt?
+  expiresAt         DateTime
+  status            GOOGLE_WATCH_STATUS @default(ACTIVE)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@index([bindingId, type, status])
+  @@index([expiresAt, status])
+}
+
+model CalendarPool {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name           String
+  status         CALENDAR_POOL_STATUS @default(DRAFT)
+  routingCursor  BigInt @default(0)
+  version        Int @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+  members        CalendarPoolMember[]
+  meetingTypes   MeetingType[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, name])
+}
+
+model CalendarPoolMember {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId       String @db.Uuid
+  poolId            String @db.Uuid
+  pool              CalendarPool @relation(fields: [poolId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  membershipId      String @db.Uuid
+  membership        Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  googleBindingId   String @db.Uuid
+  googleBinding     GoogleBinding @relation(fields: [googleBindingId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  calendarId        String
+  conflictCalendarIds String[] @default([])
+  enabled           Boolean @default(true)
+  lastAssignedSequence BigInt @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@unique([poolId, membershipId])
+  @@index([workspaceId, enabled, lastAssignedSequence])
+}
+
+model MeetingType {
+  id                 String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId        String @db.Uuid
+  workspace          Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  calendarPoolId     String @db.Uuid
+  calendarPool       CalendarPool @relation(fields: [calendarPoolId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  name               String
+  slug               String
+  description        String?
+  durationMinutes    Int @default(30)
+  intervalMinutes    Int @default(15)
+  bufferBeforeMinutes Int @default(15)
+  bufferAfterMinutes Int @default(15)
+  minimumNoticeMinutes Int @default(240)
+  bookingHorizonDays Int @default(30)
+  timezone           String
+  availabilityRules  Json
+  locationType       String @default("GOOGLE_MEET")
+  stageOnBookId      String? @db.Uuid
+  stageOnBook        LeadStage? @relation("MeetingTypeStageOnBook", fields: [stageOnBookId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  active             Boolean @default(false)
+  version            Int @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+  meetings           LeadMeeting[]
+  bookingLinks       BookingLink[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, slug])
+}
+
+model LeadMeeting {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId       String @db.Uuid
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leadId            String @db.Uuid
+  lead              Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  meetingTypeId     String @db.Uuid
+  meetingType       MeetingType @relation(fields: [meetingTypeId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  hostMembershipId  String @db.Uuid
+  hostMembership    Membership @relation("MeetingHost", fields: [hostMembershipId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  status            MEETING_STATUS @default(PENDING)
+  startsAt          DateTime
+  endsAt            DateTime
+  timezone          String
+  inviteeEmail      String
+  providerCalendarId String?
+  providerEventId   String? @unique
+  providerEtag      String?
+  conferenceUrl     String?
+  version           Int @default(1)
+  failureCode       String?
+  canceledAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+  bookingLinks      BookingLink[]
+  slotReservations  SlotReservation[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, startsAt, status])
+  @@index([leadId, status])
+}
+
+model BookingLink {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  publicId       String @unique
+  workspaceId    String @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leadId         String @db.Uuid
+  lead           Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  meetingTypeId  String @db.Uuid
+  meetingType    MeetingType @relation(fields: [meetingTypeId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  meetingId      String? @db.Uuid
+  meeting        LeadMeeting? @relation(fields: [meetingId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  secretHash     String
+  status         BOOKING_LINK_STATUS @default(ACTIVE)
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@index([workspaceId, leadId, status])
+  @@index([expiresAt, status])
+}
+
+model SlotReservation {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String @db.Uuid
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  googleBindingId String @db.Uuid
+  googleBinding   GoogleBinding @relation(fields: [googleBindingId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  meetingId       String? @db.Uuid
+  meeting         LeadMeeting? @relation(fields: [meetingId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  startsAt        DateTime
+  endsAt          DateTime
+  status          SLOT_RESERVATION_STATUS @default(HELD)
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@index([workspaceId, googleBindingId, startsAt, endsAt])
+  @@index([expiresAt, status])
+}
+
+model SheetDestination {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String @db.Uuid
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  googleBindingId String @db.Uuid
+  googleBinding   GoogleBinding @relation(fields: [googleBindingId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  name            String
+  spreadsheetId   String
+  sheetId         Int
+  sheetTitle      String
+  pipelineId      String? @db.Uuid
+  pipeline        LeadPipeline? @relation(fields: [pipelineId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  status          SHEET_DESTINATION_STATUS @default(DRAFT)
+  initialAuthority SHEET_INITIAL_AUTHORITY
+  mappingVersion  Int @default(1)
+  maxManagedRows  Int @default(50000)
+  lastSyncedAt    DateTime?
+  lastErrorCode   String?
+  version         Int @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  mappings        SheetColumnMapping[]
+  rows            SheetRowProjection[]
+  conflicts       SheetSyncConflict[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, spreadsheetId, sheetId])
+  @@index([workspaceId, status])
+}
+
+model SheetColumnMapping {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  destinationId   String @db.Uuid
+  workspaceId     String @db.Uuid
+  destination     SheetDestination @relation(fields: [destinationId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  columnIndex      Int
+  columnName       String
+  fieldKey         String
+  direction        SHEET_MAPPING_DIRECTION
+  transform        String?
+  sensitiveExportApproved Boolean @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  @@unique([destinationId, columnIndex])
+  @@unique([destinationId, fieldKey])
+}
+
+model SheetRowProjection {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String @db.Uuid
+  destinationId   String @db.Uuid
+  destination     SheetDestination @relation(fields: [destinationId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  leadId          String @db.Uuid
+  lead            Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  rowNumber       Int?
+  metadataKey     String
+  leadVersion     Int
+  mappingVersion  Int
+  syncHash        String
+  status          SHEET_ROW_STATUS @default(PENDING)
+  lastSyncedAt    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@unique([destinationId, leadId])
+  @@unique([destinationId, metadataKey])
+  @@index([workspaceId, status])
+}
+
+model SheetSyncConflict {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String @db.Uuid
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  destinationId   String @db.Uuid
+  destination     SheetDestination @relation(fields: [destinationId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  leadId          String? @db.Uuid
+  lead            Lead? @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  fieldKey        String?
+  appValue        Json?
+  sheetValue      Json?
+  appVersion      Int?
+  sheetVersion    Int?
+  status          SHEET_CONFLICT_STATUS @default(OPEN)
+  resolution      Json?
+  resolvedById    String? @db.Uuid
+  resolvedBy      Membership? @relation("SheetConflictResolver", fields: [resolvedById, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  resolvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@index([workspaceId, status, createdAt(sort: Desc)])
+  @@index([destinationId, status])
+}
+
+model IntegrationOperation {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId     String @db.Uuid
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  googleBindingId String? @db.Uuid
+  googleBinding   GoogleBinding? @relation(fields: [googleBindingId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  type            String
+  aggregateType   String
+  aggregateId     String
+  operationKey    String @unique
+  status          INTEGRATION_OPERATION_STATUS @default(PENDING)
+  expectedVersion Int?
+  request         Json?
+  response        Json?
+  lastErrorCode   String?
+  correlationId   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  attempts        IntegrationAttempt[]
+
+  @@index([workspaceId, status, createdAt])
+}
+
+model IntegrationAttempt {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  operationId   String @db.Uuid
+  operation     IntegrationOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  attempt       Int
+  statusCode    Int?
+  providerCode  String?
+  retryable     Boolean @default(false)
+  durationMs    Int?
+  createdAt     DateTime @default(now())
+
+  @@unique([operationId, attempt])
+}
+
+model OutboxEvent {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventId          String @unique @db.Uuid
+  type             String
+  version          Int @default(1)
+  occurredAt       DateTime @default(now())
+  organizationId   String @db.Uuid
+  workspaceId      String @db.Uuid
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  aggregateType    String
+  aggregateId      String @db.Uuid
+  aggregateVersion Int
+  actorType        ACTOR_TYPE
+  actorId          String? @db.Uuid
+  correlationId    String
+  causationId      String?
+  payload          Json
+  status           OUTBOX_STATUS @default(PENDING)
+  attempts         Int @default(0)
+  availableAt      DateTime @default(now())
+  publishedAt      DateTime?
+  lastError        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  @@index([status, availableAt, occurredAt])
+  @@index([workspaceId, occurredAt(sort: Desc)])
+}
+
+model ProcessedEvent {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consumer    String
+  eventId     String @db.Uuid
+  processedAt DateTime @default(now())
+
+  @@unique([consumer, eventId])
+  @@index([processedAt])
+}
+
+model IdempotencyRecord {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId    String @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actorId        String @db.Uuid
+  route          String
+  key            String
+  requestHash    String
+  status         IDEMPOTENCY_STATUS @default(IN_PROGRESS)
+  responseStatus Int?
+  responseBody   Json?
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@unique([workspaceId, actorId, route, key])
+  @@index([expiresAt])
+}
+
+enum API_KEY_STATUS {
+  ACTIVE
+  REVOKED
+}
+
+model WorkspaceApiKey {
+  id                    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId           String @db.Uuid
+  workspace             Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name                  String
+  keyPrefix             String
+  secretHash            String @unique
+  scopes                String[] @default([])
+  status                API_KEY_STATUS @default(ACTIVE)
+  createdByMembershipId String @db.Uuid
+  createdByMembership   Membership @relation(fields: [createdByMembershipId, workspaceId], references: [id, workspaceId], onDelete: Restrict)
+  lastUsedAt            DateTime?
+  expiresAt             DateTime?
+  revokedAt             DateTime?
+  createdAt             DateTime @default(now())
+
+  @@unique([workspaceId, keyPrefix])
+  @@index([workspaceId, status])
 }

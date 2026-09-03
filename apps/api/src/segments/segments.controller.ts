@@ -16,6 +16,8 @@ import { CurrentUser, CurrentWorkspace } from "../auth/decorators";
 import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { SegmentsService } from "./segments.service";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
+import { IdempotentCommand } from "../common/idempotency";
 
 const createSegmentSchema = z.object({
   name: z.string().min(1).max(100),
@@ -38,15 +40,19 @@ const previewQuerySchema = z.object({
 @ApiTags("segments")
 @ApiBearerAuth()
 @Controller("workspaces/:workspaceId/segments")
+@WorkspaceScoped()
 export class SegmentsController {
   constructor(private readonly segments: SegmentsService) {}
 
   @Get()
+  @RequireCapabilities("automations.read")
   list(@CurrentWorkspace() ws: WorkspaceContext) {
     return this.segments.list(ws.id);
   }
 
   @Post()
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   create(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,
@@ -57,11 +63,14 @@ export class SegmentsController {
   }
 
   @Get(":id")
+  @RequireCapabilities("automations.read")
   get(@CurrentWorkspace() ws: WorkspaceContext, @Param("id") id: string) {
     return this.segments.get(ws.id, id);
   }
 
   @Patch(":id")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   update(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,
@@ -73,6 +82,8 @@ export class SegmentsController {
   }
 
   @Delete(":id")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   remove(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,
@@ -82,6 +93,7 @@ export class SegmentsController {
   }
 
   @Get(":id/preview")
+  @RequireCapabilities("automations.read")
   preview(
     @CurrentWorkspace() ws: WorkspaceContext,
     @Param("id") id: string,

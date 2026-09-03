@@ -1,4 +1,5 @@
 import { Logger } from "@nestjs/common";
+import { randomUUID } from "crypto";
 import { InjectQueue, Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job, Queue } from "bullmq";
 import { QUEUES, WS_EVENTS } from "@repo/shared";
@@ -10,6 +11,7 @@ import { IgGraphClient, type IgUserProfile } from "../instagram/ig-graph.client"
 import { METRICS_KEYS, MetricsService } from "../metrics/metrics.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AutomationsExecutorService } from "../automations/automations-executor.service";
+import { LeadCommandService } from "../leads/lead-command.service";
 
 type TriggerSource = "dm" | "comment" | "story_reply";
 
@@ -73,6 +75,7 @@ export class WebhookEventsProcessor extends WorkerHost {
     private readonly flowQueue: Queue<FlowRunJob>,
     private readonly automationsExecutor: AutomationsExecutorService,
     private readonly metrics: MetricsService,
+    private readonly leadCommands: LeadCommandService,
   ) {
     super();
   }
@@ -231,34 +234,15 @@ export class WebhookEventsProcessor extends WorkerHost {
     );
     const isFollow = profile?.isUserFollowBusiness;
 
-    const contact = await this.prisma.contact.upsert({
-      where: {
-        igAccountId_igUserId: {
-          igAccountId: igAccount.id,
-          igUserId: input.senderIgUserId,
-        },
-      },
-      create: {
-        workspaceId: igAccount.workspaceId,
-        igAccountId: igAccount.id,
-        igUserId: input.senderIgUserId,
-        username: input.username ?? profile?.username ?? null,
-        name: profile?.name ?? null,
-        profilePicUrl: profile?.profilePic ?? null,
-        isFollow: isFollow ?? false,
-        ...(opensMessagingWindow ? { lastInboundAt: now } : {}),
-      },
-      update: {
-        ...(opensMessagingWindow ? { lastInboundAt: now } : {}),
-        ...(input.username || profile?.username
-          ? { username: input.username ?? profile?.username }
-          : {}),
-        ...(profile?.name ? { name: profile.name } : {}),
-        ...(profile?.profilePic
-          ? { profilePicUrl: profile.profilePic }
-          : {}),
-        ...(isFollow !== undefined ? { isFollow } : {}),
-      },
+    const contact = await this.leadCommands.upsertInstagramContact({
+      workspaceId: igAccount.workspaceId,
+      igAccountId: igAccount.id,
+      igUserId: input.senderIgUserId,
+      username: input.username ?? profile?.username ?? null,
+      name: profile?.name ?? null,
+      profilePicUrl: profile?.profilePic ?? null,
+      isFollow,
+      ...(opensMessagingWindow ? { lastInboundAt: now } : {}),
     });
 
     const contactFollowsBusiness = isFollow ?? contact.isFollow ?? false;
@@ -315,6 +299,23 @@ export class WebhookEventsProcessor extends WorkerHost {
       throw err;
     }
 
+    await this.leadCommands.capture(igAccount.workspaceId, {
+      identity: {
+        type: "INSTAGRAM",
+        scopeKey: igAccount.id,
+        value: input.senderIgUserId,
+        displayValue: input.username ?? profile?.username,
+      },
+      name: profile?.name,
+      username: input.username ?? profile?.username,
+      source: "INSTAGRAM",
+      attributes: {},
+    }, {
+      actorType: "SYSTEM",
+      correlationId: randomUUID(),
+      causationId: input.mid,
+    });
+
     if (conversation.mode === "BOT" && runFlows) {
       const trigger: FlowRunJob = {
         kind: "trigger",
@@ -330,8 +331,15 @@ export class WebhookEventsProcessor extends WorkerHost {
           ...(input.commentId ? { commentId: input.commentId } : {}),
         },
       };
-      await this.flowQueue.add("trigger", trigger);
-      await this.automationsExecutor.trigger(igAccount, contact, conversation, message, input);
+      const workspace = await this.prisma.workspace.findUniqueOrThrow({
+        where: { id: igAccount.workspaceId },
+        select: { automationEngine: true },
+      });
+      if (workspace.automationEngine === "FLOW") {
+        await this.flowQueue.add("trigger", trigger, { jobId: `flow-trigger:${message.id}` });
+      } else {
+        await this.automationsExecutor.trigger(igAccount, contact, conversation, message, input);
+      }
     }
 
     this.inbox.emitToWorkspace(

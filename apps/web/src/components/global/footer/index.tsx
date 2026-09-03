@@ -43,9 +43,9 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
             <Link href="/" className="inline-block">
-              <GemaiLogo size="sm" />
+              <GemaiLogo size="sm" className="text-white" />
             </Link>
-            <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-white/40">
+            <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-white/60">
               Instagram automation that feels human — for creators and teams who care about every conversation.
             </p>
             <div className="mt-5 flex gap-2">
@@ -55,7 +55,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] text-white/40 transition-colors hover:border-white/20 hover:text-white"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-white/60 transition-colors hover:border-white/40 hover:text-white"
                   aria-label={social.label}
                 >
                   <social.icon className="h-4 w-4" />
@@ -73,7 +73,7 @@ export default function Footer() {
             ] as const
           ).map(([title, links]) => (
             <div key={title}>
-              <h4 className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/30">
+              <h4 className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/60">
                 {title}
               </h4>
               <ul className="mt-4 space-y-2.5">
@@ -92,11 +92,11 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-white/[0.06] pt-8 text-[12px] text-white/25 sm:flex-row sm:items-center">
+        <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-white/[0.06] pt-8 text-[12px] text-white/60 sm:flex-row sm:items-center">
           <p>© {currentYear} Omyra Technologies. All rights reserved.</p>
           <a
             href="mailto:support@gemai.in"
-            className="inline-flex items-center gap-1.5 transition-colors hover:text-white/50"
+            className="inline-flex min-h-11 items-center gap-1.5 transition-colors hover:text-white"
           >
             <Mail className="h-3.5 w-3.5" />
             support@gemai.in

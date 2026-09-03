@@ -8,6 +8,8 @@ import { MessagingService } from "./messaging.service";
 import { RateLimiterService } from "./rate-limiter.service";
 import { SendProcessor } from "./send.processor";
 
+const workerProviders = (process.env.APP_ROLE ?? "api") === "worker" ? [SendProcessor] : [];
+
 @Module({
   imports: [
     BullModule.registerQueue({
@@ -21,7 +23,7 @@ import { SendProcessor } from "./send.processor";
     InboxModule,
   ],
   controllers: [ConversationsController],
-  providers: [MessagingService, SendProcessor, RateLimiterService],
+  providers: [MessagingService, RateLimiterService, ...workerProviders],
   exports: [MessagingService],
 })
 export class MessagingModule {}

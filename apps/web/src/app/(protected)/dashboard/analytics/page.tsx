@@ -12,7 +12,7 @@ const AnalyticsPage = async () => {
     <div className="flex flex-col pb-10">
       <PageHeader
         title="Analytics"
-        description="Track automation performance and engagement metrics."
+        description="Inspect the lead funnel, sales velocity, automation reliability, and integration health."
         icon={<BarChart3 className="h-5 w-5" />}
       />
       <AnalyticsDashboard />

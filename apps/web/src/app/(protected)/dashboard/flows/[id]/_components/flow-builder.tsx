@@ -250,8 +250,9 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      api(wsPath(`/flows/${flow.id}/draft`), {
+      api(wsPath(`/automations/${flow.id}/draft`), {
         method: "PUT",
+        headers: { "If-Match": String(flow.version) },
         body: { definition: toDefinition() },
       }),
     onSuccess: () => {
@@ -266,11 +267,12 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
 
   const publishMutation = useMutation({
     mutationFn: async () => {
-      await api(wsPath(`/flows/${flow.id}/draft`), {
+      const saved = await api<{ version: number }>(wsPath(`/automations/${flow.id}/draft`), {
         method: "PUT",
+        headers: { "If-Match": String(flow.version) },
         body: { definition: toDefinition() },
       });
-      return api(wsPath(`/flows/${flow.id}/publish`), { method: "POST" });
+      return api(wsPath(`/automations/${flow.id}/publish`), { method: "POST", headers: { "If-Match": String(saved.version) } });
     },
     onSuccess: () => {
       toast.success("Flow published");
@@ -298,7 +300,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
 
   const patchMutation = useMutation({
     mutationFn: (body: { name?: string; status?: FlowStatus }) =>
-      api(wsPath(`/flows/${flow.id}`), { method: "PATCH", body }),
+      api(wsPath(`/automations/${flow.id}`), { method: "PATCH", headers: { "If-Match": String(flow.version) }, body }),
     onSuccess: (_data, body) => {
       if (body.status) {
         toast.success(
@@ -315,7 +317,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
 
   const runsQuery = useQuery({
     queryKey: ["flow-runs", workspaceId, flow.id],
-    queryFn: () => api<Page<FlowRun>>(wsPath(`/flows/${flow.id}/runs`)),
+    queryFn: () => api<Page<FlowRun>>(wsPath(`/automations/${flow.id}/runs`)),
     enabled: !!workspaceId && runsOpen,
   });
 
@@ -325,7 +327,7 @@ const BuilderCanvas = ({ flow }: { flow: FlowDetail }) => {
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5">
           <Link
-            href="/dashboard/flows"
+            href={`/dashboard/${workspaceId}/automations`}
             className="text-muted-foreground hover:text-foreground transition-colors duration-quiet"
             aria-label="Back to flows"
           >
@@ -541,7 +543,7 @@ const FlowBuilder = ({ flowId }: { flowId: string }) => {
 
   const flowQuery = useQuery({
     queryKey: ["flow", workspaceId, flowId],
-    queryFn: () => api<FlowDetail>(wsPath(`/flows/${flowId}`)),
+    queryFn: () => api<FlowDetail>(wsPath(`/automations/${flowId}`)),
     enabled: !!workspaceId,
   });
 

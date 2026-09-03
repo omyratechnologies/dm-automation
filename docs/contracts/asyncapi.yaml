@@ -1,0 +1,124 @@
+asyncapi: 3.0.0
+info:
+  title: Gemai Enterprise Domain Events
+  version: 1.0.0
+  description: Identifier-only event and job contracts for the transactional outbox relay.
+defaultContentType: application/json
+channels:
+  domainEvents:
+    address: postgres.outbox
+    messages:
+      domainEvent:
+        $ref: '#/components/messages/DomainEvent'
+  flowRuns:
+    address: flow-runs
+    messages:
+      flowRun:
+        $ref: '#/components/messages/FlowRunJob'
+  googleCalendar:
+    address: google-calendar
+    messages:
+      googleCalendar:
+        $ref: '#/components/messages/GoogleCalendarJob'
+  googleSheets:
+    address: google-sheets
+    messages:
+      googleSheets:
+        $ref: '#/components/messages/GoogleSheetsJob'
+operations:
+  relayDomainEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/domainEvents'
+  consumeCalendarJobs:
+    action: receive
+    channel:
+      $ref: '#/channels/googleCalendar'
+  consumeSheetsJobs:
+    action: receive
+    channel:
+      $ref: '#/channels/googleSheets'
+components:
+  messages:
+    DomainEvent:
+      name: DomainEventEnvelope
+      examples:
+        - name: LeadCaptured
+          payload:
+            eventId: 4f42da11-0f92-4f24-896e-f25cb6df2bca
+            type: LeadCaptured
+            version: 1
+            occurredAt: '2026-09-03T12:00:00.000Z'
+            organizationId: 8db94a2b-2229-45ca-a70b-9eaecf11cc23
+            workspaceId: 886fec7c-d45e-4657-9e8a-a424cc5c8f30
+            aggregateType: Lead
+            aggregateId: dc0300c0-4378-47c7-a62e-a9e8a1d66ed5
+            aggregateVersion: 1
+            actorType: SYSTEM
+            correlationId: ingestion-01J8Y3Q9M3F6X7R2K4P8N1C5VA
+            payload: { leadId: dc0300c0-4378-47c7-a62e-a9e8a1d66ed5, leadVersion: 1 }
+      payload:
+        $ref: '#/components/schemas/DomainEventEnvelope'
+    FlowRunJob:
+      name: FlowRunJob
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind]
+        properties:
+          kind: { type: string, enum: [trigger, resume] }
+          workspaceId: { type: string, format: uuid }
+          flowRunId: { type: string, format: uuid }
+    GoogleCalendarJob:
+      name: GoogleCalendarJob
+      examples:
+        - payload: { eventId: 4f42da11-0f92-4f24-896e-f25cb6df2bca, workspaceId: 886fec7c-d45e-4657-9e8a-a424cc5c8f30, meetingId: 3b590f6a-ecbd-4469-a1d7-92f72169b9a8, operation: CREATE }
+      payload:
+        type: object
+        additionalProperties: false
+        required: [eventId, workspaceId, meetingId, operation]
+        properties:
+          eventId: { type: string, format: uuid }
+          workspaceId: { type: string, format: uuid }
+          meetingId: { type: string, format: uuid }
+          operation: { type: string, enum: [CREATE, UPDATE, CANCEL, RECONCILE, SYNC_CALENDAR] }
+    GoogleSheetsJob:
+      name: GoogleSheetsJob
+      examples:
+        - payload: { eventId: 4f42da11-0f92-4f24-896e-f25cb6df2bca, workspaceId: 886fec7c-d45e-4657-9e8a-a424cc5c8f30, destinationId: 73ce167c-2bf5-4753-b5a0-f152cb540e43, leadId: dc0300c0-4378-47c7-a62e-a9e8a1d66ed5, operation: PROJECT_LEAD }
+      payload:
+        type: object
+        additionalProperties: false
+        required: [eventId, workspaceId, destinationId, operation]
+        properties:
+          eventId: { type: string, format: uuid }
+          workspaceId: { type: string, format: uuid }
+          destinationId: { type: string, format: uuid }
+          leadId: { type: string, format: uuid }
+          operation: { type: string, enum: [PROJECT_LEAD, DRAIN_CHANGES, RECONCILE, REPAIR] }
+  schemas:
+    DomainEventEnvelope:
+      type: object
+      additionalProperties: false
+      required: [eventId, type, version, occurredAt, organizationId, workspaceId, aggregateType, aggregateId, aggregateVersion, actorType, correlationId, payload]
+      properties:
+        eventId: { type: string, format: uuid }
+        type:
+          type: string
+          enum: [LeadCaptured, LeadUpdated, LeadStageChanged, LeadAssigned, LeadScored, LeadMerged, TaskCreated, MeetingConfirmed, MeetingChanged, SheetInboundApplied, SheetConflictDetected, GoogleReauthRequired, AutomationRunStarted, AutomationRunCompleted, AutomationRunFailed]
+        version: { type: integer, minimum: 1 }
+        occurredAt: { type: string, format: date-time }
+        organizationId: { type: string, format: uuid }
+        workspaceId: { type: string, format: uuid }
+        aggregateType: { type: string }
+        aggregateId: { type: string, format: uuid }
+        aggregateVersion: { type: integer, minimum: 1 }
+        actorType: { type: string, enum: [USER, AI, SYSTEM, GOOGLE_SHEET, GOOGLE_CALENDAR] }
+        actorId: { type: string, format: uuid }
+        correlationId: { type: string }
+        causationId: { type: string }
+        payload:
+          type: object
+          description: Identifiers and revisions only; tokens, message text, and exported values are forbidden.
+          additionalProperties:
+            type: [string, number, boolean, 'null']

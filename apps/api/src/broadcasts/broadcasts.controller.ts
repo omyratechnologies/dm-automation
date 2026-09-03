@@ -15,6 +15,8 @@ import { Roles } from "../auth/roles.decorator";
 import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { BroadcastsService } from "./broadcasts.service";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
+import { IdempotentCommand } from "../common/idempotency";
 
 const createBroadcastSchema = z.object({
   name: z.string().min(1).max(100),
@@ -37,15 +39,19 @@ const updateBroadcastSchema = z
 @ApiTags("broadcasts")
 @ApiBearerAuth()
 @Controller("workspaces/:workspaceId/broadcasts")
+@WorkspaceScoped()
 export class BroadcastsController {
   constructor(private readonly broadcasts: BroadcastsService) {}
 
   @Get()
+  @RequireCapabilities("automations.read")
   list(@CurrentWorkspace() ws: WorkspaceContext) {
     return this.broadcasts.list(ws.id);
   }
 
   @Post()
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   create(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,
@@ -61,11 +67,14 @@ export class BroadcastsController {
   }
 
   @Get(":id")
+  @RequireCapabilities("automations.read")
   get(@CurrentWorkspace() ws: WorkspaceContext, @Param("id") id: string) {
     return this.broadcasts.get(ws.id, id);
   }
 
   @Patch(":id")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   update(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,
@@ -78,6 +87,8 @@ export class BroadcastsController {
 
   @Post(":id/send")
   @Roles("ADMIN")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   send(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,
@@ -87,6 +98,8 @@ export class BroadcastsController {
   }
 
   @Post(":id/cancel")
+  @RequireCapabilities("automations.manage")
+  @IdempotentCommand()
   cancel(
     @CurrentUser() user: AuthedRequestUser,
     @CurrentWorkspace() ws: WorkspaceContext,

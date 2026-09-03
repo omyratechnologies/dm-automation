@@ -13,6 +13,7 @@ function makeFixture() {
       create: jest.fn(),
     },
     post: { findFirst: jest.fn().mockResolvedValue(null) },
+    workspace: { findUniqueOrThrow: jest.fn().mockResolvedValue({ automationEngine: "FLOW" }) },
   };
   const inbox = { emitToWorkspace: jest.fn() };
   const graph = {
@@ -27,6 +28,10 @@ function makeFixture() {
   const flowQueue = { add: jest.fn() };
   const automationsExecutor = { trigger: jest.fn().mockResolvedValue(undefined) };
   const metrics = { increment: jest.fn().mockResolvedValue(undefined) };
+  const leadCommands = {
+    capture: jest.fn().mockResolvedValue({ id: "lead-1" }),
+    upsertInstagramContact: jest.fn().mockResolvedValue({ id: "contact-1", isFollow: true }),
+  };
 
   const processor = new WebhookEventsProcessor(
     prisma as never,
@@ -36,9 +41,10 @@ function makeFixture() {
     flowQueue as never,
     automationsExecutor as never,
     metrics as never,
+    leadCommands as never,
   );
 
-  return { processor, prisma, inbox, graph, tokenCrypto, flowQueue, automationsExecutor, metrics };
+  return { processor, prisma, inbox, graph, tokenCrypto, flowQueue, automationsExecutor, metrics, leadCommands };
 }
 
 describe("WebhookEventsProcessor", () => {
@@ -81,7 +87,7 @@ describe("WebhookEventsProcessor", () => {
       workspaceId: "ws-1",
       status: "ACTIVE",
     });
-    f.prisma.contact.upsert.mockResolvedValue({
+    f.leadCommands.upsertInstagramContact.mockResolvedValue({
       id: "contact-1",
     });
     f.prisma.conversation.upsert.mockResolvedValue({
@@ -92,7 +98,7 @@ describe("WebhookEventsProcessor", () => {
 
     await f.processor.process({ data: { webhookEventId: "evt-1" } } as never);
 
-    expect(f.prisma.contact.upsert).toHaveBeenCalled();
+    expect(f.leadCommands.upsertInstagramContact).toHaveBeenCalled();
     expect(f.prisma.message.create).toHaveBeenCalled();
     expect(f.flowQueue.add).toHaveBeenCalledWith(
       "trigger",
@@ -100,6 +106,7 @@ describe("WebhookEventsProcessor", () => {
         kind: "trigger",
         workspaceId: "ws-1",
       }),
+      expect.objectContaining({ jobId: "flow-trigger:msg-1" }),
     );
     expect(f.inbox.emitToWorkspace).toHaveBeenCalledWith(
       "ws-1",
@@ -115,6 +122,21 @@ describe("WebhookEventsProcessor", () => {
     expect(f.metrics.increment).toHaveBeenCalledWith(
       METRICS_KEYS.WEBHOOKS_PROCESSED,
     );
+  });
+
+  it("executes only the legacy engine when the workspace is LEGACY", async () => {
+    const f = makeFixture();
+    f.prisma.workspace.findUniqueOrThrow.mockResolvedValue({ automationEngine: "LEGACY" });
+    f.prisma.webhookEvent.findUnique.mockResolvedValue({ id: "evt-legacy", status: "RECEIVED", payload: { id: "ig-biz", messaging: [{ sender: { id: "ig-contact" }, message: { mid: "mid-legacy", text: "hello" } }] } });
+    f.prisma.igAccount.findUnique.mockResolvedValue({ id: "iga-1", igUserId: "ig-biz", workspaceId: "ws-1", status: "ACTIVE" });
+    f.leadCommands.upsertInstagramContact.mockResolvedValue({ id: "contact-1" });
+    f.prisma.conversation.upsert.mockResolvedValue({ id: "conv-1", mode: "BOT" });
+    f.prisma.message.create.mockResolvedValue({ id: "msg-legacy" });
+
+    await f.processor.process({ data: { webhookEventId: "evt-legacy" } } as never);
+
+    expect(f.automationsExecutor.trigger).toHaveBeenCalledTimes(1);
+    expect(f.flowQueue.add).not.toHaveBeenCalled();
   });
 
   it("skips DM echo (outbound messages)", async () => {
@@ -195,7 +217,7 @@ describe("WebhookEventsProcessor", () => {
       workspaceId: "ws-1",
       status: "ACTIVE",
     });
-    f.prisma.contact.upsert.mockResolvedValue({ id: "contact-1" });
+    f.leadCommands.upsertInstagramContact.mockResolvedValue({ id: "contact-1" });
     f.prisma.conversation.upsert.mockResolvedValue({
       id: "conv-1",
       mode: "BOT",
@@ -305,7 +327,7 @@ describe("WebhookEventsProcessor", () => {
       workspaceId: "ws-1",
       status: "ACTIVE",
     });
-    f.prisma.contact.upsert.mockResolvedValue({ id: "contact-1" });
+    f.leadCommands.upsertInstagramContact.mockResolvedValue({ id: "contact-1" });
     f.prisma.conversation.upsert.mockResolvedValue({
       id: "conv-1",
       mode: "BOT",
@@ -314,18 +336,15 @@ describe("WebhookEventsProcessor", () => {
 
     await f.processor.process({ data: { webhookEventId: "evt-4" } } as never);
 
-    expect(f.prisma.contact.upsert).toHaveBeenCalledWith(
+    expect(f.leadCommands.upsertInstagramContact).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: expect.objectContaining({
-          username: "fan1",
-          name: "Instagram User",
-          profilePicUrl: "https://example.com/avatar.jpg",
-          isFollow: true,
-        }),
-        update: expect.not.objectContaining({ lastInboundAt: expect.anything() }),
+        username: "fan1",
+        name: "Instagram User",
+        profilePicUrl: "https://example.com/avatar.jpg",
+        isFollow: true,
       }),
     );
-    expect(f.prisma.contact.upsert.mock.calls[0][0].create).not.toHaveProperty(
+    expect(f.leadCommands.upsertInstagramContact.mock.calls[0][0]).not.toHaveProperty(
       "lastInboundAt",
     );
     expect(f.flowQueue.add).toHaveBeenCalledWith(
@@ -337,6 +356,7 @@ describe("WebhookEventsProcessor", () => {
           commentId: "cmt-1",
         }),
       }),
+      expect.objectContaining({ jobId: "flow-trigger:msg-1" }),
     );
     expect(f.prisma.message.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -422,7 +442,7 @@ describe("WebhookEventsProcessor", () => {
       workspaceId: "ws-1",
       status: "ACTIVE",
     });
-    f.prisma.contact.upsert.mockResolvedValue({ id: "contact-1" });
+    f.leadCommands.upsertInstagramContact.mockResolvedValue({ id: "contact-1" });
     f.prisma.conversation.upsert.mockResolvedValue({
       id: "conv-1",
       mode: "BOT",
@@ -465,7 +485,7 @@ describe("WebhookEventsProcessor", () => {
 
     await f.processor.process({ data: { webhookEventId: "evt-replay" } } as never);
 
-    expect(f.prisma.contact.upsert).not.toHaveBeenCalled();
+    expect(f.leadCommands.upsertInstagramContact).not.toHaveBeenCalled();
     expect(f.prisma.conversation.upsert).not.toHaveBeenCalled();
     expect(f.prisma.message.create).not.toHaveBeenCalled();
   });

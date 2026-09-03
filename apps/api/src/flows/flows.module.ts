@@ -5,9 +5,15 @@ import { FlowsController } from "./flows.controller";
 import { FlowsService } from "./flows.service";
 import { FlowExecutor } from "./flow-executor";
 import { FlowRunsProcessor } from "./flow-runs.processor";
+import { LeadsModule } from "../leads/leads.module";
+
+const workerProviders = (process.env.APP_ROLE ?? "api") === "worker"
+  ? [FlowExecutor, FlowRunsProcessor]
+  : [];
 
 @Module({
   imports: [
+    LeadsModule,
     // FLOW_RUNS: consumed by FlowRunsProcessor + produced for delayed resumes.
     // SEND_MESSAGES: produced by the executor's send actions.
     BullModule.registerQueue(
@@ -16,6 +22,6 @@ import { FlowRunsProcessor } from "./flow-runs.processor";
     ),
   ],
   controllers: [FlowsController],
-  providers: [FlowsService, FlowExecutor, FlowRunsProcessor],
+  providers: [FlowsService, ...workerProviders],
 })
 export class FlowsModule {}

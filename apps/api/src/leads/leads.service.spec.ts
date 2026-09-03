@@ -4,13 +4,15 @@ import { LeadsService } from "./leads.service";
 function makeFixture() {
   const prisma = {
     leadField: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), upsert: jest.fn() },
-    lead: { findMany: jest.fn(), findFirst: jest.fn(), update: jest.fn(), upsert: jest.fn() },
+    lead: { findMany: jest.fn(), findFirst: jest.fn(), upsert: jest.fn() },
     leadFieldValue: { upsert: jest.fn() },
+    contact: { findFirst: jest.fn() },
   };
 
-  const service = new LeadsService(prisma as never);
+  const commands = { update: jest.fn(), ensureLeadForContact: jest.fn() };
+  const service = new LeadsService(prisma as never, commands as never);
 
-  return { service, prisma };
+  return { service, prisma, commands };
 }
 
 describe("LeadsService", () => {
@@ -63,21 +65,24 @@ describe("LeadsService", () => {
     const f = makeFixture();
     const mockLead = { id: "lead-1", qualifiedAt: null, disqualifiedAt: null };
     f.prisma.lead.findFirst.mockResolvedValue(mockLead as any);
-    f.prisma.lead.update.mockResolvedValue({ id: "lead-1", status: "QUALIFIED" } as any);
+    f.commands.update.mockResolvedValue({ id: "lead-1", status: "QUALIFIED" } as any);
 
     const result = await f.service.updateLead("lead-1", "ws-1", {
       status: "QUALIFIED",
     });
 
-    expect(f.prisma.lead.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "lead-1" },
-        data: expect.objectContaining({
-          status: "QUALIFIED",
-          qualifiedAt: expect.any(Date),
-        }),
-      })
-    );
+    expect(f.commands.update).toHaveBeenCalledWith("ws-1", "lead-1", undefined, { status: "QUALIFIED" }, expect.objectContaining({ actorType: "SYSTEM" }));
     expect(result.status).toBe("QUALIFIED");
+  });
+
+  it("rejects a cross-workspace contact before writing a lead field value", async () => {
+    const f = makeFixture();
+    f.prisma.contact.findFirst.mockResolvedValue(null);
+
+    await expect(f.service.saveLeadFieldValue("foreign-contact", "ws-1", {
+      fieldId: "75db6ce4-ce9c-43dd-aa1e-a2445ee13e23",
+      value: "must-not-write",
+    })).rejects.toThrow(NotFoundException);
+    expect(f.prisma.leadFieldValue.upsert).not.toHaveBeenCalled();
   });
 });

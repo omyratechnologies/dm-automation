@@ -108,7 +108,7 @@ export class AdminService {
     });
 
     // Write audit log entry
-    this.audit.logAdminAction(
+    await this.audit.logAdminAction(
       adminUserId,
       "subscription_override",
       "Organization",
@@ -163,7 +163,7 @@ export class AdminService {
         select: { workspace: { select: { organizationId: true } } },
       });
       if (igAcc) {
-        this.audit.logAdminAction(
+        await this.audit.logAdminAction(
           adminUserId,
           "webhook_retry",
           "WebhookEvent",

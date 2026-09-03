@@ -166,7 +166,7 @@ export class GdprService {
   }
 
   // ---------------------------------------------------------------------
-  // Workspace deletion + analytics
+  // Workspace deletion
   // ---------------------------------------------------------------------
 
   /** Hard-delete a workspace; cascades purge all tenant data. */
@@ -181,7 +181,7 @@ export class GdprService {
     if (!workspace) throw new NotFoundException("Workspace not found");
 
     await this.prisma.workspace.delete({ where: { id: ws.id } });
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       actorUserId: user.id,
       action: "workspace.deleted",
@@ -192,52 +192,4 @@ export class GdprService {
     return { deleted: true };
   }
 
-  async analyticsOverview(workspaceId: string, days: number) {
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const outWindow = {
-      workspaceId,
-      direction: "OUT" as const,
-      createdAt: { gte: since },
-    };
-
-    const [
-      sends,
-      delivered,
-      failed,
-      rejected,
-      inbound,
-      newContacts,
-      activeFlows,
-      broadcasts,
-    ] = await Promise.all([
-      this.prisma.message.count({ where: outWindow }),
-      this.prisma.message.count({ where: { ...outWindow, status: "SENT" } }),
-      this.prisma.message.count({ where: { ...outWindow, status: "FAILED" } }),
-      this.prisma.message.count({
-        where: { ...outWindow, status: "REJECTED" },
-      }),
-      this.prisma.message.count({
-        where: { workspaceId, direction: "IN", createdAt: { gte: since } },
-      }),
-      this.prisma.contact.count({
-        where: { workspaceId, createdAt: { gte: since } },
-      }),
-      this.prisma.flow.count({ where: { workspaceId, status: "ACTIVE" } }),
-      this.prisma.broadcast.count({
-        where: { workspaceId, createdAt: { gte: since } },
-      }),
-    ]);
-
-    return {
-      days,
-      sends,
-      delivered,
-      failed,
-      rejected,
-      inbound,
-      newContacts,
-      activeFlows,
-      broadcasts,
-    };
-  }
 }

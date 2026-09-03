@@ -54,7 +54,7 @@ export interface Subscription {
 
 export interface Integration {
   id: string;
-  name: 'INSTAGRAM' | 'CRM';
+  name: 'INSTAGRAM';
   token: string;
   expiresAt: Date | null;
   instagramId: string | null;
@@ -93,7 +93,6 @@ export interface IntegrationCardProps {
   title: string;
   description: string;
   icon: React.ReactNode;
-  strategy: 'INSTAGRAM' | 'CRM';
 }
 
 export interface MetricsCardProps {

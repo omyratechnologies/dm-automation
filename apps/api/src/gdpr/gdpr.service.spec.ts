@@ -260,39 +260,3 @@ describe("GdprService workspace deletion", () => {
     );
   });
 });
-
-describe("GdprService analytics overview", () => {
-  it("returns the counts shape filtered by workspace", async () => {
-    const f = makeFixture();
-    f.prisma.message.count.mockImplementation(
-      ({ where }: { where: { direction: string; status?: string } }) => {
-        if (where.direction === "IN") return Promise.resolve(7);
-        if (where.status === "SENT") return Promise.resolve(8);
-        if (where.status === "FAILED") return Promise.resolve(1);
-        if (where.status === "REJECTED") return Promise.resolve(2);
-        return Promise.resolve(11); // all OUT in window
-      },
-    );
-
-    const res = await f.service.analyticsOverview("ws-1", 30);
-
-    expect(res).toEqual({
-      days: 30,
-      sends: 11,
-      delivered: 8,
-      failed: 1,
-      rejected: 2,
-      inbound: 7,
-      newContacts: 4,
-      activeFlows: 2,
-      broadcasts: 1,
-    });
-    expect(f.prisma.flow.count).toHaveBeenCalledWith({
-      where: { workspaceId: "ws-1", status: "ACTIVE" },
-    });
-    // Every message count is workspace-scoped.
-    for (const call of f.prisma.message.count.mock.calls) {
-      expect(call[0].where.workspaceId).toBe("ws-1");
-    }
-  });
-});

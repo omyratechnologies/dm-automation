@@ -63,13 +63,13 @@ function ChapterMock({ type }: { type: "inbox" | "flows" | "leads" }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-medium text-white/85">Ananya R.</p>
-            <p className="truncate text-[11px] text-white/35">
+            <p className="truncate text-[11px] text-white/60">
               Do you ship to Bangalore?
             </p>
           </div>
-          <span className="text-[10px] text-white/25">2m</span>
+          <span className="text-[10px] text-white/60">2m</span>
         </div>
-        <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#5B6AF0] px-3.5 py-2.5 text-[12px] text-white">
+        <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#4F5DE0] px-3.5 py-2.5 text-[12px] text-white">
           Yes — Bangalore in 2–3 days. Free over ₹499.
         </div>
         <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/[0.06] px-3.5 py-2.5 text-[12px] text-white/75">
@@ -112,7 +112,7 @@ function ChapterMock({ type }: { type: "inbox" | "flows" | "leads" }) {
           key={col}
           className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2"
         >
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-white/35">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-white/60">
             {col}
           </p>
           <div className="space-y-1.5">
@@ -182,7 +182,7 @@ function Chapter({
     <motion.div
       ref={ref}
       style={{ opacity }}
-      className="grid min-h-[70vh] items-center gap-12 py-16 lg:grid-cols-2 lg:py-24"
+      className="relative grid min-h-[70vh] items-center gap-12 py-16 lg:grid-cols-2 lg:py-24"
     >
       <motion.div
         style={{ y }}
@@ -194,7 +194,7 @@ function Chapter({
         <h3 className="mt-4 whitespace-pre-line text-2xl font-semibold tracking-tight sm:text-3xl sm:leading-snug">
           {chapter.title}
         </h3>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-white/45">
+        <p className="mt-4 max-w-md text-base leading-relaxed text-white/60">
           {chapter.body}
         </p>
         <ul className="mt-8 space-y-3">
@@ -228,7 +228,7 @@ function Chapter({
                 <p className="text-sm font-medium text-white/90">
                   {chapter.eyebrow}
                 </p>
-                <p className="text-xs text-white/30">Live in Gemai</p>
+                <p className="text-xs text-white/60">Live in Gemai</p>
               </div>
             </div>
             <ChapterMock type={chapter.mock} />
@@ -277,14 +277,14 @@ export function ProductChapters() {
         <motion.div
           ref={headerRef}
           style={{ y: headerY, opacity: headerOpacity }}
-          className="mb-8 md:mb-12"
+          className="relative mb-8 md:mb-12"
         >
-          <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+          <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
             Product
           </p>
           <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-[1.1]">
             Built for how conversations
-            <span className="text-white/40"> actually happen.</span>
+            <span className="text-white/60"> actually happen.</span>
           </h2>
         </motion.div>
 

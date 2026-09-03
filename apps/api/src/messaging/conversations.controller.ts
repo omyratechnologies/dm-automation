@@ -14,6 +14,8 @@ import { CurrentUser, CurrentWorkspace } from "../auth/decorators";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { MessagingService } from "./messaging.service";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
+import { IdempotentCommand } from "../common/idempotency";
 
 const listConversationsQuery = z.object({
   status: z.enum(["OPEN", "CLOSED"]).optional(),
@@ -40,6 +42,7 @@ const sendMessageSchema = z.object({
 type SendMessageDto = z.infer<typeof sendMessageSchema>;
 
 @Controller("workspaces/:workspaceId/conversations")
+@WorkspaceScoped()
 export class ConversationsController {
   constructor(
     private readonly messaging: MessagingService,
@@ -47,6 +50,7 @@ export class ConversationsController {
   ) {}
 
   @Get()
+  @RequireCapabilities("leads.read")
   list(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @Query(new ZodValidationPipe(listConversationsQuery))
@@ -56,6 +60,7 @@ export class ConversationsController {
   }
 
   @Get(":id/messages")
+  @RequireCapabilities("leads.read")
   listMessages(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @Param("id") id: string,
@@ -65,6 +70,8 @@ export class ConversationsController {
   }
 
   @Patch(":id")
+  @RequireCapabilities("leads.write")
+  @IdempotentCommand()
   async update(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @CurrentUser() user: AuthedRequestUser,
@@ -77,7 +84,7 @@ export class ConversationsController {
       id,
       body,
     );
-    this.audit.log({
+    await this.audit.log({
       organizationId: workspace.organizationId,
       workspaceId: workspace.id,
       actorUserId: user.id,
@@ -90,6 +97,8 @@ export class ConversationsController {
   }
 
   @Post(":id/messages")
+  @RequireCapabilities("leads.write")
+  @IdempotentCommand()
   async sendMessage(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @CurrentUser() user: AuthedRequestUser,

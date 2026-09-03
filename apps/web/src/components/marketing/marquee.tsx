@@ -22,10 +22,10 @@ export function Marquee({ items, className }: Props) {
         {row.map((item, i) => (
           <span
             key={`${item}-${i}`}
-            className="text-[13px] font-medium tracking-wide text-white/30 whitespace-nowrap"
+            className="whitespace-nowrap text-[13px] font-medium tracking-wide text-white/60"
           >
             {item}
-            <span className="ml-10 text-white/15">·</span>
+            <span aria-hidden="true" className="ml-10 text-white/40">·</span>
           </span>
         ))}
       </div>

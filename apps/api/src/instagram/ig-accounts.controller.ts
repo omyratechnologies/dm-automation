@@ -6,6 +6,8 @@ import { Roles } from "../auth/roles.decorator";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { IgAccountsService } from "./ig-accounts.service";
+import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
+import { IdempotentCommand } from "../common/idempotency";
 
 const connectSchema = z.object({
   code: z.string().min(1),
@@ -13,15 +15,19 @@ const connectSchema = z.object({
 type ConnectDto = z.infer<typeof connectSchema>;
 
 @Controller("workspaces/:workspaceId/ig-accounts")
+@WorkspaceScoped()
 export class IgAccountsController {
   constructor(private readonly igAccounts: IgAccountsService) {}
 
   @Get()
+  @RequireCapabilities("integrations.read")
   list(@CurrentWorkspace() workspace: WorkspaceContext) {
     return this.igAccounts.list(workspace.id);
   }
 
   @Post("connect")
+  @RequireCapabilities("integrations.manage")
+  @IdempotentCommand()
   connect(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @CurrentUser() user: AuthedRequestUser,
@@ -31,6 +37,7 @@ export class IgAccountsController {
   }
 
   @Get(":id")
+  @RequireCapabilities("integrations.read")
   getById(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @Param("id") id: string,
@@ -39,6 +46,7 @@ export class IgAccountsController {
   }
 
   @Get(":id/media")
+  @RequireCapabilities("integrations.read")
   getMedia(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @Param("id") id: string,
@@ -48,6 +56,8 @@ export class IgAccountsController {
 
   @Delete(":id")
   @Roles("ADMIN")
+  @RequireCapabilities("integrations.manage")
+  @IdempotentCommand()
   disconnect(
     @CurrentWorkspace() workspace: WorkspaceContext,
     @CurrentUser() user: AuthedRequestUser,

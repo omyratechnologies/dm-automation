@@ -16,7 +16,9 @@ type Props = {
 const Sheet = ({ children, trigger, className, side }: Props) => {
   return (
     <ShadcnSheet>
-      <SheetTrigger className={className}>{trigger}</SheetTrigger>
+      <SheetTrigger asChild className={className}>
+        {trigger}
+      </SheetTrigger>
       <SheetContent side={side} className="p-0">
         {children}
       </SheetContent>

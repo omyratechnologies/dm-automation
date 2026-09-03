@@ -40,7 +40,7 @@ export function MagneticButton({ href, children, className, variant = "primary" 
 
   const variants = {
     primary:
-      "bg-[#5B6AF0] text-white hover:bg-[#4F5DE0]",
+      "bg-[#4F5DE0] text-white hover:bg-[#4654D1]",
     secondary:
       "border border-white/15 bg-transparent text-white hover:bg-white/5",
     light:

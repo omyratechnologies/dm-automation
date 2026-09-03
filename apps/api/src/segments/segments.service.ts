@@ -45,7 +45,7 @@ export class SegmentsService {
         filter: input.filter as Prisma.InputJsonValue,
       },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,
@@ -72,7 +72,7 @@ export class SegmentsService {
           : {}),
       },
     });
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,
@@ -86,7 +86,7 @@ export class SegmentsService {
   async remove(ws: WorkspaceContext, actorUserId: string, segmentId: string) {
     await this.get(ws.id, segmentId);
     await this.prisma.segment.delete({ where: { id: segmentId } });
-    this.audit.log({
+    await this.audit.log({
       organizationId: ws.organizationId,
       workspaceId: ws.id,
       actorUserId,

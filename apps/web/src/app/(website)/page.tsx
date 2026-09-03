@@ -49,7 +49,7 @@ export default function Home() {
               <div className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 {stat.value}
               </div>
-              <div className="mt-2 text-[13px] text-white/40">{stat.label}</div>
+              <div className="mt-2 text-[13px] text-white/60">{stat.label}</div>
             </Reveal>
           ))}
         </div>
@@ -61,12 +61,12 @@ export default function Home() {
       <section id="features" className="border-t border-white/[0.06] py-28 md:py-36">
         <div className="mx-auto max-w-6xl px-5 lg:px-8">
           <Reveal>
-            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
               Features
             </p>
             <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight sm:text-5xl">
               Everything essential.
-              <span className="text-white/40"> Nothing noisy.</span>
+              <span className="text-white/60"> Nothing noisy.</span>
             </h2>
           </Reveal>
 
@@ -111,7 +111,7 @@ export default function Home() {
                       <Icon className="h-5 w-5" />
                     </div>
                     <h3 className="text-[17px] font-semibold text-white">{f.title}</h3>
-                    <p className="mt-2 text-[14px] leading-relaxed text-white/45">{f.body}</p>
+                    <p className="mt-2 text-[14px] leading-relaxed text-white/60">{f.body}</p>
                   </div>
                 </Reveal>
               );
@@ -124,7 +124,7 @@ export default function Home() {
       <section className="border-t border-white/[0.06] py-28 md:py-36">
         <div className="mx-auto max-w-6xl px-5 lg:px-8">
           <Reveal>
-            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
               Get started
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
@@ -154,7 +154,7 @@ export default function Home() {
                   {s.step}
                 </div>
                 <h3 className="mt-4 text-xl font-semibold text-white">{s.title}</h3>
-                <p className="mt-3 text-[15px] leading-relaxed text-white/45">{s.body}</p>
+                <p className="mt-3 text-[15px] leading-relaxed text-white/60">{s.body}</p>
               </Reveal>
             ))}
           </div>
@@ -165,7 +165,7 @@ export default function Home() {
       <section id="pricing" className="border-t border-white/[0.06] py-28 md:py-36">
         <div className="mx-auto max-w-5xl px-5 lg:px-8">
           <Reveal>
-            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
               Pricing
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
@@ -176,12 +176,12 @@ export default function Home() {
           <div className="mt-16 grid gap-4 md:grid-cols-2">
             <Reveal>
               <div className="flex h-full flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8">
-                <p className="text-[13px] font-medium text-white/40">Starter</p>
+                <p className="text-[13px] font-medium text-white/60">Starter</p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-4xl font-semibold tracking-tight">₹0</span>
-                  <span className="text-white/35">/month</span>
+                  <span className="text-white/60">/month</span>
                 </div>
-                <p className="mt-2 text-[15px] text-white/40">Perfect for getting started.</p>
+                <p className="mt-2 text-[15px] text-white/60">Perfect for getting started.</p>
                 <ul className="mt-8 flex-1 space-y-3">
                   {[
                     "200 automated responses / month",
@@ -208,15 +208,15 @@ export default function Home() {
 
             <Reveal delay={100}>
               <div className="relative flex h-full flex-col rounded-2xl border border-[#5B6AF0]/40 bg-[#5B6AF0]/[0.06] p-8">
-                <div className="absolute -top-3 left-8 rounded-full bg-[#5B6AF0] px-3 py-0.5 text-[11px] font-medium text-white">
+                <div className="absolute -top-3 left-8 rounded-full bg-[#4F5DE0] px-3 py-0.5 text-[11px] font-medium text-white">
                   Most popular
                 </div>
-                <p className="text-[13px] font-medium text-white/40">Pro</p>
+                <p className="text-[13px] font-medium text-white/60">Pro</p>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-4xl font-semibold tracking-tight">₹999</span>
-                  <span className="text-white/35">/month</span>
+                  <span className="text-white/60">/month</span>
                 </div>
-                <p className="mt-2 text-[15px] text-white/40">For growing brands and teams.</p>
+                <p className="mt-2 text-[15px] text-white/60">For growing brands and teams.</p>
                 <ul className="mt-8 flex-1 space-y-3">
                   {[
                     "Unlimited automated responses",
@@ -235,7 +235,7 @@ export default function Home() {
                 </ul>
                 <Button
                   asChild
-                  className="mt-8 h-11 w-full rounded-full bg-[#5B6AF0] font-medium text-white hover:bg-[#4F5DE0]"
+                  className="mt-8 h-11 w-full rounded-full bg-[#4F5DE0] font-medium text-white hover:bg-[#4654D1]"
                 >
                   <Link href="/sign-in">Start 14-day trial</Link>
                 </Button>
@@ -249,7 +249,7 @@ export default function Home() {
       <section className="border-t border-white/[0.06] py-28 md:py-36">
         <div className="mx-auto max-w-6xl px-5 lg:px-8">
           <Reveal>
-            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
               Voices
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
@@ -288,7 +288,7 @@ export default function Home() {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-white">{t.name}</div>
-                      <div className="text-xs text-white/35">{t.handle}</div>
+                      <div className="text-xs text-white/60">{t.handle}</div>
                     </div>
                   </figcaption>
                 </figure>
@@ -302,7 +302,7 @@ export default function Home() {
       <section id="faq" className="border-t border-white/[0.06] py-28 md:py-36">
         <div className="mx-auto max-w-3xl px-5 lg:px-8">
           <Reveal>
-            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+            <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
               FAQ
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
@@ -341,7 +341,7 @@ export default function Home() {
                   <AccordionTrigger className="text-left text-[15px] font-medium text-white hover:no-underline hover:text-white/80">
                     {item.q}
                   </AccordionTrigger>
-                  <AccordionContent className="text-[15px] leading-relaxed text-white/45">
+                  <AccordionContent className="text-[15px] leading-relaxed text-white/60">
                     {item.a}
                   </AccordionContent>
                 </AccordionItem>
@@ -361,9 +361,9 @@ export default function Home() {
             <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl sm:leading-[1.1]">
               Your inbox,
               <br />
-              <span className="text-white/40">on autopilot.</span>
+              <span className="text-white/60">on autopilot.</span>
             </h2>
-            <p className="mx-auto mt-6 max-w-lg text-lg text-white/45">
+            <p className="mx-auto mt-6 max-w-lg text-lg text-white/60">
               Join teams and creators who let Gemai handle the noise — so they can focus on the work that matters.
             </p>
             <div className="mt-10">
@@ -372,7 +372,7 @@ export default function Home() {
                 <ArrowRight className="h-4 w-4" />
               </MagneticButton>
             </div>
-            <p className="mt-5 text-[13px] text-white/30">
+            <p className="mt-5 text-[13px] text-white/60">
               No credit card · 14-day Pro trial · Cancel anytime
             </p>
           </Reveal>

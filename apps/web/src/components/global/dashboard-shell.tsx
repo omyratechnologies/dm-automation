@@ -38,6 +38,7 @@ const DashboardShell = ({ sidebar, header, children }: Props) => {
 
   return (
     <div className="min-h-screen bg-background">
+      <a href="#workspace-main" className="sr-only z-[100] rounded-md bg-background px-4 py-3 text-sm font-medium focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:ring-2 focus:ring-ring">Skip to workspace content</a>
       {sidebar}
 
       <div
@@ -52,7 +53,7 @@ const DashboardShell = ({ sidebar, header, children }: Props) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
+        <main id="workspace-main" className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-[1400px]">{children}</div>
         </main>
       </div>

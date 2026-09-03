@@ -40,11 +40,6 @@ export function ProductStage() {
     [0, 0.35, 1],
     isReduced ? [1, 1, 1] : [0.92, 1, 0.98]
   );
-  const opacity = useTransform(
-    smooth,
-    [0, 0.15, 0.85, 1],
-    isReduced ? [1, 1, 1, 1] : [0.35, 1, 1, 0.75]
-  );
   const glow = useTransform(smooth, [0, 0.45, 1], [0.12, 0.32, 0.1]);
 
   return (
@@ -57,16 +52,16 @@ export function ProductStage() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="mb-10 max-w-2xl"
         >
-          <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/35">
+          <p className="text-[12px] font-medium uppercase tracking-[0.28em] text-white/60">
             Product
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             Design the journey.
-            <span className="text-white/40"> Watch it run.</span>
+            <span className="text-white/60"> Watch it run.</span>
           </h2>
         </motion.div>
 
-        <motion.div ref={ref} style={{ y, scale, opacity }} className="relative">
+        <motion.div ref={ref} style={{ y, scale }} className="relative">
           <motion.div
             aria-hidden
             style={{ opacity: glow }}
@@ -79,7 +74,7 @@ export function ProductStage() {
               <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
               <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
               <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
-              <span className="ml-3 text-[11px] text-white/30">
+              <span aria-hidden="true" className="ml-3 text-[11px] text-white/60">
                 gemai · flow builder
               </span>
             </div>
@@ -103,7 +98,7 @@ export function ProductStage() {
             </div>
           </div>
 
-          <p className="mt-5 text-center text-[13px] text-white/30">
+          <p className="mt-5 text-center text-[13px] text-white/60">
             Triggers → Instant DMs → Questions → Capture details — one visual canvas
           </p>
         </motion.div>
