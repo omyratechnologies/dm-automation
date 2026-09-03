@@ -72,7 +72,7 @@ export class CalendarService {
   }
 
   async availability(booking: { workspaceId: string; meetingTypeId: string }, fromIso?: string) {
-    const type = await this.prisma.meetingType.findUnique({ where: { id_workspaceId: { id: booking.meetingTypeId, workspaceId: booking.workspaceId } }, include: { calendarPool: { include: { members: { where: { enabled: true } } } } } });
+    const type = await this.prisma.meetingType.findUnique({ where: { id_workspaceId: { id: booking.meetingTypeId, workspaceId: booking.workspaceId } }, include: { calendarPool: { include: { members: { where: { enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } } } } } });
     if (!type?.active) throw new ProblemException(HttpStatus.NOT_FOUND, "BOOKING_RESOURCE_NOT_FOUND", "Meeting type unavailable", "This meeting type is not active");
     const now = DateTime.utc();
     const start = fromIso ? DateTime.fromISO(fromIso, { zone: type.timezone }).startOf("day") : now.setZone(type.timezone).startOf("day");
@@ -137,7 +137,7 @@ export class CalendarService {
     const startsAt = new Date(startsAtIso);
     const endsAt = new Date(startsAt.getTime() + meeting.meetingType.durationMinutes * 60_000);
     if (startsAt.getTime() < Date.now() + meeting.meetingType.minimumNoticeMinutes * 60_000 || startsAt.getTime() > Date.now() + meeting.meetingType.bookingHorizonDays * 86_400_000) throw new ProblemException(HttpStatus.UNPROCESSABLE_ENTITY, "SLOT_UNAVAILABLE", "Slot unavailable", "The slot is outside the booking window");
-    const host = await this.prisma.calendarPoolMember.findFirst({ where: { workspaceId, poolId: meeting.meetingType.calendarPoolId, membershipId: meeting.hostMembershipId, enabled: true } });
+    const host = await this.prisma.calendarPoolMember.findFirst({ where: { workspaceId, poolId: meeting.meetingType.calendarPoolId, membershipId: meeting.hostMembershipId, enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } });
     if (!host) throw new ProblemException(HttpStatus.CONFLICT, "HOST_UNAVAILABLE", "Host unavailable", "The assigned host is no longer eligible");
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -185,10 +185,10 @@ export class CalendarService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "CalendarPool" WHERE "id" = ${poolId}::uuid AND "workspaceId" = ${workspaceId}::uuid FOR UPDATE`;
       if (ownerMembershipId) {
-        const owner = await tx.calendarPoolMember.findFirst({ where: { workspaceId, poolId, membershipId: ownerMembershipId, enabled: true, googleBinding: { status: "ACTIVE" } } });
+        const owner = await tx.calendarPoolMember.findFirst({ where: { workspaceId, poolId, membershipId: ownerMembershipId, enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } });
         if (owner) return owner;
       }
-      const member = await tx.calendarPoolMember.findFirst({ where: { workspaceId, poolId, enabled: true, googleBinding: { status: "ACTIVE" } }, orderBy: [{ lastAssignedSequence: "asc" }, { id: "asc" }] });
+      const member = await tx.calendarPoolMember.findFirst({ where: { workspaceId, poolId, enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } }, orderBy: [{ lastAssignedSequence: "asc" }, { id: "asc" }] });
       if (!member) return null;
       const pool = await tx.calendarPool.update({ where: { id_workspaceId: { id: poolId, workspaceId } }, data: { routingCursor: { increment: 1 } } });
       return tx.calendarPoolMember.update({ where: { id: member.id }, data: { lastAssignedSequence: pool.routingCursor } });

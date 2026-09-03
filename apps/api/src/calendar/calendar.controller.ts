@@ -1,11 +1,14 @@
 import { Body, Controller, Get, Headers, HttpStatus, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
+import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { Queue } from "bullmq";
 import { createHash, randomUUID, timingSafeEqual } from "crypto";
+import { z } from "zod";
 import { QUEUES, type GoogleCalendarJob } from "@repo/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import type { Request } from "express";
-import { CurrentWorkspace } from "../auth/decorators";
+import { CurrentUser, CurrentWorkspace } from "../auth/decorators";
+import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
 import { RequireCapabilities, WorkspaceScoped } from "../auth/capabilities.decorator";
 import type { WorkspaceContext } from "../auth/workspace.guard";
 import { Public } from "../auth/public.decorator";
@@ -20,15 +23,74 @@ import {
   createCalendarPoolSchema, CreateCalendarPoolDto,
   createMeetingTypeSchema, CreateMeetingTypeDto,
   rescheduleMeetingSchema, RescheduleMeetingDto,
+  sendMeetingInvitationSchema, SendMeetingInvitationDto,
 } from "./calendar.dto";
 import { ProblemException } from "../common/problem-details";
 import { FeatureFlag } from "../common/feature-flag";
+import { MeetingInvitationService } from "./meeting-invitation.service";
+
+const meetingInvitationOptionsQuerySchema = z.object({ conversationId: z.string().uuid() }).strict();
+type MeetingInvitationOptionsQuery = z.infer<typeof meetingInvitationOptionsQuerySchema>;
 
 @Controller("workspaces/:workspaceId/calendar")
 @WorkspaceScoped()
 @FeatureFlag("FEATURE_GOOGLE_CALENDAR")
 export class CalendarController {
-  constructor(private readonly calendar: CalendarService) {}
+  constructor(
+    private readonly calendar: CalendarService,
+    private readonly meetingInvitations: MeetingInvitationService,
+  ) {}
+
+  @Get("meeting-invitation-options")
+  @RequireCapabilities("leads.write", "calendar.read")
+  @ApiOperation({ summary: "List eligible leads and meeting types for an Inbox invitation" })
+  @ApiQuery({ name: "conversationId", required: true, format: "uuid" })
+  @ApiOkResponse({ description: "Eligible meeting invitation options and messaging-window status" })
+  @ApiResponse({ status: 404, description: "Conversation not found in this workspace" })
+  invitationOptions(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @Query(new ZodValidationPipe(meetingInvitationOptionsQuerySchema)) query: MeetingInvitationOptionsQuery,
+  ) {
+    return this.meetingInvitations.options(workspace.id, query.conversationId);
+  }
+
+  @Post("meeting-invitations")
+  @RequireCapabilities("leads.write", "calendar.read")
+  @IdempotentCommand()
+  @ApiOperation({ summary: "Create a secure booking link and queue it as an Inbox message" })
+  @ApiHeader({ name: "Idempotency-Key", required: true, description: "Unique retry key for this command" })
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["conversationId", "leadId", "meetingTypeId"],
+      properties: {
+        conversationId: { type: "string", format: "uuid" },
+        leadId: { type: "string", format: "uuid" },
+        meetingTypeId: { type: "string", format: "uuid" },
+        expiresInDays: { type: "integer", minimum: 1, maximum: 30, default: 7 },
+        introduction: { type: "string", minLength: 1, maxLength: 600 },
+      },
+    },
+  })
+  @ApiOkResponse({ description: "Booking link and outbound Inbox message created" })
+  @ApiResponse({ status: 409, description: "The Instagram human-agent messaging window has expired" })
+  @ApiResponse({ status: 422, description: "The selected lead or meeting type is unavailable" })
+  sendInvitation(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @CurrentUser() user: AuthedRequestUser,
+    @Req() request: Request,
+    @Body(new ZodValidationPipe(sendMeetingInvitationSchema)) body: SendMeetingInvitationDto,
+  ) {
+    const { conversationId, ...input } = body;
+    return this.meetingInvitations.send(
+      workspace.id,
+      workspace.organizationId,
+      user.id,
+      conversationId,
+      input,
+      String(request.headers["x-correlation-id"] ?? randomUUID()),
+    );
+  }
 
   @Get("pools") @RequireCapabilities("calendar.read")
   list(@CurrentWorkspace() workspace: WorkspaceContext) { return this.calendar.list(workspace.id); }

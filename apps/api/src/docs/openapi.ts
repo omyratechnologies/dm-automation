@@ -42,7 +42,8 @@ export function buildOpenApiDocuments(app: INestApplication): { internal: OpenAP
         : path.includes("/audit") ? "audit.read"
           : path.includes("/leads") || path.includes("/contacts") || path.includes("/conversations") ? (mutable ? "leads.write" : "leads.read")
             : path.includes("/automations") || path.includes("/flows") || path.includes("/segments") || path.includes("/broadcasts") ? (mutable ? "automations.manage" : "automations.read")
-              : path.includes("/calendar") || path.includes("booking-links") ? (mutable ? "calendar.manage" : "calendar.read")
+              : path.includes("meeting-invitations") || path.includes("meeting-invitation-options") ? "leads.write,calendar.read"
+                : path.includes("/calendar") || path.includes("booking-links") ? (mutable ? "calendar.manage" : "calendar.read")
           : path.includes("/sheets") ? (mutable ? "sheets.manage" : "sheets.read")
                 : path.includes("/google") || path.includes("/ig-accounts") ? (mutable ? "integrations.manage" : "integrations.read")
                   : "workspace.access";
@@ -54,7 +55,7 @@ export function buildOpenApiDocuments(app: INestApplication): { internal: OpenAP
           ? new Set(["hub.mode", "hub.verify_token", "hub.challenge"])
           : new Set<string>();
       for (const parameter of parameters) {
-        if (parameter.in === "query") parameter.required = requiredQueries.has(String(parameter.name));
+        if (parameter.in === "query") parameter.required = parameter.required === true || requiredQueries.has(String(parameter.name));
       }
       for (const name of Array.from(path.matchAll(/\{([^}]+)\}/g), (match) => match[1])) {
         if (!parameters.some((parameter) => parameter.in === "path" && parameter.name === name)) {

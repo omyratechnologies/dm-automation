@@ -25,6 +25,11 @@ channels:
     messages:
       googleSheets:
         $ref: '#/components/messages/GoogleSheetsJob'
+  sendMessages:
+    address: send-messages
+    messages:
+      sendMessage:
+        $ref: '#/components/messages/SendMessageJob'
 operations:
   relayDomainEvents:
     action: receive
@@ -38,6 +43,10 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/googleSheets'
+  consumeMessageJobs:
+    action: receive
+    channel:
+      $ref: '#/channels/sendMessages'
 components:
   messages:
     DomainEvent:
@@ -96,6 +105,23 @@ components:
           destinationId: { type: string, format: uuid }
           leadId: { type: string, format: uuid }
           operation: { type: string, enum: [PROJECT_LEAD, DRAIN_CHANGES, RECONCILE, REPAIR] }
+    SendMessageJob:
+      name: SendMessageJob
+      description: Provider delivery job hydrated by the relay from an identifier-only MessageQueued event.
+      examples:
+        - payload: { workspaceId: 886fec7c-d45e-4657-9e8a-a424cc5c8f30, igAccountId: 9dbd28af-bdf0-4998-863c-53a43e43c936, contactId: 0a658318-bb97-4094-bb07-ca218a57f8d4, messageId: 82609420-5db1-41f2-899d-d667fd47c8eb, text: 'Choose your time: https://gemai.example/book/example#secret', source: AGENT, humanAgent: true }
+      payload:
+        type: object
+        additionalProperties: false
+        required: [workspaceId, igAccountId, contactId, messageId, text, source]
+        properties:
+          workspaceId: { type: string, format: uuid }
+          igAccountId: { type: string, format: uuid }
+          contactId: { type: string, format: uuid }
+          messageId: { type: string, format: uuid }
+          text: { type: string, minLength: 1 }
+          source: { type: string, enum: [FLOW, BROADCAST, AGENT, AI] }
+          humanAgent: { type: boolean }
   schemas:
     DomainEventEnvelope:
       type: object
@@ -105,7 +131,7 @@ components:
         eventId: { type: string, format: uuid }
         type:
           type: string
-          enum: [LeadCaptured, LeadUpdated, LeadStageChanged, LeadAssigned, LeadScored, LeadMerged, TaskCreated, MeetingConfirmed, MeetingChanged, SheetInboundApplied, SheetConflictDetected, GoogleReauthRequired, AutomationRunStarted, AutomationRunCompleted, AutomationRunFailed]
+          enum: [LeadCaptured, LeadUpdated, LeadStageChanged, LeadAssigned, LeadScored, LeadMerged, TaskCreated, MeetingConfirmed, MeetingChanged, SheetInboundApplied, SheetConflictDetected, GoogleReauthRequired, AutomationRunStarted, AutomationRunCompleted, AutomationRunFailed, MessageQueued]
         version: { type: integer, minimum: 1 }
         occurredAt: { type: string, format: date-time }
         organizationId: { type: string, format: uuid }

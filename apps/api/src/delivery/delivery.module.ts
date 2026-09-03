@@ -10,6 +10,13 @@ import { ProcessedEventService } from "./processed-event.service";
   imports: [
     BullModule.registerQueue({ name: QUEUES.GOOGLE_CALENDAR }),
     BullModule.registerQueue({ name: QUEUES.GOOGLE_SHEETS }),
+    BullModule.registerQueue({
+      name: QUEUES.SEND_MESSAGES,
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: { type: "exponential", delay: 30_000 },
+      },
+    }),
   ],
   providers: [OutboxService, ProcessedEventService, OutboxRelayService],
   exports: [OutboxService, ProcessedEventService],

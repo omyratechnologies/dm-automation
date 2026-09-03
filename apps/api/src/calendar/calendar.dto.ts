@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { meetingTypeSchema } from "@repo/shared";
+import { meetingTypeSchema, sendMeetingInvitationSchema } from "@repo/shared";
 
 export const createCalendarPoolSchema = z.object({ name: z.string().trim().min(1).max(120) });
 export const addCalendarPoolMemberSchema = z.object({
@@ -22,3 +22,5 @@ export type CreateMeetingTypeDto = z.infer<typeof createMeetingTypeSchema>;
 export type CreateBookingLinkDto = z.infer<typeof createBookingLinkSchema>;
 export type BookMeetingDto = z.infer<typeof bookMeetingSchema>;
 export type RescheduleMeetingDto = z.infer<typeof rescheduleMeetingSchema>;
+export { sendMeetingInvitationSchema };
+export type SendMeetingInvitationDto = z.infer<typeof sendMeetingInvitationSchema>;

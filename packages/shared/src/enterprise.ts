@@ -9,6 +9,11 @@ export const stableErrorCodes = [
   "SHEET_SYNC_CONFLICT",
   "SLOT_UNAVAILABLE",
   "BOOKING_TOKEN_EXPIRED",
+  "BOOKING_RESOURCE_NOT_FOUND",
+  "CONVERSATION_NOT_FOUND",
+  "MEETING_INVITATION_LEAD_INVALID",
+  "MEETING_TYPE_UNAVAILABLE",
+  "MESSAGING_WINDOW_EXPIRED",
   "GOOGLE_REAUTH_REQUIRED",
   "GOOGLE_SCOPE_MISSING",
   "GOOGLE_RATE_LIMITED",
@@ -39,6 +44,7 @@ export const domainEventTypes = [
   "AutomationRunStarted",
   "AutomationRunCompleted",
   "AutomationRunFailed",
+  "MessageQueued",
 ] as const;
 export type DomainEventType = (typeof domainEventTypes)[number];
 
@@ -141,6 +147,15 @@ export const meetingTypeSchema = z.object({
   availabilityRules: z.record(z.unknown()),
 }).strict();
 export type MeetingType = z.infer<typeof meetingTypeSchema>;
+
+export const sendMeetingInvitationSchema = z.object({
+  conversationId: z.string().uuid(),
+  leadId: z.string().uuid(),
+  meetingTypeId: z.string().uuid(),
+  expiresInDays: z.number().int().min(1).max(30).default(7),
+  introduction: z.string().trim().min(1).max(600).optional(),
+}).strict();
+export type SendMeetingInvitation = z.infer<typeof sendMeetingInvitationSchema>;
 
 export const googleBindingSchema = z.object({
   id: z.string().uuid(),

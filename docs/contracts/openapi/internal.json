@@ -7,7 +7,7 @@
         "parameters": [
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -5764,7 +5764,7 @@
         "parameters": [
           {
             "name": "status",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -5772,7 +5772,7 @@
           },
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -5780,7 +5780,7 @@
           },
           {
             "name": "limit",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -5788,7 +5788,7 @@
           },
           {
             "name": "search",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -5796,7 +5796,7 @@
           },
           {
             "name": "pipelineId",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -5804,7 +5804,7 @@
           },
           {
             "name": "view",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -6141,7 +6141,7 @@
         "parameters": [
           {
             "name": "status",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -6149,7 +6149,7 @@
           },
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -6157,7 +6157,7 @@
           },
           {
             "name": "limit",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -6165,7 +6165,7 @@
           },
           {
             "name": "search",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -6173,7 +6173,7 @@
           },
           {
             "name": "pipelineId",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -6181,7 +6181,7 @@
           },
           {
             "name": "view",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -18085,7 +18085,7 @@
           },
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -18261,7 +18261,7 @@
           },
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -24562,6 +24562,422 @@
         "x-required-permission": "integrations.read"
       }
     },
+    "/v1/workspaces/{workspaceId}/calendar/meeting-invitation-options": {
+      "get": {
+        "operationId": "CalendarController_invitationOptions",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eligible meeting invitation options and messaging-window status",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found in this workspace",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 404,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List eligible leads and meeting types for an Inbox invitation",
+        "tags": [
+          "Calendar"
+        ],
+        "description": "List eligible leads and meeting types for an Inbox invitation in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "leads.write,calendar.read"
+      }
+    },
+    "/v1/workspaces/{workspaceId}/calendar/meeting-invitations": {
+      "post": {
+        "operationId": "CalendarController_sendInvitation",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Unique retry key for this command",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "conversationId",
+                  "leadId",
+                  "meetingTypeId"
+                ],
+                "properties": {
+                  "conversationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "leadId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "meetingTypeId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "expiresInDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 30,
+                    "default": 7
+                  },
+                  "introduction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 600
+                  }
+                }
+              },
+              "example": {
+                "example": "See the request schema for accepted fields"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking link and outbound Inbox message created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 400,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 403,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The Instagram human-agent messaging window has expired",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 409,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 412,
+                  "code": "VERSION_CONFLICT",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The selected lead or meeting type is unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 422,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 428,
+                  "code": "PRECONDITION_REQUIRED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 429,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Stable problem response",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                },
+                "example": {
+                  "type": "https://docs.gemai.app/problems/request-failed",
+                  "title": "Request failed",
+                  "status": 500,
+                  "code": "REQUEST_FAILED",
+                  "detail": "The command could not be completed",
+                  "correlationId": "4f42da11-0f92-4f24-896e-f25cb6df2bca"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a secure booking link and queue it as an Inbox message",
+        "tags": [
+          "Calendar"
+        ],
+        "description": "Create a secure booking link and queue it as an Inbox message in the selected workspace. Errors use stable application/problem+json codes.",
+        "x-required-permission": "leads.write,calendar.read"
+      }
+    },
     "/v1/workspaces/{workspaceId}/calendar/pools": {
       "get": {
         "operationId": "CalendarController_list",
@@ -24897,7 +25313,7 @@
         "parameters": [
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -24905,7 +25321,7 @@
           },
           {
             "name": "limit",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -26310,7 +26726,7 @@
         "parameters": [
           {
             "name": "from",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -28566,7 +28982,7 @@
           },
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -28574,7 +28990,7 @@
           },
           {
             "name": "limit",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -28742,7 +29158,7 @@
         "parameters": [
           {
             "name": "cursor",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -28750,7 +29166,7 @@
           },
           {
             "name": "limit",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"
@@ -29272,7 +29688,7 @@
         "parameters": [
           {
             "name": "days",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "number"

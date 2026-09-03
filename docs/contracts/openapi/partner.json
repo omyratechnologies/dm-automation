@@ -178,7 +178,7 @@
         "parameters": [
           {
             "name": "from",
-            "required": false,
+            "required": true,
             "in": "query",
             "schema": {
               "type": "string"

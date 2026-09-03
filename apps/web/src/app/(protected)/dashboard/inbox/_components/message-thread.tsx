@@ -25,6 +25,7 @@ import { AlertTriangle, Bot, Send, UserRound, ArrowLeft } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { initialsOf } from "./conversation-list";
+import MeetingInviteDialog from "./meeting-invite-dialog";
 
 type Props = {
   conversation: Conversation;
@@ -351,6 +352,10 @@ const MessageThread = ({ conversation, members, onBack }: Props) => {
       {/* Composer */}
       <div className="p-3 border-t border-border">
         <div className="flex items-end gap-2">
+          <MeetingInviteDialog
+            conversationId={conversation.id}
+            contactName={conversation.contact.name ?? `@${conversation.contact.username}`}
+          />
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

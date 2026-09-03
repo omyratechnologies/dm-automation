@@ -7,6 +7,7 @@ import { Queue } from "bullmq";
 import { QUEUES, WS_EVENTS } from "@repo/shared";
 import type { SendMessageJob } from "@repo/shared";
 import type { CONVERSATION_MODE, CONVERSATION_STATUS } from "@prisma/client";
+import type { Message, Prisma } from "@prisma/client";
 import { InboxGateway } from "../inbox/inbox.gateway";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -49,17 +50,7 @@ export class MessagingService {
    * only sanctioned way to send — the SendProcessor enforces windows/limits.
    */
   async createAndQueueSend(params: CreateAndQueueSendParams) {
-    const message = await this.prisma.message.create({
-      data: {
-        workspaceId: params.workspaceId,
-        conversationId: params.conversationId,
-        direction: "OUT",
-        source: params.source,
-        text: params.text,
-        status: "QUEUED",
-        sentById: params.sentById ?? null,
-      },
-    });
+    const message = await this.createQueuedMessage(this.prisma, params);
 
     const job: SendMessageJob = {
       workspaceId: params.workspaceId,
@@ -78,14 +69,31 @@ export class MessagingService {
         ? { replyToCommentId: params.replyToCommentId }
         : {}),
     };
-    await this.sendQueue.add("send", job);
+    await this.sendQueue.add("send", job, { jobId: `send-message:${message.id}` });
 
-    this.inbox.emitToWorkspace(
-      params.workspaceId,
-      WS_EVENTS.MESSAGE_CREATED,
-      message,
-    );
+    this.emitMessageCreated(params.workspaceId, message);
     return message;
+  }
+
+  createQueuedMessage(
+    client: Prisma.TransactionClient | PrismaService,
+    params: Pick<CreateAndQueueSendParams, "workspaceId" | "conversationId" | "text" | "source" | "sentById">,
+  ) {
+    return client.message.create({
+      data: {
+        workspaceId: params.workspaceId,
+        conversationId: params.conversationId,
+        direction: "OUT",
+        source: params.source,
+        text: params.text,
+        status: "QUEUED",
+        sentById: params.sentById ?? null,
+      },
+    });
+  }
+
+  emitMessageCreated(workspaceId: string, message: Message): void {
+    this.inbox.emitToWorkspace(workspaceId, WS_EVENTS.MESSAGE_CREATED, message);
   }
 
   async listConversations(

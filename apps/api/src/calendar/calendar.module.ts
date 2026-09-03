@@ -8,13 +8,15 @@ import { CalendarController, GoogleCalendarWebhookController, PublicBookingContr
 import { CalendarService } from "./calendar.service";
 import { GoogleCalendarProcessor } from "./google-calendar.processor";
 import { CalendarReconciliationService } from "./calendar-reconciliation.service";
+import { MessagingModule } from "../messaging/messaging.module";
+import { MeetingInvitationService } from "./meeting-invitation.service";
 
 const workerProviders = (process.env.APP_ROLE ?? "api") === "worker" && process.env.FEATURE_GOOGLE_CALENDAR === "true" ? [GoogleCalendarProcessor] : [];
 
 @Module({
-  imports: [GoogleModule, LeadsModule, BullModule.registerQueue({ name: QUEUES.GOOGLE_CALENDAR })],
+  imports: [GoogleModule, LeadsModule, MessagingModule, BullModule.registerQueue({ name: QUEUES.GOOGLE_CALENDAR })],
   controllers: [CalendarController, PublicBookingController, GoogleCalendarWebhookController],
-  providers: [CalendarService, BookingLinkGuard, CalendarReconciliationService, ...workerProviders],
+  providers: [CalendarService, MeetingInvitationService, BookingLinkGuard, CalendarReconciliationService, ...workerProviders],
   exports: [CalendarService],
 })
 export class CalendarModule {}

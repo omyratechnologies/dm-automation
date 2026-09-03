@@ -9,6 +9,7 @@ Gemai is the system of record for contact identity, leads, pipelines, qualificat
 | Lead CRM | contacts, identities, leads, pipelines, stages, attributes, tasks, activities, views, consent | Delivery |
 | Automations | flows, immutable versions, runs, qualification policy and decision logs | Lead CRM commands, Delivery |
 | Google Integrations | grants, bindings, watches, Calendar, meetings, booking links, Sheets, conflicts | Lead CRM commands, Delivery |
+| Messaging | conversations and outbound/inbound messages | Google Integrations commands, Delivery |
 | Delivery | outbox, processed events, idempotency, relay, operation attempts | BullMQ and PostgreSQL |
 
 No automation or integration may mutate Lead CRM tables directly. The compatibility `LeadFieldValue` path remains for one release and is tenant-checked.
@@ -24,6 +25,7 @@ One NestJS artifact runs as `APP_ROLE=api|worker|relay`. API receives commands a
 - Calendar FreeBusy is a snapshot. PostgreSQL slot exclusion is authoritative before the final provider recheck.
 - Sheet deletions mark projections `ROW_MISSING`; they never delete leads.
 - Domain events carry identifiers and revisions only.
+- `SendMeetingInvitation` is owned by Google Integrations: it validates the workspace conversation, active Lead and eligible Calendar host, then atomically creates the hash-protected booking link, queued Inbox message, audit record and identifier-only `MessageQueued` event. The relay hydrates the provider job from PostgreSQL after commit.
 
 ## Capacity assumptions
 

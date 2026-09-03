@@ -2,7 +2,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import type { OutboxEvent } from "@prisma/client";
 import { Queue } from "bullmq";
-import { QUEUES } from "@repo/shared";
+import { QUEUES, type SendMessageJob } from "@repo/shared";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -15,6 +15,7 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     @InjectQueue(QUEUES.GOOGLE_CALENDAR) private readonly calendarQueue: Queue,
     @InjectQueue(QUEUES.GOOGLE_SHEETS) private readonly sheetsQueue: Queue,
+    @InjectQueue(QUEUES.SEND_MESSAGES) private readonly messageQueue: Queue<SendMessageJob>,
   ) {}
 
   onModuleInit(): void {
@@ -62,6 +63,34 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
 
   private async publish(event: OutboxEvent): Promise<void> {
     try {
+      if (event.type === "MessageQueued") {
+        const message = await this.prisma.message.findFirst({
+          where: { id: event.aggregateId, workspaceId: event.workspaceId },
+          include: {
+            conversation: {
+              select: { igAccountId: true, contactId: true },
+            },
+          },
+        });
+        if (message?.status === "QUEUED" && message.text) {
+          if (!["FLOW", "BROADCAST", "AGENT", "AI"].includes(message.source)) {
+            throw new Error(`Unsupported outbound message source: ${message.source}`);
+          }
+          await this.messageQueue.add(
+            "send",
+            {
+              workspaceId: event.workspaceId,
+              igAccountId: message.conversation.igAccountId,
+              contactId: message.conversation.contactId,
+              messageId: message.id,
+              text: message.text,
+              source: message.source as SendMessageJob["source"],
+              humanAgent: message.source === "AGENT",
+            },
+            { jobId: `send-messages:${event.eventId}` },
+          );
+        }
+      }
       if (event.type.startsWith("Lead") || event.type.startsWith("Sheet")) {
         const destinations = await this.prisma.sheetDestination.findMany({
           where: {
