@@ -110,6 +110,40 @@ describe("GoogleOAuthService", () => {
     expect(f.audit.logInTransaction).toHaveBeenCalledWith(f.tx, expect.objectContaining({ action: "google.binding.connected", targetId: "binding-1" }));
   });
 
+  it("accepts Google's canonical userinfo.email scope for the requested email shorthand", async () => {
+    const f = fixture();
+    f.prisma.googleOAuthSession.findUnique.mockResolvedValue({
+      id: "session-1", userId: "user-1", workspaceId: "workspace-1", authorizedMembershipId: "member-1",
+      consumedAt: null, expiresAt: new Date(Date.now() + 60_000), codeVerifierEncrypted: "encrypted:verifier",
+      ownership: "MEMBER", capabilities: ["CALENDAR"], requestedScopes: ["openid", "email", ...[
+        "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+        "https://www.googleapis.com/auth/calendar.events.freebusy",
+        "https://www.googleapis.com/auth/calendar.events.owned",
+      ]],
+      returnPath: "/dashboard/workspace-1/integrations",
+    });
+    f.prisma.googleOAuthSession.updateMany.mockResolvedValue({ count: 1 });
+    f.crypto.decrypt.mockReturnValue("verifier");
+    (axios.post as jest.Mock)
+      .mockResolvedValueOnce({ data: {
+        access_token: "access", refresh_token: "refresh", expires_in: 3600,
+        scope: [
+          "openid",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+          "https://www.googleapis.com/auth/calendar.events.freebusy",
+          "https://www.googleapis.com/auth/calendar.events.owned",
+        ].join(" "),
+        id_token: "identity",
+      } })
+      .mockResolvedValueOnce({ data: { sub: "google-sub-1", email: "customer@example.com", aud: "client-id" } });
+
+    await expect(f.service.callback("state", "code")).resolves.toEqual(expect.objectContaining({ bindingId: "binding-1" }));
+    expect(f.tx.googleGrant.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({ scopes: expect.arrayContaining(["https://www.googleapis.com/auth/userinfo.email"]) }),
+    }));
+  });
+
   it("lets a member disconnect only their own Calendar binding", async () => {
     const f = fixture();
     f.tx.googleBinding.findUnique.mockResolvedValue({

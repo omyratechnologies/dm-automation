@@ -17,6 +17,13 @@ const CALENDAR_SCOPES = [
 ];
 const SHEETS_SCOPES = ["https://www.googleapis.com/auth/drive.file"];
 
+// Google may expand the OAuth shorthand scopes in its token response. Treat
+// those canonical URIs as the same grant without weakening capability checks.
+const SCOPE_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  email: ["email", "https://www.googleapis.com/auth/userinfo.email"],
+  profile: ["profile", "https://www.googleapis.com/auth/userinfo.profile"],
+};
+
 interface TokenResponse {
   access_token: string;
   refresh_token?: string;
@@ -139,8 +146,12 @@ export class GoogleOAuthService {
     const tokens = tokenResponse.data;
     const tokenInfo = await axios.post<{ sub: string; email?: string; aud: string }>("https://oauth2.googleapis.com/tokeninfo", new URLSearchParams({ id_token: tokens.id_token }), { headers: { "content-type": "application/x-www-form-urlencoded" }, timeout: 10_000 });
     if (tokenInfo.data.aud !== this.config.get("GOOGLE_CLIENT_ID")) throw new ProblemException(HttpStatus.BAD_REQUEST, "GOOGLE_ACCOUNT_INVALID", "Google identity invalid", "The Google token audience does not match this application");
-    const grantedScopes = (tokens.scope ?? "").split(" ").filter(Boolean);
-    const missing = session.requestedScopes.filter((scope) => !grantedScopes.includes(scope));
+    const grantedScopes = (tokens.scope ?? "").split(/\s+/).filter(Boolean);
+    const grantedScopeSet = new Set(grantedScopes);
+    const missing = session.requestedScopes.filter((scope) => {
+      const acceptedValues = SCOPE_ALIASES[scope] ?? [scope];
+      return !acceptedValues.some((value) => grantedScopeSet.has(value));
+    });
     if (missing.length) throw new ProblemException(HttpStatus.FORBIDDEN, "GOOGLE_SCOPE_MISSING", "Google scope missing", "Google did not grant all requested capabilities");
 
     const workspace = await this.prisma.workspace.findUnique({ where: { id: session.workspaceId }, select: { organizationId: true } });
