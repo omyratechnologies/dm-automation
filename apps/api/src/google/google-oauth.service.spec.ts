@@ -53,7 +53,11 @@ describe("GoogleOAuthService", () => {
     const f = fixture();
     f.prisma.membership.findUnique.mockResolvedValue({ id: "member-1", role: "AGENT", status: "ACTIVE" });
 
-    await expect(f.service.start({ userId: "user-1", workspaceId: "workspace-1", membershipId: "member-1", ownership: "MEMBER", capabilities: ["CALENDAR"], returnPath: "/dashboard/workspace-1/integrations" })).resolves.toEqual(expect.objectContaining({ authorizationUrl: expect.stringContaining("accounts.google.com") }));
+    const result = await f.service.start({ userId: "user-1", workspaceId: "workspace-1", membershipId: "member-1", ownership: "MEMBER", capabilities: ["CALENDAR"], returnPath: "/dashboard/workspace-1/integrations" });
+    const scopes = new URL(result.authorizationUrl).searchParams.get("scope")?.split(" ") ?? [];
+    expect(scopes).toContain("https://www.googleapis.com/auth/calendar.calendarlist.readonly");
+    expect(scopes).toContain("https://www.googleapis.com/auth/calendar.events.freebusy");
+    expect(scopes).toContain("https://www.googleapis.com/auth/calendar.events.owned");
   });
 
   it("rejects inactive members and member-owned Sheets grants", async () => {
