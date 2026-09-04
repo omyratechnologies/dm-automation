@@ -23,6 +23,7 @@ export const CAPABILITIES = [
   "sheets.read",
   "sheets.manage",
   "integrations.read",
+  "integrations.connect",
   "integrations.manage",
   "analytics.read",
   "audit.read",
@@ -33,7 +34,7 @@ export type Capability = (typeof CAPABILITIES)[number];
 export const ROLE_CAPABILITIES: Record<Role, readonly Capability[]> = {
   OWNER: CAPABILITIES,
   ADMIN: CAPABILITIES.filter((capability) => capability !== "workspace.manage"),
-  AGENT: ["leads.read", "leads.write", "leads.assign", "automations.read", "calendar.read", "integrations.read", "analytics.read"],
+  AGENT: ["leads.read", "leads.write", "leads.assign", "automations.read", "calendar.read", "integrations.read", "integrations.connect", "analytics.read"],
 };
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

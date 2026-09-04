@@ -60,6 +60,18 @@ export class CalendarController {
   @ApiOperation({ summary: "Create a secure booking link and queue it as an Inbox message" })
   @ApiHeader({ name: "Idempotency-Key", required: true, description: "Unique retry key for this command" })
   @ApiBody({
+    examples: {
+      default: {
+        summary: "Send a seven-day booking invitation",
+        value: {
+          conversationId: "2b1d89da-4ba8-4faf-a58b-92fb2da9b10a",
+          leadId: "67b924f0-6c9d-4995-ae4d-e1c2f7b23a83",
+          meetingTypeId: "83475ce4-1a1e-44a1-81c3-2b8064127df2",
+          expiresInDays: 7,
+          introduction: "Choose a time that works for you.",
+        },
+      },
+    },
     schema: {
       type: "object",
       required: ["conversationId", "leadId", "meetingTypeId"],

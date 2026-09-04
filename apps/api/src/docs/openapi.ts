@@ -45,12 +45,13 @@ export function buildOpenApiDocuments(app: INestApplication): { internal: OpenAP
               : path.includes("meeting-invitations") || path.includes("meeting-invitation-options") ? "leads.write,calendar.read"
                 : path.includes("/calendar") || path.includes("booking-links") ? (mutable ? "calendar.manage" : "calendar.read")
           : path.includes("/sheets") ? (mutable ? "sheets.manage" : "sheets.read")
-                : path.includes("/google") || path.includes("/ig-accounts") ? (mutable ? "integrations.manage" : "integrations.read")
+                : path.includes("/google/oauth-sessions") || (path.includes("/google/bindings/") && method === "delete") ? "integrations.connect"
+                  : path.includes("/google") || path.includes("/ig-accounts") ? (mutable ? "integrations.manage" : "integrations.read")
                   : "workspace.access";
       operationRecord["x-required-permission"] = permission;
       const parameters = ((operationRecord.parameters ??= []) as Array<Record<string, unknown>>);
       const requiredQueries = path.endsWith("/google/oauth/callback")
-        ? new Set(["state", "code"])
+        ? new Set(["state"])
         : path.endsWith("/webhooks/instagram") && method === "get"
           ? new Set(["hub.mode", "hub.verify_token", "hub.challenge"])
           : new Set<string>();
@@ -66,8 +67,10 @@ export function buildOpenApiDocuments(app: INestApplication): { internal: OpenAP
       if (mutable && !idempotencyExempt && !parameters.some((parameter) => parameter.in === "header" && String(parameter.name).toLowerCase() === "idempotency-key")) {
         parameters.push({ name: "Idempotency-Key", in: "header", required: true, description: "Unique retry key for this command (maximum 200 characters).", schema: { type: "string", maxLength: 200 }, example: "01J8Y3Q9M3F6X7R2K4P8N1C5VA" });
       }
-      const requestBody = operationRecord.requestBody as { content?: Record<string, { example?: unknown }> } | undefined;
-      for (const media of Object.values(requestBody?.content ?? {})) media.example ??= { example: "See the request schema for accepted fields" };
+      const requestBody = operationRecord.requestBody as { content?: Record<string, { example?: unknown; examples?: unknown }> } | undefined;
+      for (const media of Object.values(requestBody?.content ?? {})) {
+        if (media.example === undefined && media.examples === undefined) media.example = { example: "See the request schema for accepted fields" };
+      }
       const responses = (operationRecord.responses ??= {}) as Record<string, unknown>;
       for (const status of ["400", "403", "409", "412", "428", "429", "500"]) {
         responses[status] ??= { description: "Stable problem response", content: { "application/problem+json": { schema: { $ref: "#/components/schemas/ProblemDetails" }, example: { type: "https://docs.gemai.app/problems/request-failed", title: "Request failed", status: Number(status), code: status === "412" ? "VERSION_CONFLICT" : status === "428" ? "PRECONDITION_REQUIRED" : "REQUEST_FAILED", detail: "The command could not be completed", correlationId: "4f42da11-0f92-4f24-896e-f25cb6df2bca" } } } };

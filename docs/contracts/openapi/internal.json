@@ -23698,7 +23698,7 @@
         ],
         "summary": "Googlestart",
         "description": "Googlestart in the selected workspace. Errors use stable application/problem+json codes.",
-        "x-required-permission": "integrations.manage"
+        "x-required-permission": "integrations.connect"
       }
     },
     "/v1/workspaces/{workspaceId}/google/bindings": {
@@ -24213,7 +24213,7 @@
         ],
         "summary": "Googledisconnect",
         "description": "Googledisconnect in the selected workspace. Errors use stable application/problem+json codes.",
-        "x-required-permission": "integrations.manage"
+        "x-required-permission": "integrations.connect"
       }
     },
     "/v1/workspaces/{workspaceId}/google/grants/{grantId}": {
@@ -24400,25 +24400,30 @@
         "operationId": "GoogleOAuthCallbackController_callback",
         "parameters": [
           {
-            "name": "state",
-            "required": true,
+            "name": "error",
+            "required": false,
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "description": "Provider error returned when consent is denied",
+            "schema": {}
           },
           {
             "name": "code",
+            "required": false,
+            "in": "query",
+            "description": "Authorization code returned after consent",
+            "schema": {}
+          },
+          {
+            "name": "state",
             "required": true,
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
+            "description": "Single-use OAuth state returned by Google",
+            "schema": {}
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful response",
+          "303": {
+            "description": "Redirects to the safe Gemai dashboard return path with a non-sensitive result code",
             "content": {
               "application/json": {
                 "example": {
@@ -24554,11 +24559,11 @@
             }
           }
         },
+        "summary": "Complete Google account authorization",
         "tags": [
           "GoogleOAuthCallback"
         ],
-        "summary": "Google OAuth Callbackcallback",
-        "description": "Google OAuth Callbackcallback in the selected workspace. Errors use stable application/problem+json codes.",
+        "description": "Complete Google account authorization in the selected workspace. Errors use stable application/problem+json codes.",
         "x-required-permission": "integrations.read"
       }
     },
@@ -24808,8 +24813,17 @@
                   }
                 }
               },
-              "example": {
-                "example": "See the request schema for accepted fields"
+              "examples": {
+                "default": {
+                  "summary": "Send a seven-day booking invitation",
+                  "value": {
+                    "conversationId": "2b1d89da-4ba8-4faf-a58b-92fb2da9b10a",
+                    "leadId": "67b924f0-6c9d-4995-ae4d-e1c2f7b23a83",
+                    "meetingTypeId": "83475ce4-1a1e-44a1-81c3-2b8064127df2",
+                    "expiresInDays": 7,
+                    "introduction": "Choose a time that works for you."
+                  }
+                }
               }
             }
           }

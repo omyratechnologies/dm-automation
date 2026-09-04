@@ -12,6 +12,14 @@
 - 403: compare granted scopes and resource ACL. Never expand scope silently.
 - Member removal: disable routing immediately. Workspace-owned resources become `TRANSFER_REQUIRED` until an Admin reconnects.
 
+## OAuth onboarding and callback
+
+- Gemai uses one dedicated production Web OAuth client; never reuse the Clerk sign-in client or a customer's OAuth client secret.
+- The authorized redirect URI must exactly match `GOOGLE_OAUTH_REDIRECT_URI`. Production uses the API callback, not a dashboard URL.
+- Calendar is member-owned: every active member connects and disconnects only their own Google account. Sheets is workspace-owned and requires Owner/Admin authorization.
+- A cancelled consent redirects to Integrations without creating a grant. Invalid, expired and replayed state values produce a stable callback error and never exchange a code.
+- If connection succeeds but no binding appears, inspect `GoogleOAuthSession`, the `google.binding.connected` audit entry and token-exchange errors by correlation ID. Never log authorization codes, access tokens, refresh tokens or ID tokens.
+
 ## Google 429/5xx
 
 Honor provider retry guidance with jittered exponential backoff. Open a per-workspace/provider circuit after sustained failure so a large tenant cannot starve other workspaces. Keep operations actionable and retain the stable error code.

@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, Headers, HttpStatus, Param, Post, Query, Req } from "@nestjs/common";
-import type { Request } from "express";
+import { Body, Controller, Delete, Get, Headers, HttpException, HttpStatus, Param, Post, Query, Res } from "@nestjs/common";
+import type { Response } from "express";
+import { ApiOperation, ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { z } from "zod";
 import { CurrentUser, CurrentWorkspace } from "../auth/decorators";
 import type { AuthedRequestUser } from "../auth/clerk-auth.guard";
@@ -33,7 +34,7 @@ export class GoogleController {
 
   @Post("oauth-sessions")
   @FeatureFlag("FEATURE_GOOGLE_OAUTH")
-  @RequireCapabilities("integrations.manage")
+  @RequireCapabilities("integrations.connect")
   @IdempotentCommand()
   start(@CurrentUser() user: AuthedRequestUser, @CurrentWorkspace() workspace: WorkspaceContext, @Body(new ZodValidationPipe(startSchema)) input: z.infer<typeof startSchema>) {
     return this.oauth.start({ userId: user.id, workspaceId: workspace.id, membershipId: workspace.membershipId!, ...input });
@@ -41,8 +42,15 @@ export class GoogleController {
 
   @Get("bindings")
   @RequireCapabilities("integrations.read")
-  list(@CurrentWorkspace() workspace: WorkspaceContext) {
-    return this.prisma.googleBinding.findMany({ where: { workspaceId: workspace.id }, select: { id: true, grantId: true, ownership: true, capabilities: true, status: true, version: true, lastHealthAt: true, lastErrorCode: true, grant: { select: { email: true, scopes: true } } } });
+  async list(@CurrentUser() user: AuthedRequestUser, @CurrentWorkspace() workspace: WorkspaceContext) {
+    const bindings = await this.prisma.googleBinding.findMany({ where: { workspaceId: workspace.id }, select: { id: true, grantId: true, authorizedMembershipId: true, ownership: true, capabilities: true, status: true, version: true, lastHealthAt: true, lastErrorCode: true, grant: { select: { userId: true, email: true, scopes: true } } } });
+    return bindings.map(({ authorizedMembershipId, grant, ...binding }) => ({
+      ...binding,
+      grant: { email: grant.email, scopes: grant.scopes },
+      canDisconnect: binding.ownership === "WORKSPACE"
+        ? ["OWNER", "ADMIN"].includes(workspace.role)
+        : authorizedMembershipId === workspace.membershipId && grant.userId === user.id,
+    }));
   }
 
   @Get("bindings/:bindingId/calendars")
@@ -53,10 +61,10 @@ export class GoogleController {
   }
 
   @Delete("bindings/:bindingId")
-  @RequireCapabilities("integrations.manage")
+  @RequireCapabilities("integrations.connect")
   @IdempotentCommand()
-  disconnect(@CurrentWorkspace() workspace: WorkspaceContext, @Param("bindingId") bindingId: string, @Headers("if-match") ifMatch?: string) {
-    return this.oauth.disconnectBinding(workspace.id, bindingId, this.version(ifMatch));
+  disconnect(@CurrentUser() user: AuthedRequestUser, @CurrentWorkspace() workspace: WorkspaceContext, @Param("bindingId") bindingId: string, @Headers("if-match") ifMatch?: string) {
+    return this.oauth.disconnectBinding({ workspaceId: workspace.id, organizationId: workspace.organizationId, bindingId, expectedVersion: this.version(ifMatch), actorUserId: user.id, actorMembershipId: workspace.membershipId!, actorRole: workspace.role });
   }
 
   @Delete("grants/:grantId")
@@ -81,7 +89,48 @@ export class GoogleOAuthCallbackController {
 
   @Get("callback")
   @Public()
-  callback(@Query("state") state: string, @Query("code") code: string, @Req() _request: Request) {
-    return this.oauth.callback(state, code);
+  @ApiOperation({ summary: "Complete Google account authorization" })
+  @ApiQuery({ name: "state", required: false, description: "Single-use OAuth state returned by Google" })
+  @ApiQuery({ name: "code", required: false, description: "Authorization code returned after consent" })
+  @ApiQuery({ name: "error", required: false, description: "Provider error returned when consent is denied" })
+  @ApiResponse({ status: 303, description: "Redirects to the safe Gemai dashboard return path with a non-sensitive result code" })
+  async callback(
+    @Query("state") state: string | undefined,
+    @Query("code") code: string | undefined,
+    @Query("error") providerError: string | undefined,
+    @Res() response: Response,
+  ): Promise<void> {
+    const returnPath = await this.oauth.returnPathForState(state);
+    if (!state) {
+      response.redirect(303, this.oauth.frontendRedirect(returnPath, "error", "OAUTH_STATE_INVALID"));
+      return;
+    }
+    if (providerError) {
+      try {
+        const cancelled = await this.oauth.cancel(state);
+        response.redirect(303, this.oauth.frontendRedirect(cancelled.returnPath, "cancelled", "GOOGLE_ACCESS_DENIED"));
+      } catch (error) {
+        response.redirect(303, this.oauth.frontendRedirect(returnPath, "error", this.problemCode(error)));
+      }
+      return;
+    }
+    if (!code) {
+      response.redirect(303, this.oauth.frontendRedirect(returnPath, "error", "GOOGLE_OAUTH_RESPONSE_INVALID"));
+      return;
+    }
+    try {
+      const result = await this.oauth.callback(state, code);
+      response.redirect(303, this.oauth.frontendRedirect(result.returnPath, "connected"));
+    } catch (error) {
+      response.redirect(303, this.oauth.frontendRedirect(returnPath, "error", this.problemCode(error)));
+    }
+  }
+
+  private problemCode(error: unknown): string {
+    if (error instanceof HttpException) {
+      const body = error.getResponse();
+      if (body && typeof body === "object" && "code" in body && typeof body.code === "string") return body.code;
+    }
+    return "GOOGLE_UNAVAILABLE";
   }
 }
