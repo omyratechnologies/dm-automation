@@ -109,7 +109,7 @@ export default function IntegrationsPage() {
           readinessFailed={readiness.isError}
           isConnecting={connect.isPending}
           disconnectingId={disconnect.variables?.id}
-          testingId={testCalendar.variables?.id}
+          testingId={testCalendar.isPending ? testCalendar.variables?.id : undefined}
           onTest={(binding) => testCalendar.mutate(binding)}
           onConnect={() => connect.mutate(["CALENDAR"])}
           onDisconnect={(binding) => disconnect.mutate(binding)}
@@ -126,7 +126,7 @@ export default function IntegrationsPage() {
           readinessFailed={readiness.isError}
           isConnecting={connect.isPending}
           disconnectingId={disconnect.variables?.id}
-          testingId={testSheets.variables?.id}
+          testingId={testSheets.isPending ? testSheets.variables?.id : undefined}
           onTest={(binding) => testSheets.mutate(binding)}
           onConnect={() => connect.mutate(["SHEETS"])}
           onDisconnect={(binding) => disconnect.mutate(binding)}

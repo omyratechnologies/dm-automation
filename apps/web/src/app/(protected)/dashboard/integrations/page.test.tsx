@@ -71,6 +71,7 @@ describe("IntegrationsPage", () => {
     await waitFor(() => expect(api).toHaveBeenCalledWith(
       "/workspaces/886fec7c-d45e-4657-9e8a-a424cc5c8f30/google/bindings/binding-1/calendars",
     ));
+    await waitFor(() => expect(testButton).toBeEnabled());
   });
 
   it("verifies a workspace Sheets grant with a live Drive API request", async () => {
@@ -98,5 +99,6 @@ describe("IntegrationsPage", () => {
     await waitFor(() => expect(api).toHaveBeenCalledWith(
       "/workspaces/886fec7c-d45e-4657-9e8a-a424cc5c8f30/google/bindings/binding-sheets/spreadsheets",
     ));
+    await waitFor(() => expect(testButton).toBeEnabled());
   });
 });
