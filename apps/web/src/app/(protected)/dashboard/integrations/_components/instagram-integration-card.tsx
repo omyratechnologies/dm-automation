@@ -105,14 +105,16 @@ export default function InstagramIntegrationCard() {
         ) : integration ? (
           <div className="flex flex-col justify-between gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 truncate text-sm font-medium">
+              <p className="flex items-start gap-2 text-sm font-medium">
                 <CheckCircle2
-                  className="h-4 w-4 shrink-0 text-emerald-600"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600"
                   aria-hidden="true"
                 />
-                {integration.username
-                  ? `@${integration.username}`
-                  : "Instagram account"}
+                <span className="break-all">
+                  {integration.username
+                    ? `@${integration.username}`
+                    : "Instagram account"}
+                </span>
               </p>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 Active for messaging and automation in this workspace.
