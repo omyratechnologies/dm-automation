@@ -9,8 +9,14 @@ vi.mock("@/lib/api", () => ({ apiFetch }));
 vi.mock("next/navigation", () => ({ useParams: () => ({ publicId: "public-booking-id" }) }));
 
 describe("public booking page", () => {
+  let resolvedOptionsSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     window.location.hash = "booking-secret";
+    const originalResolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
+    resolvedOptionsSpy = vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockImplementation(function (this: Intl.DateTimeFormat) {
+      return { ...originalResolvedOptions.call(this), timeZone: "America/New_York" };
+    });
     apiFetch.mockReset();
     apiFetch.mockImplementation(async (_path: string, options?: { method?: string }) => {
       if (options?.method === "POST") {
@@ -22,14 +28,18 @@ describe("public booking page", () => {
 
   afterEach(() => {
     cleanup();
+    resolvedOptionsSpy.mockRestore();
     window.location.hash = "";
   });
 
-  it("keeps the secret in the authorization header and books the selected slot", async () => {
+  it("shows slots in the visitor timezone while booking the original UTC instant", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
     render(<QueryClientProvider client={client}><BookingPage /></QueryClientProvider>);
 
     const slot = await screen.findByRole("radio");
+    expect(screen.getByLabelText("Timezone for available meeting times")).toHaveValue("America/New_York");
+    expect(slot).toHaveTextContent("12:30 AM EDT");
+    expect(screen.getByText(/All times are shown in America \/ New York/)).toBeInTheDocument();
     fireEvent.click(slot);
     fireEvent.change(screen.getByLabelText("Email for your invitation"), { target: { value: "lead@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm meeting" }));
@@ -44,5 +54,21 @@ describe("public booking page", () => {
     ));
     expect(apiFetch.mock.calls.every(([path]) => !String(path).includes("booking-secret"))).toBe(true);
     expect(await screen.findByText("Your meeting is reserved")).toBeInTheDocument();
+  });
+
+  it("formats slots correctly across daylight-saving time changes", async () => {
+    apiFetch.mockResolvedValueOnce({
+      timezone: "UTC",
+      slots: [
+        { startsAt: "2026-03-08T06:30:00.000Z", endsAt: "2026-03-08T07:00:00.000Z" },
+        { startsAt: "2026-03-08T07:30:00.000Z", endsAt: "2026-03-08T08:00:00.000Z" },
+      ],
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    render(<QueryClientProvider client={client}><BookingPage /></QueryClientProvider>);
+
+    const slots = await screen.findAllByRole("radio");
+    expect(slots[0]).toHaveTextContent("1:30 AM EST");
+    expect(slots[1]).toHaveTextContent("3:30 AM EDT");
   });
 });
