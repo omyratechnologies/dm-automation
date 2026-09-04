@@ -72,4 +72,31 @@ describe("IntegrationsPage", () => {
       "/workspaces/886fec7c-d45e-4657-9e8a-a424cc5c8f30/google/bindings/binding-1/calendars",
     ));
   });
+
+  it("verifies a workspace Sheets grant with a live Drive API request", async () => {
+    role = "OWNER";
+    api.mockImplementation(async (path: string) => {
+      if (path.endsWith("/google/readiness")) return {
+        oauth: { available: true, status: "AVAILABLE" },
+        calendar: { available: true, status: "AVAILABLE" },
+        sheets: { available: true, status: "AVAILABLE" },
+      };
+      if (path.endsWith("/google/bindings")) return [{
+        id: "binding-sheets", ownership: "WORKSPACE", capabilities: ["SHEETS"], status: "ACTIVE", version: 1,
+        lastHealthAt: null, lastErrorCode: null, canDisconnect: true,
+        grant: { email: "admin@example.com", scopes: [] },
+      }];
+      if (path.endsWith("/sheets/destinations")) return [];
+      if (path.endsWith("/spreadsheets")) return { files: [] };
+      return {};
+    });
+    renderPage();
+
+    const testButton = await screen.findByRole("button", { name: "Test admin@example.com Google Sheets connection" });
+    expect(testButton).toBeEnabled();
+    fireEvent.click(testButton);
+    await waitFor(() => expect(api).toHaveBeenCalledWith(
+      "/workspaces/886fec7c-d45e-4657-9e8a-a424cc5c8f30/google/bindings/binding-sheets/spreadsheets",
+    ));
+  });
 });

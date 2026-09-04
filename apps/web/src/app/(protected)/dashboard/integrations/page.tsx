@@ -28,6 +28,7 @@ type Binding = {
 };
 type Destination = { id: string; name: string; status: string; spreadsheetId: string; sheetTitle: string; lastSyncedAt: string | null; lastErrorCode: string | null; _count: { conflicts: number; rows: number } };
 type CalendarList = { items?: Array<{ id: string; summary: string; primary?: boolean; accessRole?: string; timeZone?: string }> };
+type SpreadsheetList = { files?: Array<{ id: string; name: string; mimeType: string; modifiedTime?: string }>; nextPageToken?: string };
 
 export default function IntegrationsPage() {
   const { api, wsPath, workspaceId, workspace } = useApi();
@@ -75,6 +76,16 @@ export default function IntegrationsPage() {
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Calendar connection test failed"),
   });
+  const testSheets = useMutation({
+    mutationFn: (binding: Binding) => api<SpreadsheetList>(wsPath(`/google/bindings/${binding.id}/spreadsheets`)),
+    onSuccess: (result) => {
+      const count = result.files?.length ?? 0;
+      toast.success(count
+        ? `Sheets access verified · ${count.toLocaleString()} app-authorized ${count === 1 ? "spreadsheet" : "spreadsheets"} available`
+        : "Sheets access verified · select a spreadsheet to create the first managed destination");
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Sheets connection test failed"),
+  });
 
   const calendarBindings = bindings.data?.filter((binding) => binding.capabilities.includes("CALENDAR")) ?? [];
   const sheetBindings = bindings.data?.filter((binding) => binding.capabilities.includes("SHEETS")) ?? [];
@@ -115,6 +126,8 @@ export default function IntegrationsPage() {
           readinessFailed={readiness.isError}
           isConnecting={connect.isPending}
           disconnectingId={disconnect.variables?.id}
+          testingId={testSheets.variables?.id}
+          onTest={(binding) => testSheets.mutate(binding)}
           onConnect={() => connect.mutate(["SHEETS"])}
           onDisconnect={(binding) => disconnect.mutate(binding)}
           consequences="Disconnecting pauses projections. Sheet rows and Google version history are not automatically erased."

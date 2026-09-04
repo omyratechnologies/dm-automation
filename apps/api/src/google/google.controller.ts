@@ -60,6 +60,13 @@ export class GoogleController {
     return this.api.listCalendars(workspace.id, bindingId);
   }
 
+  @Get("bindings/:bindingId/spreadsheets")
+  @FeatureFlag("FEATURE_GOOGLE_SHEETS")
+  @RequireCapabilities("integrations.read")
+  spreadsheets(@CurrentWorkspace() workspace: WorkspaceContext, @Param("bindingId") bindingId: string) {
+    return this.api.listDriveSpreadsheets(workspace.id, bindingId);
+  }
+
   @Delete("bindings/:bindingId")
   @RequireCapabilities("integrations.connect")
   @IdempotentCommand()

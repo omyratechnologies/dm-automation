@@ -76,6 +76,20 @@ export class GoogleApiClient {
     });
   }
 
+  async listDriveSpreadsheets(workspaceId: string, bindingId: string) {
+    return this.request<{ files?: Array<{ id: string; name: string; mimeType: string; modifiedTime?: string }>; nextPageToken?: string }>(workspaceId, bindingId, GOOGLE_SCOPES.DRIVE_FILE, {
+      method: "GET",
+      url: "https://www.googleapis.com/drive/v3/files",
+      params: {
+        q: "mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
+        spaces: "drive",
+        orderBy: "modifiedTime desc",
+        pageSize: 100,
+        fields: "nextPageToken,files(id,name,mimeType,modifiedTime)",
+      },
+    });
+  }
+
   async getSheetValues(workspaceId: string, bindingId: string, spreadsheetId: string, range: string) {
     return this.request<{ range: string; values?: unknown[][] }>(workspaceId, bindingId, GOOGLE_SCOPES.DRIVE_FILE, {
       method: "GET", url: `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}`,
