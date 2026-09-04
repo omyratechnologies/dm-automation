@@ -55,8 +55,10 @@ function fixture(overrides: { lastInboundAt?: Date | null; lead?: unknown; meeti
   const outbox = { append: jest.fn().mockResolvedValue({ eventId: "0ece59e5-8495-401a-8a43-12bb0fce4d4e" }) };
   const audit = { logInTransaction: jest.fn().mockResolvedValue({}) };
   const config = { getOrThrow: jest.fn().mockReturnValue("https://gemai.example") };
-  const service = new MeetingInvitationService(prisma as never, messaging as never, outbox as never, audit as never, config as never);
-  return { service, prisma, tx, messaging, outbox, audit };
+  const leadCommands = { ensureLeadForContact: jest.fn().mockResolvedValue({ id: LEAD_ID }) };
+  const calendar = { ensureDefaultBookingSetup: jest.fn().mockResolvedValue({ meetingType }) };
+  const service = new MeetingInvitationService(prisma as never, messaging as never, outbox as never, audit as never, config as never, leadCommands as never, calendar as never);
+  return { service, prisma, tx, messaging, outbox, audit, leadCommands, calendar };
 }
 
 describe("MeetingInvitationService", () => {
@@ -128,7 +130,7 @@ describe("MeetingInvitationService", () => {
       where: expect.objectContaining({
         workspaceId: WORKSPACE_ID,
         active: true,
-        calendarPool: { members: { some: expect.objectContaining({ enabled: true }) } },
+        calendarPool: { status: "ACTIVE", members: { some: expect.objectContaining({ enabled: true }) } },
       }),
     }));
     expect(result).toMatchObject({
@@ -136,6 +138,21 @@ describe("MeetingInvitationService", () => {
       meetingTypes: [{ id: MEETING_TYPE_ID }],
       messagingEligible: true,
     });
+  });
+
+  it("repairs a legacy conversation lead and provisions the member's default booking setup", async () => {
+    const f = fixture();
+
+    const result = await f.service.prepare(WORKSPACE_ID, "member-1", USER_ID, CONVERSATION_ID, "correlation-prepare");
+
+    expect(f.leadCommands.ensureLeadForContact).toHaveBeenCalledWith(CONTACT_ID, expect.objectContaining({
+      actorType: "USER",
+      actorId: USER_ID,
+      membershipId: "member-1",
+      correlationId: "correlation-prepare",
+    }), "INSTAGRAM");
+    expect(f.calendar.ensureDefaultBookingSetup).toHaveBeenCalledWith(WORKSPACE_ID, "member-1");
+    expect(result).toMatchObject({ leads: [{ id: LEAD_ID }], meetingTypes: [{ id: MEETING_TYPE_ID }] });
   });
 
   it("keeps the accepted invitation recoverable when immediate Redis delivery fails", async () => {

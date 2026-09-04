@@ -60,7 +60,8 @@ export default function MeetingInviteDialog({ conversationId, contactName }: Pro
     queryKey: ["meeting-invitation-options", workspaceId, conversationId],
     queryFn: () =>
       api<InvitationOptions>(
-        wsPath(`/calendar/meeting-invitation-options?conversationId=${encodeURIComponent(conversationId)}`),
+        wsPath("/calendar/meeting-invitation-preparations"),
+        { method: "POST", body: { conversationId } },
       ),
     enabled: open && Boolean(workspaceId),
   });
@@ -123,7 +124,8 @@ export default function MeetingInviteDialog({ conversationId, contactName }: Pro
         </DialogHeader>
 
         {optionsQuery.isLoading ? (
-          <div className="space-y-4 py-2" aria-label="Loading meeting options">
+          <div className="space-y-4 py-2" aria-label="Preparing meeting options">
+            <p className="text-sm text-muted-foreground">Preparing your lead and Calendar booking settings…</p>
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-24 w-full" />

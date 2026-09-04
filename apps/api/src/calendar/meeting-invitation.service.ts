@@ -8,6 +8,8 @@ import { ProblemException } from "../common/problem-details";
 import { OutboxService } from "../delivery/outbox.service";
 import { MessagingService } from "../messaging/messaging.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { LeadCommandService } from "../leads/lead-command.service";
+import { CalendarService } from "./calendar.service";
 import type { SendMeetingInvitationDto } from "./calendar.dto";
 
 const DEFAULT_INVITATION = "I'd be happy to meet. Choose a time that works for you.";
@@ -22,7 +24,29 @@ export class MeetingInvitationService {
     private readonly outbox: OutboxService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly leads: LeadCommandService,
+    private readonly calendar: CalendarService,
   ) {}
+
+  async prepare(
+    workspaceId: string,
+    membershipId: string,
+    actorUserId: string,
+    conversationId: string,
+    correlationId: string,
+  ) {
+    const conversation = await this.findConversation(this.prisma, workspaceId, conversationId);
+    await Promise.all([
+      this.leads.ensureLeadForContact(conversation.contactId, {
+        actorType: "USER",
+        actorId: actorUserId,
+        membershipId,
+        correlationId,
+      }, "INSTAGRAM"),
+      this.calendar.ensureDefaultBookingSetup(workspaceId, membershipId),
+    ]);
+    return this.options(workspaceId, conversationId);
+  }
 
   async options(workspaceId: string, conversationId: string) {
     const conversation = await this.findConversation(this.prisma, workspaceId, conversationId);
@@ -36,7 +60,7 @@ export class MeetingInvitationService {
         where: {
           workspaceId,
           active: true,
-          calendarPool: { members: { some: { enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } } },
+          calendarPool: { status: "ACTIVE", members: { some: { enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } } },
         },
         select: { id: true, name: true, durationMinutes: true, timezone: true },
         orderBy: [{ name: "asc" }, { id: "asc" }],
@@ -81,7 +105,7 @@ export class MeetingInvitationService {
             id: input.meetingTypeId,
             workspaceId,
             active: true,
-            calendarPool: { members: { some: { enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } } },
+            calendarPool: { status: "ACTIVE", members: { some: { enabled: true, membership: { status: "ACTIVE" }, googleBinding: { status: "ACTIVE", capabilities: { has: "CALENDAR" } } } } },
           },
           select: { id: true, name: true, durationMinutes: true, timezone: true },
         }),

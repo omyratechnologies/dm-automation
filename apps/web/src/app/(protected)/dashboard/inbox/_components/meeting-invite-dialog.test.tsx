@@ -21,8 +21,8 @@ function renderDialog() {
 describe("MeetingInviteDialog", () => {
   beforeEach(() => {
     api.mockReset();
-    api.mockImplementation(async (_path: string, options?: { method?: string }) => {
-      if (options?.method === "POST") {
+    api.mockImplementation(async (path: string, options?: { method?: string }) => {
+      if (path.endsWith("/calendar/meeting-invitations") && options?.method === "POST") {
         return { messageId: "82609420-5db1-41f2-899d-d667fd47c8eb", bookingLinkId: "b7f687aa-3a48-472f-aa15-5ae41af4c6af", expiresAt: "2026-09-11T00:00:00.000Z", meetingType: { id: "e2282b45-bbec-42ab-a8d0-026003fa58a2", name: "Discovery call", durationMinutes: 30, timezone: "Asia/Kolkata" } };
       }
       return {
@@ -42,6 +42,10 @@ describe("MeetingInviteDialog", () => {
 
     expect(await screen.findByRole("dialog", { name: "Send meeting invite" })).toBeInTheDocument();
     expect(await screen.findByText("Discovery call")).toBeInTheDocument();
+    expect(api).toHaveBeenCalledWith(
+      "/workspaces/886fec7c-d45e-4657-9e8a-a424cc5c8f30/calendar/meeting-invitation-preparations",
+      { method: "POST", body: { conversationId: "f7e8453c-5f16-46a1-8959-6e5ff3a64b1e" } },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Send invitation" }));
 
     await waitFor(() => expect(api).toHaveBeenCalledWith(

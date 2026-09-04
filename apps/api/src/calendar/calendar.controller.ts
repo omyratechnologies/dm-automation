@@ -54,6 +54,29 @@ export class CalendarController {
     return this.meetingInvitations.options(workspace.id, query.conversationId);
   }
 
+  @Post("meeting-invitation-preparations")
+  @RequireCapabilities("leads.write", "calendar.read")
+  @IdempotentCommand()
+  @ApiOperation({ summary: "Prepare the current member's default Calendar host and the conversation's active lead" })
+  @ApiHeader({ name: "Idempotency-Key", required: true, description: "Unique retry key for this command" })
+  @ApiBody({ schema: { type: "object", required: ["conversationId"], properties: { conversationId: { type: "string", format: "uuid" } } } })
+  @ApiOkResponse({ description: "Eligible meeting invitation options after idempotent setup" })
+  @ApiResponse({ status: 422, description: "The member has no active member-owned Calendar binding" })
+  prepareInvitation(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @CurrentUser() user: AuthedRequestUser,
+    @Req() request: Request,
+    @Body(new ZodValidationPipe(meetingInvitationOptionsQuerySchema)) body: MeetingInvitationOptionsQuery,
+  ) {
+    return this.meetingInvitations.prepare(
+      workspace.id,
+      workspace.membershipId!,
+      user.id,
+      body.conversationId,
+      String(request.headers["x-correlation-id"] ?? randomUUID()),
+    );
+  }
+
   @Post("meeting-invitations")
   @RequireCapabilities("leads.write", "calendar.read")
   @IdempotentCommand()

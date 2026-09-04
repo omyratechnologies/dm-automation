@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Prisma } from "@prisma/client";
 import { createHash, randomBytes, randomUUID } from "crypto";
@@ -19,7 +19,83 @@ export function isSlotReservationConflict(error: unknown): boolean {
 
 @Injectable()
 export class CalendarService {
+  private readonly logger = new Logger(CalendarService.name);
+
   constructor(private readonly prisma: PrismaService, private readonly google: GoogleApiClient, private readonly outbox: OutboxService, private readonly leads: LeadCommandService, private readonly config: ConfigService) {}
+
+  async ensureDefaultBookingSetup(workspaceId: string, membershipId: string) {
+    const [workspace, binding] = await Promise.all([
+      this.prisma.workspace.findUnique({ where: { id: workspaceId }, select: { timezone: true } }),
+      this.prisma.googleBinding.findFirst({
+        where: {
+          workspaceId,
+          authorizedMembershipId: membershipId,
+          ownership: "MEMBER",
+          status: "ACTIVE",
+          capabilities: { has: "CALENDAR" },
+          authorizedMembership: { status: "ACTIVE" },
+        },
+        orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
+      }),
+    ]);
+    if (!workspace || !binding) {
+      throw new ProblemException(HttpStatus.UNPROCESSABLE_ENTITY, "GOOGLE_BINDING_INVALID", "Calendar setup unavailable", "Connect your own Google Calendar before preparing meeting invitations");
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const pool = await tx.calendarPool.upsert({
+        where: { workspaceId_name: { workspaceId, name: "Default hosts" } },
+        create: { workspaceId, name: "Default hosts", status: "ACTIVE" },
+        update: {},
+      });
+      const member = await tx.calendarPoolMember.upsert({
+        where: { poolId_membershipId: { poolId: pool.id, membershipId } },
+        create: {
+          workspaceId,
+          poolId: pool.id,
+          membershipId,
+          googleBindingId: binding.id,
+          calendarId: "primary",
+          conflictCalendarIds: [],
+          enabled: true,
+        },
+        update: { googleBindingId: binding.id, calendarId: "primary" },
+      });
+      const meetingType = await tx.meetingType.upsert({
+        where: { workspaceId_slug: { workspaceId, slug: "discovery-call" } },
+        create: {
+          workspaceId,
+          calendarPoolId: pool.id,
+          name: "Discovery call",
+          slug: "discovery-call",
+          durationMinutes: 30,
+          intervalMinutes: 15,
+          bufferBeforeMinutes: 15,
+          bufferAfterMinutes: 15,
+          minimumNoticeMinutes: 240,
+          bookingHorizonDays: 30,
+          timezone: workspace.timezone,
+          availabilityRules: {
+            "1": [{ start: "09:00", end: "17:00" }],
+            "2": [{ start: "09:00", end: "17:00" }],
+            "3": [{ start: "09:00", end: "17:00" }],
+            "4": [{ start: "09:00", end: "17:00" }],
+            "5": [{ start: "09:00", end: "17:00" }],
+          },
+          active: true,
+        },
+        update: {},
+      });
+      return { pool, member, meetingType };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+
+    try {
+      await this.ensureCalendarWatch(result.member.id);
+    } catch (error) {
+      this.logger.warn(`Default Calendar setup is ready, but watch registration was deferred: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return result;
+  }
 
   list(workspaceId: string) {
     return this.prisma.calendarPool.findMany({ where: { workspaceId }, include: { members: true, meetingTypes: true }, orderBy: { name: "asc" } });

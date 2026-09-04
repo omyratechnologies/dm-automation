@@ -220,7 +220,7 @@ export class LeadCommandService {
     throw new ProblemException(HttpStatus.CONFLICT, "IDENTITY_CONFLICT", "Identity capture conflict", "The identity could not be captured after concurrent updates");
   }
 
-  async ensureLeadForContact(contactId: string, actor: LeadActor) {
+  async ensureLeadForContact(contactId: string, actor: LeadActor, source: LEAD_SOURCE = "AUTOMATION") {
     const contact = await this.prisma.contact.findUnique({
       where: { id: contactId },
       include: { identities: { orderBy: { isPrimary: "desc" }, take: 1 } },
@@ -232,7 +232,7 @@ export class LeadCommandService {
       identity: { type: identity.type, scopeKey: identity.scopeKey, value: identity.normalizedValue },
       name: contact.name ?? undefined,
       username: contact.username ?? undefined,
-      source: "AUTOMATION",
+      source,
       attributes: {},
     }, actor);
   }
