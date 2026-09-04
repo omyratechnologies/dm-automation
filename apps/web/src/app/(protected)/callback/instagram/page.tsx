@@ -21,7 +21,7 @@ const Page = async ({ searchParams }: Props) => {
       error: resolvedSearchParams.error,
       reason: resolvedSearchParams.error_reason,
     });
-    redirect(`/dashboard/connections?error=${resolvedSearchParams.error}`);
+    redirect(`/dashboard/integrations?error=${resolvedSearchParams.error}`);
   }
   
   // Check for authorization code
@@ -35,17 +35,17 @@ const Page = async ({ searchParams }: Props) => {
 
       if (result.status === 200) {
         logger.info("Instagram integration completed successfully");
-        redirect("/dashboard/connections?success=true");
+        redirect("/dashboard/integrations?success=true");
       }
       
       if (result.status === 404) {
         logger.warn("Instagram integration was not found or is already connected");
-        redirect("/dashboard/connections?error=already_connected");
+        redirect("/dashboard/integrations?error=already_connected");
       }
       
       if (result.status === 401) {
         logger.warn("Instagram integration did not return an access token");
-        redirect("/dashboard/connections?error=no_token");
+        redirect("/dashboard/integrations?error=no_token");
       }
       
       logger.error("Instagram integration failed", {
@@ -53,7 +53,7 @@ const Page = async ({ searchParams }: Props) => {
         error: result.error,
       });
       const errorMsg = encodeURIComponent(result.error || "integration_failed");
-      redirect(`/dashboard/connections?error=integration_failed&details=${errorMsg}`);
+      redirect(`/dashboard/integrations?error=integration_failed&details=${errorMsg}`);
       
     } catch (error: unknown) {
       // Re-throw redirect errors - they're expected Next.js behavior
@@ -67,12 +67,12 @@ const Page = async ({ searchParams }: Props) => {
       const errorMsg = encodeURIComponent(
         error instanceof Error ? error.message : "Unknown error",
       );
-      redirect(`/dashboard/connections?error=exception&details=${errorMsg}`);
+      redirect(`/dashboard/integrations?error=exception&details=${errorMsg}`);
     }
   }
   
   logger.warn("Instagram OAuth callback omitted its code or state");
-  redirect("/dashboard/connections?error=invalid_callback");
+  redirect("/dashboard/integrations?error=invalid_callback");
 };
 
 export default Page;

@@ -5,6 +5,33 @@ import IntegrationsPage from "./page";
 
 const api = vi.fn();
 let role: "OWNER" | "ADMIN" | "AGENT" = "AGENT";
+const instagram = vi.hoisted(() => ({
+  integrations: [] as Array<{
+    id: string;
+    name: string;
+    expiresAt: Date | null;
+    instagramId: string | null;
+    createdAt: Date;
+    username?: string | null;
+  }>,
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  refetch: vi.fn(),
+}));
+
+vi.mock("@/actions/integrations", () => ({
+  onOAuthInstagram: instagram.connect,
+  onDisconnect: instagram.disconnect,
+}));
+
+vi.mock("@/hooks/user-queries", () => ({
+  useQueryUser: () => ({
+    data: { integrations: instagram.integrations },
+    isLoading: false,
+    isError: false,
+    refetch: instagram.refetch,
+  }),
+}));
 
 vi.mock("@/hooks/use-api", () => ({
   useApi: () => ({
@@ -23,6 +50,10 @@ function renderPage() {
 describe("IntegrationsPage", () => {
   beforeEach(() => {
     role = "AGENT";
+    instagram.integrations = [];
+    instagram.connect.mockReset();
+    instagram.disconnect.mockReset();
+    instagram.refetch.mockReset();
     api.mockReset();
     api.mockImplementation(async (path: string) => {
       if (path.endsWith("/google/readiness")) return {
@@ -37,6 +68,32 @@ describe("IntegrationsPage", () => {
   });
 
   afterEach(cleanup);
+
+  it("manages Instagram and Google from one Integrations page", async () => {
+    renderPage();
+
+    expect(screen.getByRole("heading", { name: "Messaging" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect Instagram" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Connect Google Calendar" })).toBeEnabled();
+    expect(screen.getByText("Google Sheets")).toBeInTheDocument();
+  });
+
+  it("shows the connected Instagram account in the consolidated page", () => {
+    instagram.integrations = [{
+      id: "instagram-1",
+      name: "INSTAGRAM",
+      expiresAt: null,
+      instagramId: "ig-1",
+      createdAt: new Date("2026-09-04T00:00:00Z"),
+      username: "gemai_business",
+    }];
+
+    renderPage();
+
+    expect(screen.getByText("@gemai_business")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Disconnect" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Connect Instagram" })).not.toBeInTheDocument();
+  });
 
   it("lets an Agent connect their own Calendar but not workspace-owned Sheets", async () => {
     renderPage();

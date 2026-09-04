@@ -3,9 +3,8 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { GoogleIntegrationReadiness } from "@repo/shared";
-import { CalendarDays, CheckCircle2, ExternalLink, FileSpreadsheet, Instagram, Loader2, ShieldCheck, TriangleAlert, Unplug } from "lucide-react";
+import { CalendarDays, CheckCircle2, ExternalLink, FileSpreadsheet, Loader2, Plug, ShieldCheck, TriangleAlert, Unplug } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 import PageHeader from "@/components/global/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi } from "@/hooks/use-api";
 import { googleAvailabilityBadge, googleAvailabilityCopy, type GoogleAvailability } from "@/lib/google-integration-readiness";
+import InstagramIntegrationCard from "./_components/instagram-integration-card";
 
 type Capability = "CALENDAR" | "SHEETS";
 type Binding = {
@@ -41,13 +41,38 @@ export default function IntegrationsPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const result = params.get("google");
-    if (!result) return;
-    if (result === "connected") toast.success("Google account connected successfully");
-    else if (result === "cancelled") toast.info("Google connection was cancelled. No access was granted.");
-    else toast.error("Google could not be connected. Please try again.");
-    params.delete("google");
-    params.delete("code");
+    const googleResult = params.get("google");
+    const instagramSuccess = params.get("success");
+    const instagramError = params.get("error");
+    const details = params.get("details");
+    let handled = false;
+
+    if (googleResult) {
+      handled = true;
+      if (googleResult === "connected") toast.success("Google account connected successfully");
+      else if (googleResult === "cancelled") toast.info("Google connection was cancelled. No access was granted.");
+      else toast.error("Google could not be connected. Please try again.");
+    }
+
+    if (instagramSuccess) {
+      handled = true;
+      toast.success(instagramSuccess === "disconnected"
+        ? "Instagram account disconnected successfully"
+        : "Instagram account connected successfully");
+    } else if (instagramError) {
+      handled = true;
+      const messages: Record<string, string> = {
+        already_connected: "An Instagram account is already connected.",
+        no_code: "Instagram did not return an authorization code.",
+        no_token: "Instagram access could not be authorized.",
+        access_denied: "Instagram access was not granted.",
+        invalid_callback: "The Instagram connection expired. Please try again.",
+      };
+      toast.error(details || messages[instagramError] || "Instagram could not be connected. Please try again.");
+    }
+
+    if (!handled) return;
+    ["google", "code", "success", "error", "details"].forEach((key) => params.delete(key));
     const query = params.toString();
     window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
   }, []);
@@ -90,57 +115,69 @@ export default function IntegrationsPage() {
   const calendarBindings = bindings.data?.filter((binding) => binding.capabilities.includes("CALENDAR")) ?? [];
   const sheetBindings = bindings.data?.filter((binding) => binding.capabilities.includes("SHEETS")) ?? [];
 
-  return <div className="space-y-5 pb-10">
-    <PageHeader title="Integrations" description="Connect each team member's Calendar and one controlled Sheets account for this workspace." icon={<ShieldCheck className="h-5 w-5" />} />
+  return <div className="space-y-8 pb-10">
+    <PageHeader title="Integrations" description="Connect and manage every account that powers messaging, scheduling, and lead sync in this workspace." icon={<Plug className="h-5 w-5" />} />
     <div aria-live="polite" className="sr-only">{connect.isPending ? "Opening Google account selection" : disconnect.isPending ? "Disconnecting Google account" : ""}</div>
 
-    {bindings.isLoading ? (
-      <div className="grid gap-4 lg:grid-cols-2"><Skeleton className="h-72 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div>
-    ) : (
-      <div className="grid gap-4 lg:grid-cols-2">
-        <IntegrationCard
-          icon={<CalendarDays className="h-5 w-5" />}
-          title="Google Calendar"
-          description="Connect your own Calendar for availability, owner-first routing, invitations and Google Meet links."
-          bindings={calendarBindings}
-          canConnect={canConnectCalendar}
-          restrictedCopy="Every active team member can connect their own Calendar."
-          availability={readiness.data?.calendar}
-          readinessFailed={readiness.isError}
-          isConnecting={connect.isPending}
-          disconnectingId={disconnect.variables?.id}
-          testingId={testCalendar.isPending ? testCalendar.variables?.id : undefined}
-          onTest={(binding) => testCalendar.mutate(binding)}
-          onConnect={() => connect.mutate(["CALENDAR"])}
-          onDisconnect={(binding) => disconnect.mutate(binding)}
-          consequences="Disconnecting stops new routing immediately. Existing Google invitations remain with attendees."
-        />
-        <IntegrationCard
-          icon={<FileSpreadsheet className="h-5 w-5" />}
-          title="Google Sheets"
-          description="Connect a workspace account for controlled two-way lead views and inspectable conflicts."
-          bindings={sheetBindings}
-          canConnect={canManageWorkspace}
-          restrictedCopy="An Owner or Admin connects Sheets for the workspace."
-          availability={readiness.data?.sheets}
-          readinessFailed={readiness.isError}
-          isConnecting={connect.isPending}
-          disconnectingId={disconnect.variables?.id}
-          testingId={testSheets.isPending ? testSheets.variables?.id : undefined}
-          onTest={(binding) => testSheets.mutate(binding)}
-          onConnect={() => connect.mutate(["SHEETS"])}
-          onDisconnect={(binding) => disconnect.mutate(binding)}
-          consequences="Disconnecting pauses projections. Sheet rows and Google version history are not automatically erased."
-        />
+    <section aria-labelledby="messaging-integrations" className="space-y-3">
+      <div>
+        <h2 id="messaging-integrations" className="text-base font-semibold text-foreground">Messaging</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Connect the customer channel where conversations and automations run.</p>
       </div>
-    )}
+      <InstagramIntegrationCard />
+    </section>
 
-    <Card>
-      <CardHeader><CardTitle className="text-base">Managed Sheet destinations</CardTitle><CardDescription>Publicly shared files are blocked. Sensitive fields remain export-denied until an Admin explicitly approves them.</CardDescription></CardHeader>
+    <section aria-labelledby="workspace-integrations" className="space-y-3">
+      <div>
+        <h2 id="workspace-integrations" className="text-base font-semibold text-foreground">Scheduling and lead data</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Connect Google tools for team availability, meeting invitations, and controlled lead projections.</p>
+      </div>
+      {bindings.isLoading ? (
+        <div className="grid gap-4 lg:grid-cols-2"><Skeleton className="h-72 rounded-xl" /><Skeleton className="h-72 rounded-xl" /></div>
+      ) : (
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <IntegrationCard
+            icon={<CalendarDays className="h-5 w-5" />}
+            title="Google Calendar"
+            description="Connect your own Calendar for availability, owner-first routing, invitations and Google Meet links."
+            bindings={calendarBindings}
+            canConnect={canConnectCalendar}
+            restrictedCopy="Every active team member can connect their own Calendar."
+            availability={readiness.data?.calendar}
+            readinessFailed={readiness.isError}
+            isConnecting={connect.isPending}
+            disconnectingId={disconnect.variables?.id}
+            testingId={testCalendar.isPending ? testCalendar.variables?.id : undefined}
+            onTest={(binding) => testCalendar.mutate(binding)}
+            onConnect={() => connect.mutate(["CALENDAR"])}
+            onDisconnect={(binding) => disconnect.mutate(binding)}
+            consequences="Disconnecting stops new routing immediately. Existing Google invitations remain with attendees."
+          />
+          <IntegrationCard
+            icon={<FileSpreadsheet className="h-5 w-5" />}
+            title="Google Sheets"
+            description="Connect a workspace account for controlled two-way lead views and inspectable conflicts."
+            bindings={sheetBindings}
+            canConnect={canManageWorkspace}
+            restrictedCopy="An Owner or Admin connects Sheets for the workspace."
+            availability={readiness.data?.sheets}
+            readinessFailed={readiness.isError}
+            isConnecting={connect.isPending}
+            disconnectingId={disconnect.variables?.id}
+            testingId={testSheets.isPending ? testSheets.variables?.id : undefined}
+            onTest={(binding) => testSheets.mutate(binding)}
+            onConnect={() => connect.mutate(["SHEETS"])}
+            onDisconnect={(binding) => disconnect.mutate(binding)}
+            consequences="Disconnecting pauses projections. Sheet rows and Google version history are not automatically erased."
+          />
+        </div>
+      )}
+    </section>
+
+    <Card aria-labelledby="managed-sheet-destinations">
+      <CardHeader><CardTitle id="managed-sheet-destinations" className="text-base">Managed Sheet destinations</CardTitle><CardDescription>Publicly shared files are blocked. Sensitive fields remain export-denied until an Admin explicitly approves them.</CardDescription></CardHeader>
       <CardContent>{destinations.data?.length ? <div className="divide-y divide-border">{destinations.data.map((destination) => <div key={destination.id} className="flex min-h-14 flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center"><div><p className="text-sm font-medium">{destination.name} · {destination.sheetTitle}</p><p className="text-xs text-muted-foreground">{destination._count.rows.toLocaleString()} managed rows · {destination._count.conflicts} open conflicts</p></div><div className="flex items-center gap-2"><Badge variant={destination._count.conflicts ? "destructive" : "secondary"}>{destination.status}</Badge><a className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-md px-3 text-sm text-primary transition-colors duration-200 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={`https://docs.google.com/spreadsheets/d/${destination.spreadsheetId}`} target="_blank" rel="noreferrer">Open <ExternalLink className="h-4 w-4" /></a></div></div>)}</div> : <p className="py-8 text-center text-sm text-muted-foreground">No Sheet destinations configured.</p>}</CardContent>
     </Card>
-
-    <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Instagram className="h-5 w-5" />Instagram</CardTitle><CardDescription>Instagram account and webhook settings remain available during the compatibility release.</CardDescription></CardHeader><CardContent><Button variant="outline" className="h-11" asChild><Link href={workspaceId ? `/dashboard/${workspaceId}/connections` : "/dashboard/connections"}>Manage Instagram connection</Link></Button></CardContent></Card>
   </div>;
 }
 
@@ -164,7 +201,7 @@ function IntegrationCard({ icon, title, description, bindings, canConnect, restr
   const healthy = bindings.some((binding) => binding.status === "ACTIVE");
   const unavailableCopy = googleAvailabilityCopy(availability, readinessFailed);
   const badge = healthy ? "Connected" : googleAvailabilityBadge(availability, readinessFailed);
-  return <Card>
+  return <Card className="h-full">
     <CardHeader><div className="flex items-center justify-between gap-3"><CardTitle className="flex items-center gap-2 text-base">{icon}{title}</CardTitle><Badge variant={healthy ? "default" : "secondary"}>{badge}</Badge></div><CardDescription>{description}</CardDescription></CardHeader>
     <CardContent className="space-y-4">
       {bindings.map((binding) => {

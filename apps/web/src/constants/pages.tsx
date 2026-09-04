@@ -9,7 +9,7 @@ import {
 export const PAGE_BREAD_CRUMBS: string[] = [
   "contacts",
   "automations",
-  "connections",
+  "integrations",
   "settings",
 ];
 
@@ -20,7 +20,6 @@ type Props = {
 export const PAGE_ICON: Props = {
   AUTOMATIONS: <AutomationDuoToneBlue />,
   CONTACTS: <ContactsDuoToneBlue />,
-  CONNECTIONS: <RocketDuoToneBlue />,
   INTEGRATIONS: <RocketDuoToneBlue />,
   SETTINGS: <SettingsDuoToneWhite />,
   HOME: <HomeDuoToneBlue />,

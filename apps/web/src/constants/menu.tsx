@@ -3,7 +3,6 @@ import {
   CalendarDays,
   Inbox,
   LayoutDashboard,
-  Link2,
   Megaphone,
   Plug,
   Settings,
@@ -39,7 +38,6 @@ export const SIDEBAR_GROUPS: SideBarGroup[] = [
   { id: "insights", label: "Insights", items: [item("analytics", "/dashboard/analytics", <BarChart3 className="h-4 w-4" />)] },
   {
     id: "manage", label: "Manage", items: [
-      item("connections", "/dashboard/connections", <Link2 className="h-4 w-4" />),
       item("integrations", "/dashboard/integrations", <Plug className="h-4 w-4" />),
       item("team", "/dashboard/team", <UsersRound className="h-4 w-4" />),
       item("settings", "/dashboard/settings", <Settings className="h-4 w-4" />),

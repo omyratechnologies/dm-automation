@@ -23,7 +23,7 @@ export default function HelpPage() {
   const faqs = [
     {
       question: "How do I connect my Instagram account?",
-      answer: "Go to Connections in the sidebar, click 'Connect Instagram', and follow the authorization steps. You'll need a business or creator Instagram account."
+      answer: "Go to Integrations in the sidebar, click 'Connect Instagram', and follow the authorization steps. You'll need a business or creator Instagram account."
     },
     {
       question: "What's the difference between FREE and PRO plans?",

@@ -1,7 +1,7 @@
 import {
   BarChart3,
   Zap,
-  Link2,
+  Plug,
   Settings,
   LineChart,
   LayoutDashboard,
@@ -42,10 +42,10 @@ const Page = async () => {
       icon: LineChart,
     },
     {
-      href: "/dashboard/connections",
-      title: "Connections",
-      description: "Link Instagram accounts",
-      icon: Link2,
+      href: "/dashboard/integrations",
+      title: "Integrations",
+      description: "Connect Instagram and Google",
+      icon: Plug,
     },
   ];
 
@@ -57,9 +57,9 @@ const Page = async () => {
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/connections">
-                <Link2 className="h-4 w-4 mr-1.5" />
-                Connect
+              <Link href="/dashboard/integrations">
+                <Plug className="h-4 w-4 mr-1.5" />
+                Integrations
               </Link>
             </Button>
             <Button asChild size="sm">

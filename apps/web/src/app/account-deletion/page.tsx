@@ -64,7 +64,7 @@ export default function AccountDeletionPage() {
               If you connected an Instagram professional account and want to revoke access:
             </p>
             <ol className="list-decimal list-inside space-y-3 ml-4">
-              <li>In Gemai, open <strong>Dashboard → Connections</strong> and select <strong>Disconnect</strong></li>
+              <li>In Gemai, open <strong>Dashboard → Integrations</strong> and select <strong>Disconnect</strong></li>
             </ol>
             <p className="my-4">You can also revoke access directly in Instagram:</p>
             <ol className="list-decimal list-inside space-y-3 ml-4">
