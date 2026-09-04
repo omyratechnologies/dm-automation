@@ -27,6 +27,7 @@ type Binding = {
   grant: { email: string | null; scopes: string[] };
 };
 type Destination = { id: string; name: string; status: string; spreadsheetId: string; sheetTitle: string; lastSyncedAt: string | null; lastErrorCode: string | null; _count: { conflicts: number; rows: number } };
+type CalendarList = { items?: Array<{ id: string; summary: string; primary?: boolean; accessRole?: string; timeZone?: string }> };
 
 export default function IntegrationsPage() {
   const { api, wsPath, workspaceId, workspace } = useApi();
@@ -66,6 +67,14 @@ export default function IntegrationsPage() {
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Could not disconnect Google"),
   });
+  const testCalendar = useMutation({
+    mutationFn: (binding: Binding) => api<CalendarList>(wsPath(`/google/bindings/${binding.id}/calendars`)),
+    onSuccess: (result) => {
+      const count = result.items?.length ?? 0;
+      toast.success(`Calendar connection verified · ${count.toLocaleString()} ${count === 1 ? "calendar" : "calendars"} available`);
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Calendar connection test failed"),
+  });
 
   const calendarBindings = bindings.data?.filter((binding) => binding.capabilities.includes("CALENDAR")) ?? [];
   const sheetBindings = bindings.data?.filter((binding) => binding.capabilities.includes("SHEETS")) ?? [];
@@ -89,6 +98,8 @@ export default function IntegrationsPage() {
           readinessFailed={readiness.isError}
           isConnecting={connect.isPending}
           disconnectingId={disconnect.variables?.id}
+          testingId={testCalendar.variables?.id}
+          onTest={(binding) => testCalendar.mutate(binding)}
           onConnect={() => connect.mutate(["CALENDAR"])}
           onDisconnect={(binding) => disconnect.mutate(binding)}
           consequences="Disconnecting stops new routing immediately. Existing Google invitations remain with attendees."
@@ -120,7 +131,7 @@ export default function IntegrationsPage() {
   </div>;
 }
 
-function IntegrationCard({ icon, title, description, bindings, canConnect, restrictedCopy, availability, readinessFailed, isConnecting, disconnectingId, onConnect, onDisconnect, consequences }: {
+function IntegrationCard({ icon, title, description, bindings, canConnect, restrictedCopy, availability, readinessFailed, isConnecting, disconnectingId, testingId, onConnect, onDisconnect, onTest, consequences }: {
   icon: React.ReactNode;
   title: "Google Calendar" | "Google Sheets";
   description: string;
@@ -131,8 +142,10 @@ function IntegrationCard({ icon, title, description, bindings, canConnect, restr
   readinessFailed: boolean;
   isConnecting: boolean;
   disconnectingId?: string;
+  testingId?: string;
   onConnect: () => void;
   onDisconnect: (binding: Binding) => void;
+  onTest?: (binding: Binding) => void;
   consequences: string;
 }) {
   const healthy = bindings.some((binding) => binding.status === "ACTIVE");
@@ -144,10 +157,14 @@ function IntegrationCard({ icon, title, description, bindings, canConnect, restr
       {bindings.map((binding) => {
         const email = binding.grant.email ?? "Google account";
         const disconnecting = disconnectingId === binding.id;
+        const testing = testingId === binding.id;
         return <div key={binding.id} className="rounded-lg border border-border p-3">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="min-w-0"><p className="flex items-center gap-2 truncate text-sm font-medium">{binding.status === "ACTIVE" ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <TriangleAlert className="h-4 w-4 shrink-0 text-amber-600" />}{email}</p><p className="mt-1 text-xs text-muted-foreground">{binding.ownership.toLowerCase()} authorization · {binding.status.replaceAll("_", " ").toLowerCase()}</p>{binding.lastErrorCode && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Needs attention: {binding.lastErrorCode.replaceAll("_", " ").toLowerCase()}</p>}</div>
-            {binding.canDisconnect && <Button type="button" variant="outline" className="h-11 shrink-0 cursor-pointer" disabled={disconnecting} onClick={() => onDisconnect(binding)} aria-label={`Disconnect ${email} from ${title}`}>{disconnecting ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Unplug className="h-4 w-4" />} Disconnect</Button>}
+            <div className="flex flex-wrap gap-2">
+              {onTest && binding.status === "ACTIVE" && <Button type="button" variant="outline" className="h-11 shrink-0 cursor-pointer" disabled={testing} onClick={() => onTest(binding)} aria-label={`Test ${email} ${title} connection`}>{testing ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <ShieldCheck className="h-4 w-4" />} Test connection</Button>}
+              {binding.canDisconnect && <Button type="button" variant="outline" className="h-11 shrink-0 cursor-pointer" disabled={disconnecting} onClick={() => onDisconnect(binding)} aria-label={`Disconnect ${email} from ${title}`}>{disconnecting ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Unplug className="h-4 w-4" />} Disconnect</Button>}
+            </div>
           </div>
         </div>;
       })}

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import IntegrationsPage from "./page";
@@ -65,5 +65,11 @@ describe("IntegrationsPage", () => {
     renderPage();
 
     expect(await screen.findByRole("button", { name: "Disconnect owner@example.com from Google Calendar" })).toBeEnabled();
+    const testButton = screen.getByRole("button", { name: "Test owner@example.com Google Calendar connection" });
+    expect(testButton).toBeEnabled();
+    fireEvent.click(testButton);
+    await waitFor(() => expect(api).toHaveBeenCalledWith(
+      "/workspaces/886fec7c-d45e-4657-9e8a-a424cc5c8f30/google/bindings/binding-1/calendars",
+    ));
   });
 });
